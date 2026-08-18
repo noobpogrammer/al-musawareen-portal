@@ -4,7 +4,7 @@ import { translations, LanguageType } from '../utils/translations';
 import { 
   Camera, Video, Link as LinkIcon, FileText, CheckCircle2, 
   AlertCircle, ExternalLink, Calendar, MapPin, Star, Award, Clock, ListFilter,
-  Shield, Users, Check, Edit3, Plus, Search
+  Shield, Users, Check, Edit3, Plus, Search, RefreshCw
 } from 'lucide-react';
 import { calculateStarRating, calculateUserAverageRating } from '../utils/starRating';
 import StarRatingDisplay from './StarRatingDisplay';
@@ -14,6 +14,7 @@ import DispatchedLensesRosterTable from './DispatchedLensesRosterTable';
 import ShotReportSubmissionsView from './ShotReportSubmissionsView';
 import CoverageAssignmentsView from './CoverageAssignmentsView';
 import OnboardingApprovalsView from './OnboardingApprovalsView';
+import { supabase } from '../utils/supabaseClient';
 
 interface SubmissionPortalProps {
   lang: LanguageType;
@@ -28,6 +29,7 @@ interface SubmissionPortalProps {
   onRespondAssignment?: (assignmentId: string, itsNumber: string, action: 'accepted' | 'declined', reason?: string) => void;
   onAddAssignment?: (assignment: Omit<Assignment, 'id'>) => void;
   onUpdateAssignment?: (assignment: Assignment) => void;
+  onUpdateAvatar?: (its: string, avatarUrl: string) => void;
   onAddMiqaat?: (name: string) => void;
   onAddZone?: (name: string) => void;
   onBulkAddZones?: (names: string[]) => void;
@@ -53,6 +55,7 @@ export default function SubmissionPortal({
   onRespondAssignment,
   onAddAssignment,
   onUpdateAssignment,
+  onUpdateAvatar,
   onAddMiqaat,
   onAddZone,
   onBulkAddZones,
@@ -363,13 +366,23 @@ export default function SubmissionPortal({
               </span>
             </div>
 
-            <AvatarPlaceholder
-              src={currentUser.avatarUrl}
-              alt={currentUser.fullName}
-              sizeClassName="w-16 h-16"
-              iconSizeClassName="w-7 h-7"
-              className="border-2 border-[#BA8332] shrink-0"
-            />
+            <div className="relative group cursor-pointer shrink-0" title="Click camera button to upload/change profile photo (DP)">
+              <AvatarPlaceholder
+                src={currentUser.avatarUrl}
+                alt={currentUser.fullName}
+                sizeClassName="w-16 h-16"
+                iconSizeClassName="w-7 h-7"
+                className="border-2 border-[#BA8332] shrink-0"
+              />
+              <label className="absolute -bottom-1 -right-1 bg-[#BA8332] hover:bg-[#a06e28] text-white p-1 rounded-full shadow-md cursor-pointer transition-transform hover:scale-110 border border-white flex items-center justify-center">
+                {isUploadingDp ? (
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Camera className="w-3 h-3" />
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleUploadDpPhoto} disabled={isUploadingDp} />
+              </label>
+            </div>
           </div>
 
         </div>

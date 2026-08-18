@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Assignment, ShotReport, SharafEventDef, SharafAllocation, MiqaatDef, Zone, Topic, AssignmentNotification, HRPermissions, UserRole, getUserRoles, DEFAULT_HR_PERMISSIONS } from './types';
 import { 
-  INITIAL_USERS, 
   INITIAL_ASSIGNMENTS, 
   INITIAL_SUBMISSIONS, 
   INITIAL_ZONES, 
@@ -51,11 +50,11 @@ export default function App() {
   const [users, setUsers] = useState<UserProfile[]>(() => {
     try {
       const saved = localStorage.getItem('al_musawareen_users');
-      if (!saved) return INITIAL_USERS;
+      if (!saved) return [];
       const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed.map(sanitizeUserProfile) : INITIAL_USERS;
+      return Array.isArray(parsed) ? parsed.map(sanitizeUserProfile) : [];
     } catch {
-      return INITIAL_USERS;
+      return [];
     }
   });
 
@@ -369,6 +368,18 @@ export default function App() {
     setCurrentUser(null);
     localStorage.removeItem('al_musawareen_session');
     setActiveView('public');
+  };
+
+  const handleUpdateAvatar = (its: string, avatarUrl: string) => {
+    setUsers(prev => prev.map(u => u.itsNumber === its ? { ...u, avatarUrl } : u));
+    setCurrentUser(prev => {
+      if (prev && prev.itsNumber === its) {
+        const updated = { ...prev, avatarUrl };
+        localStorage.setItem('al_musawareen_session', JSON.stringify(updated));
+        return updated;
+      }
+      return prev;
+    });
   };
 
   // 3. Operational State Mutation Functions (Callbacks)
@@ -787,6 +798,7 @@ export default function App() {
             onApproveUser={handleApproveUser}
             onRejectUser={handleRejectUser}
             onUpdateUserPermissions={handleUpdateUserPermissions}
+            onUpdateAvatar={handleUpdateAvatar}
             onAddAssignment={handleAddAssignment}
             onUpdateAssignment={handleUpdateAssignment}
             onReassignSlot={handleReassignSlot}
@@ -841,6 +853,7 @@ export default function App() {
             onRespondAssignment={handleRespondAssignment}
             onAddAssignment={handleAddAssignment}
             onUpdateAssignment={handleUpdateAssignment}
+            onUpdateAvatar={handleUpdateAvatar}
             onAddMiqaat={handleAddMiqaat}
             onAddZone={handleAddZone}
             onBulkAddZones={handleBulkAddZones}

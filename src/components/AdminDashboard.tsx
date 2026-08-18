@@ -7,10 +7,11 @@ import {
   Check, X, Plus, Sparkles, MapPin, Link as LinkIcon, 
   Award, RefreshCw, Layers, Server, Activity, UserPlus, Search,
   Settings, Upload, Clock, Trash2, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight,
-  Star, Edit3, Shield, Key, UserCheck, ShieldAlert
+  Star, Edit3, Shield, Key, UserCheck, ShieldAlert, Camera
 } from 'lucide-react';
 import AvatarPlaceholder from './AvatarPlaceholder';
 import BulkAddModal from './BulkAddModal';
+import { supabase } from '../utils/supabaseClient';
 import { MOHALLA_OPTIONS } from '../utils/mockData';
 import { calculateStarRating } from '../utils/starRating';
 import StarRatingDisplay from './StarRatingDisplay';
@@ -54,6 +55,7 @@ interface AdminDashboardProps {
   onAddTopic?: (name: string) => void;
   onBulkAddTopics?: (names: string[]) => void;
   onSaveRatingOverride?: (reportId: string, goldStars: number, redStars: number, note: string, isOverride: boolean) => void;
+  onUpdateAvatar?: (its: string, avatarUrl: string) => void;
 }
 
 export default function AdminDashboard({
@@ -68,6 +70,7 @@ export default function AdminDashboard({
   onApproveUser,
   onRejectUser,
   onUpdateUserPermissions,
+  onUpdateAvatar,
   onAddAssignment,
   onUpdateAssignment,
   onReassignSlot,
@@ -96,6 +99,46 @@ export default function AdminDashboard({
 
   // Star Rating Override Modal State
   const [overrideModalReport, setOverrideModalReport] = useState<ShotReport | null>(null);
+
+  // DP Upload State
+  const [isUploadingDp, setIsUploadingDp] = useState(false);
+
+  const handleUploadDpPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+    try {
+      setIsUploadingDp(true);
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${currentUser.itsNumber}-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('dp-uploads')
+        .upload(fileName, file, { contentType: file.type || 'image/jpeg', upsert: true });
+      
+      let publicUrl = '';
+      if (!uploadError) {
+        const { data } = supabase.storage.from('dp-uploads').getPublicUrl(fileName);
+        publicUrl = data.publicUrl;
+      } else {
+        publicUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (publicUrl) {
+        await supabase.from('members').update({ dp_url: publicUrl }).eq('its_id', currentUser.itsNumber);
+        if (onUpdateAvatar) {
+          onUpdateAvatar(currentUser.itsNumber, publicUrl);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to upload profile picture:', err);
+    } finally {
+      setIsUploadingDp(false);
+    }
+  };
 
   // Reassignment state
   const [reassignTarget, setReassignTarget] = useState<{ assignmentId: string; oldIts: string } | null>(null);
@@ -596,14 +639,24 @@ export default function AdminDashboard({
               </span>
             </div>
 
-            {/* Admin Profile avatar: real uploaded photo when available, square shape with rounded corners (~10px), 1.5-2x size (w-16 h-16) */}
-            <AvatarPlaceholder
-              src={currentUser.avatarUrl}
-              alt={currentUser.fullName}
-              sizeClassName="w-16 h-16"
-              iconSizeClassName="w-7 h-7"
-              className="border-2 border-[#BA8332]"
-            />
+            {/* Admin Profile avatar with Camera Upload Badge */}
+            <div className="relative group cursor-pointer shrink-0" title="Click camera button to upload/change profile photo (DP)">
+              <AvatarPlaceholder
+                src={currentUser.avatarUrl}
+                alt={currentUser.fullName}
+                sizeClassName="w-16 h-16"
+                iconSizeClassName="w-7 h-7"
+                className="border-2 border-[#BA8332]"
+              />
+              <label className="absolute -bottom-1 -right-1 bg-[#BA8332] hover:bg-[#a06e28] text-white p-1.5 rounded-full shadow-md cursor-pointer transition-transform hover:scale-110 border border-white flex items-center justify-center">
+                {isUploadingDp ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleUploadDpPhoto} disabled={isUploadingDp} />
+              </label>
+            </div>
           </div>
 
         </div>

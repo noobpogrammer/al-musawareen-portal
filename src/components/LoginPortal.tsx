@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import Logo from './Logo';
 import { translations, LanguageType } from '../utils/translations';
 import { UserProfile } from '../types';
-import { INITIAL_USERS } from '../utils/mockData';
-import { Shield, Camera, Key, Mail, RefreshCw, AlertCircle } from 'lucide-react';
+import { Key, Mail, AlertCircle } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 
 interface LoginPortalProps {
@@ -35,15 +34,21 @@ export default function LoginPortal({ lang, onLoginSuccess, onNavigateRegister }
     setLoading(true);
 
     try {
-      // 1. Resolve ITS ID to email
-      const { data: emailData, error: lookupError } = await supabase
-        .rpc('get_email_by_its_id', { target_its_id: trimmedId });
+      // 1. Resolve ITS ID or Email
+      let resolvedEmail = trimmedId;
+      if (!trimmedId.includes('@')) {
+        const { data: emailData, error: lookupError } = await supabase
+          .rpc('get_email_by_its_id', { target_its_id: trimmedId });
 
-      if (lookupError || !emailData || emailData.length === 0) {
-        throw new Error('ITS ID is not registered.');
+        if (lookupError) {
+          console.error('Supabase RPC get_email_by_its_id error:', lookupError);
+          throw new Error(`ITS Lookup Error: ${lookupError.message || 'Function get_email_by_its_id failed'}`);
+        }
+        if (!emailData || emailData.length === 0) {
+          throw new Error('ITS ID is not registered.');
+        }
+        resolvedEmail = emailData[0].email;
       }
-
-      const resolvedEmail = emailData[0].email;
 
       // 2. Authenticate using resolved email
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -57,7 +62,7 @@ export default function LoginPortal({ lang, onLoginSuccess, onNavigateRegister }
 
       const userId = data.user?.id;
       if (!userId) {
-        throw new Error('User not found.');
+        throw new Error('User session not found.');
       }
 
       // Fetch user profile from members table
@@ -68,7 +73,7 @@ export default function LoginPortal({ lang, onLoginSuccess, onNavigateRegister }
         .single();
 
       if (dbError || !memberProfile) {
-        throw new Error('Profile not found in database.');
+        throw new Error(dbError ? `Database Profile Error: ${dbError.message}` : 'Profile record not found in members table.');
       }
 
       // Enforce strict Admin Approval check: non-admin users must have status 'approved'
@@ -103,36 +108,8 @@ export default function LoginPortal({ lang, onLoginSuccess, onNavigateRegister }
 
       onLoginSuccess(loggedUser);
     } catch (err: any) {
-      // Fallback check in demo/local state if Supabase authentication is offline or demo accounts are used
-      const localUsers: UserProfile[] = (() => {
-        try {
-          const saved = localStorage.getItem('al_musawareen_users');
-          return saved ? JSON.parse(saved) : INITIAL_USERS;
-        } catch {
-          return INITIAL_USERS;
-        }
-      })();
-
-      const matchedLocal = localUsers.find(u => 
-        u.itsNumber === trimmedId || u.email?.toLowerCase() === trimmedId.toLowerCase()
-      );
-
-      if (matchedLocal) {
-        if (matchedLocal.role !== 'admin') {
-          if (matchedLocal.status === 'pending') {
-            triggerError('Your registration is pending official approval by Sheikh Ibrahim Bhai Lokhandwala. You will be able to log in once approved.');
-            return;
-          }
-          if (matchedLocal.status === 'rejected') {
-            triggerError('Your registration request was declined by Administration.');
-            return;
-          }
-        }
-        onLoginSuccess(matchedLocal);
-        return;
-      }
-
-      triggerError(err.message || 'Invalid credentials or pending approval.');
+      console.error('Supabase Authentication Error:', err);
+      triggerError(err.message || 'Invalid credentials or authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -244,39 +221,6 @@ export default function LoginPortal({ lang, onLoginSuccess, onNavigateRegister }
               <span>{loading ? 'Authenticating...' : t.loginBtn}</span>
             </button>
           </form>
-
-          {/* Quick Demo Credentials Panel */}
-          <div className="mt-8 border-t border-[#5C130F]/15 pt-5">
-            <p className="text-[10px] text-[#5C130F] font-bold tracking-wider uppercase text-center mb-3 font-mono">
-              {lang === 'en' ? 'Demonstration Fast Access' : 'الوصول السريع للعرض التجريبي'}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => fillDemoCreds('admin')}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white/40 hover:bg-[#5C130F] hover:text-white text-[#5C130F] text-xs font-mono font-bold uppercase border border-[#5C130F]/30 transition-all rounded-none cursor-pointer"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span>{lang === 'en' ? 'Shk Ibrahim' : 'الشيخ ابراهيم'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillDemoCreds('photographer')}
-                className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white/40 hover:bg-[#5C130F] hover:text-white text-[#5C130F] text-xs font-mono font-bold uppercase border border-[#5C130F]/30 transition-all rounded-none cursor-pointer"
-              >
-                <Camera className="w-3.5 h-3.5" />
-                <span>{lang === 'en' ? 'Taher' : 'طاهر'}</span>
-              </button>
-            </div>
-            <div className="text-[10px] text-[#3A1A14]/80 leading-relaxed text-center mt-3 bg-white/40 rounded-none p-2.5 border border-[#5C130F]/20 font-serif italic">
-              <span className="font-sans font-bold block text-[#5C130F] not-italic mb-0.5">
-                {lang === 'en' ? 'Testing Note:' : 'ملاحظة الاختبار:'}
-              </span>
-              <span>
-                {lang === 'en' ? t.adminLoginHint : t.adminLoginHint}
-              </span>
-            </div>
-          </div>
 
           {/* Register Redirect Link */}
           <div className="mt-6 text-center text-xs">
