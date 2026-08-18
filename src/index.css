@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Cairo:wght@300;400;500;600;700;800&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Aref+Ruqaa:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Cinzel", "Georgia", serif;
+  --font-amiri: "Amiri", "Georgia", serif;
+  --font-cairo: "Cairo", sans-serif;
+  --font-ruqaa: "Aref Ruqaa", serif;
+  --font-cinzel-dec: "Cinzel Decorative", serif;
+
+  /* Official Brand Color Tokens */
+  --color-editorial-bg: #faf4e8; /* Warm Ivory Cream */
+  --color-editorial-ink: #5c130f; /* Rich Velvet Red (#5C130F) */
+  --color-editorial-accent: #ce933e; /* Mystic Bronze Gold (#CE933E) */
+  --color-editorial-gold-sec: #ba8332; /* Mud Yellow / Filmstrip Gold (#BA8332) */
+  --color-editorial-border: rgba(92, 19, 15, 0.15);
+  --color-editorial-border-light: rgba(92, 19, 15, 0.08);
+
+  /* Redefine maroon to map to Rich Velvet Red and gold to Mystic Bronze */
+  --color-maroon-50: #faf4e8;
+  --color-maroon-100: #f5e4e2;
+  --color-maroon-200: #e8c2be;
+  --color-maroon-300: #d69893;
+  --color-maroon-400: #bf6760;
+  --color-maroon-500: #a13d35;
+  --color-maroon-600: #852821;
+  --color-maroon-700: #6f1c16;
+  --color-maroon-800: #5c130f; /* Rich Velvet Red */
+  --color-maroon-900: #420a07;
+  --color-maroon-950: #260402;
+
+  --color-gold-50: #fdfbf7;
+  --color-gold-100: #f9eed7;
+  --color-gold-200: #f1daac;
+  --color-gold-300: #e5bd75;
+  --color-gold-400: #ce933e; /* Mystic Bronze Gold */
+  --color-gold-500: #ba8332; /* Mud Yellow */
+  --color-gold-600: #9a6923;
+  --color-gold-700: #7b5118;
+  --color-gold-800: #5c3a0f;
+  --color-gold-900: #3e2407;
+  --color-gold-950: #241302;
+}
+
+/* Base Editorial Page styling - One single continuous pattern background layer on body */
+body {
+  background-color: #faf4e8;
+  background-image: url("/images/geometric-pattern.png");
+  background-repeat: repeat;
+  background-size: 400px auto;
+  color: #5c130f;
+  font-feature-settings: "kern" 1, "liga" 1;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+  background: transparent;
+}
+
+/* Intermediate page containers are transparent so the single continuous body pattern shows through */
+.bg-editorial-bg {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Official Islamic floral pattern utility class */
+.bg-hexagon-pattern, .bg-geometric-pattern {
+  background-image: url("/images/geometric-pattern.png");
+  background-repeat: repeat;
+  background-size: 400px auto;
+}
+
+/* Custom animation utility for shaking invalid inputs */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+
+/* Scrollbar customization with editorial style */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #faf4e8;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(92, 19, 15, 0.2);
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ce933e;
+}
+
+/* Editorial layout patterns */
+.editorial-grid-line {
+  background-image: linear-gradient(to right, rgba(92, 19, 15, 0.15) 1px, transparent 1px);
+  background-size: 25% 100%;
+}
+
+/* ==========================================================================
+   UNIFIED CREAM TRANSLUCENT CARD SYSTEM (.editorial-card / .portal-card)
+   - Background: Translucent Cream rgba(246, 237, 218, 0.78 - 0.90) over body pattern
+   - Boundary: 1px solid rgba(92, 19, 15, 0.15) & 0 4px 12px rgba(92, 19, 15, 0.08) shadow
+   - Structural Accent: 3px solid #5C130F top border
+   - Headings & Section Labels: Rich Velvet Red #5C130F
+   - Main Titles & Body Text: Dark Rich Ink #3A1A14 (Strong Contrast)
+   - Section Dividers: 1px solid rgba(92, 19, 15, 0.2)
+   - Inputs: Warm Off-White #FDFAF3 fill, 0.5px solid rgba(92, 19, 15, 0.35) border
+   - Primary Buttons: Mud Yellow #BA8332 fill
+   ========================================================================== */
+
+/* 1. Standard Cream Card (Exact Login Card Opacity ~0.78) */
+.editorial-card, .portal-card {
+  background-color: rgba(246, 237, 218, 0.78) !important;
+  background-image: none !important;
+  color: #3A1A14 !important;
+  border: 1px solid rgba(92, 19, 15, 0.15) !important;
+  border-top: 3px solid #5C130F !important;
+  box-shadow: 0 4px 12px rgba(92, 19, 15, 0.08), 0 1px 3px rgba(92, 19, 15, 0.06) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 14px !important;
+}
+
+/* 2. Light Cream Card (Exact Login Card Opacity ~0.78) */
+.editorial-card-light, .portal-card-light {
+  background-color: rgba(246, 237, 218, 0.78) !important;
+  background-image: none !important;
+  color: #3A1A14 !important;
+  border: 1px solid rgba(92, 19, 15, 0.15) !important;
+  border-top: 3px solid #5C130F !important;
+  box-shadow: 0 4px 12px rgba(92, 19, 15, 0.08), 0 1px 3px rgba(92, 19, 15, 0.06) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 14px !important;
+}
+
+/* 3. Dense Cream Card (Exact Login Card Opacity ~0.78) */
+.editorial-card-dense, .portal-card-dense {
+  background-color: rgba(246, 237, 218, 0.78) !important;
+  background-image: none !important;
+  color: #3A1A14 !important;
+  border: 1px solid rgba(92, 19, 15, 0.15) !important;
+  border-top: 3px solid #5C130F !important;
+  box-shadow: 0 4px 12px rgba(92, 19, 15, 0.08), 0 1px 3px rgba(92, 19, 15, 0.06) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 14px !important;
+}
+
+.editorial-card:hover, .portal-card:hover,
+.editorial-card-light:hover, .portal-card-light:hover,
+.editorial-card-dense:hover, .portal-card-dense:hover {
+  border-color: rgba(92, 19, 15, 0.3) !important;
+  border-top-color: #5C130F !important;
+  box-shadow: 0 8px 20px rgba(92, 19, 15, 0.12), 0 2px 5px rgba(92, 19, 15, 0.08) !important;
+}
+
+/* Structural Divider Line inside Card Header & Sub-sections */
+.card-divider, .editorial-card-divider {
+  border-bottom: 1px solid rgba(92, 19, 15, 0.2) !important;
+}
+
+/* Local Sub-Section Box inside Dense Cards */
+.card-section-box {
+  background-color: rgba(255, 255, 255, 0.35) !important;
+  border: 1px solid rgba(92, 19, 15, 0.18) !important;
+  padding: 1.25rem;
+  border-radius: 12px !important;
+}
+
+/* Headings & Section Labels inside Cards -> Rich Velvet Red #5C130F */
+.editorial-card h1, .editorial-card h2, .editorial-card h3, .editorial-card h4, .editorial-card h5, .editorial-card h6,
+.editorial-card-light h1, .editorial-card-light h2, .editorial-card-light h3, .editorial-card-light h4, .editorial-card-light h5, .editorial-card-light h6,
+.editorial-card-dense h1, .editorial-card-dense h2, .editorial-card-dense h3, .editorial-card-dense h4, .editorial-card-dense h5, .editorial-card-dense h6,
+.portal-card h1, .portal-card h2, .portal-card h3, .portal-card h4, .portal-card h5, .portal-card h6 {
+  color: #5C130F !important;
+}
+
+/* Main Titles & Body Text inside Cards -> Dark Rich Ink #3A1A14 */
+.editorial-card p, .editorial-card span, .editorial-card label, .editorial-card li,
+.editorial-card-light p, .editorial-card-light span, .editorial-card-light label, .editorial-card-light li,
+.editorial-card-dense p, .editorial-card-dense span, .editorial-card-dense label, .editorial-card-dense li,
+.portal-card p, .portal-card span, .portal-card label, .portal-card li {
+  color: #3A1A14;
+}
+
+.editorial-card .text-muted, .portal-card .text-muted,
+.editorial-card-light .text-muted, .editorial-card-dense .text-muted,
+.editorial-card .text-editorial-ink\/60, .portal-card .text-editorial-ink\/60,
+.editorial-card-light .text-editorial-ink\/60, .editorial-card-dense .text-editorial-ink\/60,
+.editorial-card .text-editorial-ink\/70, .portal-card .text-editorial-ink\/70,
+.editorial-card-light .text-editorial-ink\/70, .editorial-card-dense .text-editorial-ink\/70,
+.editorial-card .text-editorial-ink\/80, .portal-card .text-editorial-ink\/80,
+.editorial-card-light .text-editorial-ink\/80, .editorial-card-dense .text-editorial-ink\/80 {
+  color: rgba(58, 26, 20, 0.75) !important;
+}
+
+/* Warm Off-White Input Fields (#FDFAF3) inside Cards */
+.editorial-card input, .editorial-card select, .editorial-card textarea,
+.editorial-card-light input, .editorial-card-light select, .editorial-card-light textarea,
+.editorial-card-dense input, .editorial-card-dense select, .editorial-card-dense textarea,
+.portal-card input, .portal-card select, .portal-card textarea,
+input, select, textarea {
+  background-color: #FDFAF3 !important;
+  border: 0.5px solid rgba(92, 19, 15, 0.35) !important;
+  color: #3A1A14 !important;
+  border-radius: 8px !important;
+}
+
+.editorial-card input:focus, .editorial-card select:focus, .editorial-card textarea:focus,
+.editorial-card-light input:focus, .editorial-card-light select:focus, .editorial-card-light textarea:focus,
+.editorial-card-dense input:focus, .editorial-card-dense select:focus, .editorial-card-dense textarea:focus,
+.portal-card input:focus, .portal-card select:focus, .portal-card textarea:focus {
+  background-color: #FFFFFF !important;
+  border-color: #5C130F !important;
+  box-shadow: 0 0 0 1px #5C130F !important;
+  outline: none !important;
+}
+
+.editorial-card input::placeholder, .editorial-card textarea::placeholder,
+.editorial-card-light input::placeholder, .editorial-card-light textarea::placeholder,
+.editorial-card-dense input::placeholder, .editorial-card-dense textarea::placeholder,
+.portal-card input::placeholder, .portal-card textarea::placeholder {
+  color: rgba(58, 26, 20, 0.45) !important;
+}
+
+/* Active & Selected Option Cards (Radio cards, assignment tracks, active tabs) */
+.option-card-selected, .card-option-active {
+  background-color: rgba(186, 131, 50, 0.14) !important;
+  color: #5C130F !important;
+  border: 1.5px solid #BA8332 !important;
+  border-radius: 12px !important;
+}
+
+.option-card-selected p, .option-card-selected span, .option-card-selected h3, .option-card-selected h4, .option-card-selected svg,
+.card-option-active p, .card-option-active span, .card-option-active h3, .card-option-active h4, .card-option-active svg {
+  color: #5C130F !important;
+}
+
+/* Unselected Option Cards */
+.option-card-unselected, .card-option-inactive {
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  color: #5C130F !important;
+  border: 1px solid rgba(92, 19, 15, 0.2) !important;
+  border-radius: 12px !important;
+}
+
+.option-card-unselected:hover, .card-option-inactive:hover {
+  background-color: rgba(186, 131, 50, 0.08) !important;
+  border-color: rgba(186, 131, 50, 0.5) !important;
+}
+
+/* Contrast Protection: Any white text or dark maroon background element must render white text */
+.editorial-card .\!text-white, .editorial-card-dense .\!text-white, .editorial-card-light .\!text-white,
+.editorial-card .text-white, .editorial-card-dense .text-white, .editorial-card-light .text-white,
+.editorial-card .bg-\[\#5C130F\] *, .editorial-card-dense .bg-\[\#5C130F\] *, .editorial-card-light .bg-\[\#5C130F\] * {
+  color: #FFFFFF !important;
+}
+
+.option-card-unselected p, .option-card-unselected span, .option-card-unselected h3, .option-card-unselected h4,
+.card-option-inactive p, .card-option-inactive span, .card-option-inactive h3, .card-option-inactive h4 {
+  color: #5C130F !important;
+}
+
+/* Primary Button/CTA - Mud Yellow #BA8332 fill */
+.editorial-card .btn-primary, .portal-card .btn-primary,
+.editorial-card-light .btn-primary, .editorial-card-dense .btn-primary,
+.editorial-card button[type="submit"], .portal-card button[type="submit"],
+.editorial-card-light button[type="submit"], .editorial-card-dense button[type="submit"],
+.editorial-card .btn-accent, .portal-card .btn-accent,
+.editorial-card-light .btn-accent, .editorial-card-dense .btn-accent,
+button {
+  border-radius: 8px !important;
+}
+
+.editorial-card .btn-primary:hover, .portal-card .btn-primary:hover,
+.editorial-card-light .btn-primary:hover, .editorial-card-dense .btn-primary:hover,
+.editorial-card button[type="submit"]:hover, .portal-card button[type="submit"]:hover,
+.editorial-card-light button[type="submit"]:hover, .editorial-card-dense button[type="submit"]:hover,
+.editorial-card .btn-accent:hover, .portal-card .btn-accent:hover,
+.editorial-card-light .btn-accent:hover, .editorial-card-dense .btn-accent:hover {
+  background-color: #a06e28 !important;
+  border-color: #a06e28 !important;
+}
+
+.editorial-button {
+  border: 1px solid #BA8332;
+  background-color: rgba(92, 19, 15, 0.88);
+  color: #F3E6D0;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.editorial-button:hover {
+  background-color: #BA8332;
+  color: #ffffff;
+}
+
+.editorial-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid rgba(243, 230, 208, 0.3);
+  padding: 0.125rem 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  color: #F3E6D0;
+}
+
+

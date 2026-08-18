@@ -1,0 +1,6 @@
+{
+  "name": "Al Musawareen Portal",
+  "description": "Official portal for the Dawoodi Bohra community's photography & videography organization. Manage registrations, zones, coverage assignments, shot reports, and Sharaf allocations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
