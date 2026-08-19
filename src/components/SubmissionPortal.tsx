@@ -99,6 +99,46 @@ export default function SubmissionPortal({
   // Star Override Modal State inside Portal
   const [portalOverrideReport, setPortalOverrideReport] = useState<ShotReport | null>(null);
 
+  // DP Upload State inside SubmissionPortal
+  const [isUploadingDp, setIsUploadingDp] = useState(false);
+
+  const handleUploadDpPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser) return;
+    try {
+      setIsUploadingDp(true);
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${currentUser.itsNumber}-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('dp-uploads')
+        .upload(fileName, file, { contentType: file.type || 'image/jpeg', upsert: true });
+      
+      let publicUrl = '';
+      if (!uploadError) {
+        const { data } = supabase.storage.from('dp-uploads').getPublicUrl(fileName);
+        publicUrl = data.publicUrl;
+      } else {
+        publicUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (publicUrl) {
+        await supabase.from('members').update({ dp_url: publicUrl }).eq('its_id', currentUser.itsNumber);
+        if (onUpdateAvatar) {
+          onUpdateAvatar(currentUser.itsNumber, publicUrl);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to upload profile picture:', err);
+    } finally {
+      setIsUploadingDp(false);
+    }
+  };
+
   const [selectedAssignmentId, setSelectedAssignmentId] = useState('');
   const [driveLink, setDriveLink] = useState('');
   const [notes, setNotes] = useState('');
