@@ -11,7 +11,8 @@ import {
 } from './utils/mockData';
 import { LanguageType } from './utils/translations';
 
-// Import Modular Portal components
+import { Clock, ShieldAlert } from 'lucide-react';
+import Logo from './components/Logo';
 import Navbar from './components/Navbar';
 import PublicPortal from './components/PublicPortal';
 import LoginPortal from './components/LoginPortal';
@@ -238,7 +239,7 @@ export default function App() {
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         localStorage.removeItem('al_musawareen_session');
-        setActiveView('public');
+        setActiveView(prev => (prev === 'pendingApproval' || prev === 'accountRejected' || prev === 'login') ? prev : 'public');
       }
     });
 
@@ -319,6 +320,17 @@ export default function App() {
         .single();
       
       if (member) {
+        // Enforce strict Admin Approval gate: non-admin users MUST have status === 'approved'
+        if (member.role !== 'admin' && member.status !== 'approved') {
+          console.warn(`[Access Guard] Unapproved user ${member.its_id} (status: ${member.status}) attempted session restore. Revoking auth session.`);
+          const targetView = member.status === 'rejected' ? 'accountRejected' : 'pendingApproval';
+          setActiveView(targetView);
+          await supabase.auth.signOut();
+          setCurrentUser(null);
+          localStorage.removeItem('al_musawareen_session');
+          return;
+        }
+
         const profile: UserProfile = {
           itsNumber: member.its_id,
           fullName: member.full_name,
@@ -458,7 +470,7 @@ export default function App() {
       return [...prev, pendingUser];
     });
 
-    setActiveView('login');
+    setActiveView('pendingApproval');
   };
 
   // D. Create a new single assignment coverage record
@@ -783,6 +795,89 @@ export default function App() {
             onRegisterSuccess={handleRegisterOnboard}
             onNavigateLogin={() => setActiveView('login')}
           />
+        )}
+
+        {activeView === 'pendingApproval' && (
+          <div className="min-h-screen bg-editorial-bg py-16 px-4 flex items-center justify-center font-sans">
+            <div className="w-full max-w-lg editorial-card p-8 sm:p-10 space-y-6 text-center animate-fadeIn">
+              <div className="flex flex-col items-center">
+                <Logo variant="primary" className="h-14 mb-4" />
+                <div className="w-16 h-16 rounded-full bg-[#BA8332]/15 border-2 border-[#BA8332] flex items-center justify-center text-[#BA8332] my-2">
+                  <Clock className="w-8 h-8 animate-pulse" />
+                </div>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#5C130F] mt-3">
+                  Application Pending Official Approval
+                </h2>
+                <p className="font-mono text-xs text-[#BA8332] uppercase tracking-wider font-bold mt-1">
+                  Al Musawareen Onboarding Status
+                </p>
+              </div>
+
+              <div className="bg-[#FDFAF3] border border-[#5C130F]/20 p-5 rounded-none space-y-3 text-left rtl:text-right font-sans text-xs text-[#3A1A14]/85 leading-relaxed">
+                <p className="font-serif italic text-sm text-[#5C130F] font-bold text-center">
+                  "Your registration has been dispatched to Sheikh Ibrahim Bhai Lokhandwala for official onboarding."
+                </p>
+                <p className="text-center text-xs">
+                  Once your ITS registration and credentials are verified by Administration, your account will be activated and you will be granted access to the Delegate Portal.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 border-t border-[#5C130F]/15">
+                <button
+                  type="button"
+                  onClick={() => setActiveView('login')}
+                  className="w-full sm:w-auto px-6 py-3 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Return to Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveView('public')}
+                  className="w-full sm:w-auto px-6 py-3 bg-white/40 hover:bg-[#5C130F]/10 text-[#5C130F] font-mono text-xs font-bold uppercase tracking-wider transition-colors border border-[#5C130F]/30 cursor-pointer"
+                >
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeView === 'accountRejected' && (
+          <div className="min-h-screen bg-editorial-bg py-16 px-4 flex items-center justify-center font-sans">
+            <div className="w-full max-w-lg editorial-card p-8 sm:p-10 space-y-6 text-center animate-fadeIn">
+              <div className="flex flex-col items-center">
+                <Logo variant="primary" className="h-14 mb-4" />
+                <div className="w-16 h-16 rounded-full bg-red-100 border-2 border-red-700 flex items-center justify-center text-red-700 my-2">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-red-900 mt-3">
+                  Application Declined
+                </h2>
+                <p className="font-mono text-xs text-red-700 uppercase tracking-wider font-bold mt-1">
+                  Registration Request Status
+                </p>
+              </div>
+
+              <div className="bg-[#FDFAF3] border border-red-200 p-5 rounded-none space-y-3 text-center font-sans text-xs text-[#3A1A14]/85 leading-relaxed">
+                <p className="font-serif italic text-sm text-red-900 font-bold">
+                  "Your registration request was declined by Administration."
+                </p>
+                <p className="text-xs">
+                  If you believe this is an error or require assistance regarding your ITS authorization, please contact Al Musawareen Administration.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 border-t border-[#5C130F]/15">
+                <button
+                  type="button"
+                  onClick={() => setActiveView('public')}
+                  className="w-full sm:w-auto px-6 py-3 bg-[#5C130F] hover:bg-[#3A1A14] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Return to Home
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeView === 'admin' && currentUser?.role === 'admin' && (

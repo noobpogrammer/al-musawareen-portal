@@ -267,6 +267,9 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
         otherEquipment: (role === 'photographer' || role === 'videographer') ? otherEquipment.trim() : ''
       };
 
+      // Sign out immediately so new applicant session is not held live before admin approval
+      await supabase.auth.signOut();
+
       setRegisteredSuccess(true);
       setTimeout(() => {
         onRegisterSuccess(newUser);
