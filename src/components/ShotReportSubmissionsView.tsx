@@ -87,19 +87,19 @@ export default function ShotReportSubmissionsView({
                   </div>
                 </div>
 
-                {/* Automated Star Rating & Star Override Control */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-stretch lg:self-center border-t lg:border-t-0 border-[#5C130F]/15 pt-3 lg:pt-0 bg-[#FAF4E8]/80 p-3.5 rounded-xl border border-[#5C130F]/15">
+                {/* Automated Star Rating & Star Override Control Box */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 self-stretch bg-[#FAF4E8]/90 p-4 rounded-xl border border-[#5C130F]/20 shadow-xs">
                   <StarRatingDisplay rating={rating} showSubtext={true} size="md" />
 
                   {canStarOverride && (
                     <button
                       type="button"
                       onClick={() => setOverrideModalReport(sub)}
-                      className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white text-xs font-mono font-bold rounded-md transition-colors shrink-0 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                      className="px-3.5 py-2 bg-[#5C130F] hover:bg-[#3A1A14] active:bg-[#3A1A14] !text-[#F3E6D0] text-xs font-mono font-bold rounded-md transition-colors shrink-0 flex items-center gap-1.5 shadow-xs cursor-pointer group"
                       title="Override Star Rating"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Override Rating</span>
+                      <Edit3 className="w-3.5 h-3.5 !text-[#F3E6D0]" />
+                      <span className="!text-[#F3E6D0]">Override Rating</span>
                     </button>
                   )}
                 </div>

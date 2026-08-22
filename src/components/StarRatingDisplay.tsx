@@ -116,11 +116,6 @@ export default function StarRatingDisplay({
             <span>
               {completedTouchPointsCount}/{totalTouchPointsCount} Touch Points ({Math.round(completionPercent)}%)
             </span>
-            <span>•</span>
-            <span className={isOnTime ? 'text-emerald-700 font-bold flex items-center gap-0.5' : 'text-red-700 font-bold flex items-center gap-0.5'}>
-              {isOnTime ? <CheckCircle2 className="w-3 h-3 text-emerald-600 inline" /> : <Clock className="w-3 h-3 text-red-600 inline" />}
-              {isOnTime ? 'On-Time (+1★)' : 'Late (0★)'}
-            </span>
           </div>
 
           {redStars > 0 && redReasonsList.length > 0 && (

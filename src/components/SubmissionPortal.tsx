@@ -486,7 +486,7 @@ export default function SubmissionPortal({
         </div>
 
         {/* 3. TAB BAR (DYNAMIC MULTI-ROLE & PERMISSION BASED TABS) */}
-        <div className="flex flex-wrap gap-3 border-b border-[#5C130F]/20 pb-3">
+        <div className="flex flex-wrap gap-2.5 w-full">
           {/* Photographer / Videographer Tabs */}
           {isPhotographerOrVideographer && (
             <>
@@ -494,7 +494,7 @@ export default function SubmissionPortal({
               <button
                 type="button"
                 onClick={() => setActiveTab('assigned')}
-                className={`relative py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                className={`relative flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                   activeTab === 'assigned'
                     ? 'option-card-selected'
                     : 'option-card-unselected'
@@ -512,26 +512,26 @@ export default function SubmissionPortal({
               <button
                 type="button"
                 onClick={() => setActiveTab('submit_form')}
-                className={`py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                   activeTab === 'submit_form'
                     ? 'option-card-selected'
                     : 'option-card-unselected'
                 }`}
               >
-                {lang === 'en' ? 'Submit Shot Report' : 'تقديم تقرير جديد'}
+                <span>{lang === 'en' ? 'Submit Shot Report' : 'تقديم تقرير جديد'}</span>
               </button>
 
               {/* Tab 3: Submission Log */}
               <button
                 type="button"
                 onClick={() => setActiveTab('submission_logs')}
-                className={`py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                   activeTab === 'submission_logs'
                     ? 'option-card-selected'
                     : 'option-card-unselected'
                 }`}
               >
-                {lang === 'en' ? 'Submission Log' : 'سجل التسليمات'}
+                <span>{lang === 'en' ? 'Submission Log' : 'سجل التسليمات'}</span>
               </button>
 
               {/* Tab 4: Sharaf Pass */}
@@ -539,7 +539,7 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('sharaf')}
-                  className={`py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'sharaf'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
@@ -558,13 +558,13 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_assignments')}
-                  className={`py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_assignments'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
                   }`}
                 >
-                  <Shield className="w-3.5 h-3.5 text-[#BA8332]" />
+                  <Shield className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
                   <span>{lang === 'en' ? 'Coverage & Zone Assignments' : 'إدارة التغطيات والمناطق'}</span>
                 </button>
               )}
@@ -573,13 +573,13 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_submissions')}
-                  className={`py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_submissions'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
                   }`}
                 >
-                  <FileText className="w-3.5 h-3.5 text-[#BA8332]" />
+                  <FileText className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
                   <span>{lang === 'en' ? 'Shot Report Audits' : 'تدقيق تقارير اللقطات'}</span>
                 </button>
               )}
@@ -588,13 +588,13 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_roster')}
-                  className={`py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_roster'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
                   }`}
                 >
-                  <Users className="w-3.5 h-3.5 text-[#BA8332]" />
+                  <Users className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
                   <span>{lang === 'en' ? 'Team Roster' : 'سجل فريق العمل'}</span>
                 </button>
               )}
