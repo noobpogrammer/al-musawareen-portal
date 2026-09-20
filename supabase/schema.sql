@@ -165,12 +165,43 @@ CREATE POLICY "Allow admin write allocations" ON public.sharaf_allocations FOR A
     USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role IN ('admin', 'coordinator')));
 
 -- Assignments Policies
-CREATE POLICY "Allow read assignments" ON public.assignments FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow select assignments for authorized users"
+ON public.assignments FOR SELECT TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role IN ('admin', 'coordinator')
+            OR (m.hr_permissions IS NOT NULL AND (
+                (m.hr_permissions->>'assignCoverage')::boolean = true OR
+                (m.hr_permissions->>'viewAssignments')::boolean = true
+            ))
+            OR (public.assignments.assigned_users IS NOT NULL AND m.its_id = ANY(public.assignments.assigned_users))
+        )
+    )
+);
+
 CREATE POLICY "Allow write assignments" ON public.assignments FOR ALL TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role IN ('admin', 'coordinator')));
 
 -- Assignment Notifications Policies
-CREATE POLICY "Allow read notifications" ON public.assignment_notifications FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow admin and authorized hr read notifications" 
+ON public.assignment_notifications FOR SELECT TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid() 
+        AND (
+            m.role IN ('admin', 'coordinator')
+            OR (m.hr_permissions IS NOT NULL AND (
+                (m.hr_permissions->>'assignCoverage')::boolean = true OR
+                (m.hr_permissions->>'viewAssignments')::boolean = true
+            ))
+        )
+    )
+);
+
 CREATE POLICY "Allow admin and authorized hr manage notifications" 
 ON public.assignment_notifications FOR ALL TO authenticated
 USING (
@@ -363,9 +394,19 @@ CREATE TABLE IF NOT EXISTS public.miqaat_requests (
 
 ALTER TABLE public.miqaat_requests ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow select miqaat requests for authenticated"
+CREATE POLICY "Allow select miqaat requests for authorized users"
 ON public.miqaat_requests FOR SELECT TO authenticated
-USING (true);
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role IN ('admin', 'coordinator')
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'assignCoverage')::boolean = true)
+            OR (public.miqaat_requests.member_responses IS NOT NULL AND public.miqaat_requests.member_responses ? m.its_id)
+        )
+    )
+);
 
 CREATE POLICY "Allow all for admin and authorized hr miqaat requests"
 ON public.miqaat_requests FOR ALL TO authenticated
@@ -612,7 +653,12 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.respond_to_miqaat_request(UUID, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.respond_to_miqaat_request(UUID, TEXT, TEXT) FROM anon;
 GRANT EXECUTE ON FUNCTION public.respond_to_miqaat_request(UUID, TEXT, TEXT) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.respond_to_assignment(UUID, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.respond_to_assignment(UUID, TEXT, TEXT) FROM anon;
 GRANT EXECUTE ON FUNCTION public.respond_to_assignment(UUID, TEXT, TEXT) TO authenticated;
 
 
