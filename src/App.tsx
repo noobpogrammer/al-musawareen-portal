@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Assignment, ShotReport, SharafEventDef, SharafAllocation, MiqaatDef, Zone, Topic, AssignmentNotification, HRPermissions, UserRole, DataDumpRecord, getUserRoles, DEFAULT_HR_PERMISSIONS, MiqaatRequest } from './types';
 import { 
-  INITIAL_ASSIGNMENTS, 
   INITIAL_SUBMISSIONS, 
   INITIAL_ZONES, 
   INITIAL_TOPICS,
   DEFAULT_SHARAF_EVENTS,
   INITIAL_SHARAF_ALLOCATIONS,
-  INITIAL_MIQAATS,
-  INITIAL_MIQAAT_REQUESTS
+  INITIAL_MIQAATS
 } from './utils/mockData';
 import { LanguageType } from './utils/translations';
+import { 
+  mapAssignmentFromDb, 
+  mapAssignmentToDb, 
+  mapNotificationFromDb, 
+  mapMiqaatRequestFromDb, 
+  mapMiqaatRequestToDb 
+} from './utils/assignmentHelpers';
 
 import { Clock, ShieldAlert } from 'lucide-react';
 import Logo from './components/Logo';
@@ -74,16 +79,8 @@ export default function App() {
     }
   });
 
-  const [assignments, setAssignments] = useState<Assignment[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_assignments');
-      if (!saved) return INITIAL_ASSIGNMENTS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_ASSIGNMENTS;
-    } catch {
-      return INITIAL_ASSIGNMENTS;
-    }
-  });
+  // Supabase-backed assignments (authoritative DB source)
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
 
   const [submissions, setSubmissions] = useState<ShotReport[]>(() => {
     try {
@@ -105,16 +102,8 @@ export default function App() {
     }
   });
 
-  const [notifications, setNotifications] = useState<AssignmentNotification[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_notifications');
-      if (!saved) return [];
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  // Supabase-backed notifications (authoritative DB source)
+  const [notifications, setNotifications] = useState<AssignmentNotification[]>([]);
 
   const [lang, setLang] = useState<LanguageType>(() => {
     const saved = localStorage.getItem('al_musawareen_lang');
@@ -191,17 +180,8 @@ export default function App() {
     }
   });
 
-  // Miqaat Requests List
-  const [miqaatRequests, setMiqaatRequests] = useState<MiqaatRequest[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_miqaat_requests');
-      if (!saved) return INITIAL_MIQAAT_REQUESTS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_MIQAAT_REQUESTS;
-    } catch {
-      return INITIAL_MIQAAT_REQUESTS;
-    }
-  });
+  // Supabase-backed Miqaat Requests (authoritative DB source)
+  const [miqaatRequests, setMiqaatRequests] = useState<MiqaatRequest[]>([]);
 
   const [activeView, setActiveView] = useState<string>(() => {
     const savedUser = localStorage.getItem('al_musawareen_session');
@@ -216,14 +196,10 @@ export default function App() {
     return 'public';
   });
 
-  // 2. Persistence Hooks
+  // 2. Persistence Hooks (Phase 1A: Only non-migrated entities in localStorage)
   useEffect(() => {
     localStorage.setItem('al_musawareen_users', JSON.stringify(users));
   }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_assignments', JSON.stringify(assignments));
-  }, [assignments]);
 
   useEffect(() => {
     localStorage.setItem('al_musawareen_submissions', JSON.stringify(submissions));
@@ -260,14 +236,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('al_musawareen_topics', JSON.stringify(topics));
   }, [topics]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_miqaat_requests', JSON.stringify(miqaatRequests));
-  }, [miqaatRequests]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_notifications', JSON.stringify(notifications));
-  }, [notifications]);
 
   // Load and listen to Supabase Auth State
   useEffect(() => {
@@ -357,6 +325,28 @@ export default function App() {
           });
         }
 
+        // Fetch Assignments from Supabase
+        const { data: dbAssignments, error: assignErr } = await supabase
+          .from('assignments')
+          .select('*')
+          .order('date', { ascending: false });
+        if (!assignErr && dbAssignments) {
+          setAssignments(dbAssignments.map(mapAssignmentFromDb));
+        } else if (assignErr) {
+          console.warn('Failed to load assignments from Supabase:', assignErr);
+        }
+
+        // Fetch Assignment Notifications from Supabase
+        const { data: dbNotifs, error: notifsErr } = await supabase
+          .from('assignment_notifications')
+          .select('*')
+          .order('timestamp', { ascending: false });
+        if (!notifsErr && dbNotifs) {
+          setNotifications(dbNotifs.map(mapNotificationFromDb));
+        } else if (notifsErr) {
+          console.warn('Failed to load notifications from Supabase:', notifsErr);
+        }
+
         // Fetch Data Dump records from Supabase
         const { data: dbDumps, error: dumpErr } = await supabase.from('data_dumps').select('*');
         if (!dumpErr && dbDumps && dbDumps.length > 0) {
@@ -418,26 +408,14 @@ export default function App() {
         }
 
         // Fetch Miqaat Requests from Supabase
-        const { data: dbMiqaatReqs, error: miqaatReqsErr } = await supabase.from('miqaat_requests').select('*');
-        if (!miqaatReqsErr && dbMiqaatReqs && dbMiqaatReqs.length > 0) {
-          const mappedReqs: MiqaatRequest[] = dbMiqaatReqs.map(mr => ({
-            id: mr.id,
-            miqaatName: mr.miqaat_name,
-            fromDate: mr.from_date,
-            toDate: mr.to_date,
-            notes: mr.notes || undefined,
-            members: mr.members || [],
-            createdAt: mr.created_at
-          }));
-          setMiqaatRequests(prev => {
-            const combined = [...mappedReqs];
-            prev.forEach(p => {
-              if (!combined.some(c => c.id === p.id)) {
-                combined.push(p);
-              }
-            });
-            return combined;
-          });
+        const { data: dbMiqaatReqs, error: miqaatReqsErr } = await supabase
+          .from('miqaat_requests')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!miqaatReqsErr && dbMiqaatReqs) {
+          setMiqaatRequests(dbMiqaatReqs.map(mapMiqaatRequestFromDb));
+        } else if (miqaatReqsErr) {
+          console.warn('Failed to load miqaat requests from Supabase:', miqaatReqsErr);
         }
       } catch (err) {
         console.warn('Could not fetch data from Supabase:', err);
@@ -627,7 +605,7 @@ export default function App() {
 
     try {
       const { error } = await supabase.from('data_dumps').upsert({
-        assignment_id: record.assignmentId && !record.assignmentId.startsWith('as_gen_') ? record.assignmentId : null,
+        assignment_id: record.assignmentId || null,
         sharaf_allocation_id: record.sharafAllocationId && !record.sharafAllocationId.startsWith('alloc_') ? record.sharafAllocationId : null,
         its_number: record.itsNumber,
         event_name: record.eventName,
@@ -645,6 +623,8 @@ export default function App() {
         completion_percent_override: record.completionPercentOverride ?? null,
         completed_touch_points: record.completedTouchPoints || null,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'assignment_id,its_number'
       });
       if (error) {
         console.warn('Supabase data_dumps upsert error:', error);
@@ -690,97 +670,158 @@ export default function App() {
     setActiveView('pendingApproval');
   };
 
-  // D. Create a new single assignment coverage record
-  const handleAddAssignment = (newAs: Omit<Assignment, 'id'>) => {
+  // D. Create a new single assignment coverage record (Database-backed UUID generation)
+  const handleAddAssignment = async (newAs: Omit<Assignment, 'id'>) => {
     const initialStatuses: Record<string, 'pending' | 'accepted' | 'declined'> = {};
     newAs.assignedUsers.forEach(its => {
       initialStatuses[its] = 'pending';
     });
 
-    const freshAssignment: Assignment = {
+    const dbPayload = mapAssignmentToDb({
       ...newAs,
-      id: `as_gen_${Date.now()}`,
-      memberStatuses: initialStatuses
-    };
-    setAssignments(prev => [freshAssignment, ...prev]);
+      memberStatuses: initialStatuses,
+      memberDeclineReasons: {}
+    });
+
+    try {
+      const { data, error } = await supabase
+        .from('assignments')
+        .insert(dbPayload)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create assignment in Supabase:', error);
+        alert(lang === 'en' ? `Failed to create assignment: ${error.message}` : `فشل إنشاء التكليف: ${error.message}`);
+        return;
+      }
+
+      const createdAssignment = mapAssignmentFromDb(data);
+      setAssignments(prev => [createdAssignment, ...prev]);
+    } catch (err) {
+      console.error('Error in handleAddAssignment:', err);
+    }
   };
 
-  // Handle photographer/videographer accept or decline response
-  const handleRespondAssignment = (assignmentId: string, itsNumber: string, action: 'accepted' | 'declined', reason?: string) => {
-    const targetAssignment = assignments.find(a => a.id === assignmentId);
-    const member = users.find(u => u.itsNumber === itsNumber);
+  // Handle photographer/videographer accept or decline response via secure server RPC
+  const handleRespondAssignment = async (
+    assignmentId: string,
+    itsNumber: string,
+    action: 'accepted' | 'declined',
+    reason?: string
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc('respond_to_assignment', {
+        target_assignment_id: assignmentId,
+        response_status: action,
+        decline_reason: reason || null
+      });
 
-    if (!targetAssignment || !member) return;
-
-    // Update assignment memberStatuses and memberDeclineReasons
-    setAssignments(prev => prev.map(as => {
-      if (as.id === assignmentId) {
-        const updatedStatuses = { ...(as.memberStatuses || {}) };
-        updatedStatuses[itsNumber] = action;
-        const updatedReasons = { ...(as.memberDeclineReasons || {}) };
-        if (reason) {
-          updatedReasons[itsNumber] = reason;
-        }
-        return { 
-          ...as, 
-          memberStatuses: updatedStatuses,
-          memberDeclineReasons: updatedReasons 
-        };
+      if (error) {
+        console.error('Supabase respond_to_assignment error:', error);
+        alert(lang === 'en' ? `Failed to submit response: ${error.message}` : `فشل إرسال الرد: ${error.message}`);
+        return;
       }
-      return as;
-    }));
 
-    // Create notification alert for Admin
-    const title = typeof targetAssignment.topic === 'string'
-      ? targetAssignment.topic
-      : Array.isArray(targetAssignment.topics) ? targetAssignment.topics.join(', ') : 'Coverage Task';
+      if (data) {
+        const saved = mapAssignmentFromDb(data);
+        setAssignments(prev => prev.map(as => as.id === saved.id ? saved : as));
+      }
 
-    const notificationMsg = action === 'accepted'
-      ? `${member.fullName} confirmed ${title} coverage.`
-      : `${member.fullName} declined ${title} coverage${reason ? ` (${reason})` : ''} — 1 slot needs reassignment.`;
-
-    const newNotification: AssignmentNotification = {
-      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-      assignmentId,
-      itsNumber,
-      memberName: member.fullName,
-      assignmentTitle: notificationMsg,
-      action,
-      declineReason: reason,
-      timestamp: new Date().toISOString(),
-      read: false
-    };
-
-    setNotifications(prev => [newNotification, ...prev]);
+      // Refetch notifications to sync newly created server notification
+      const { data: dbNotifs } = await supabase
+        .from('assignment_notifications')
+        .select('*')
+        .order('timestamp', { ascending: false });
+      if (dbNotifs) {
+        setNotifications(dbNotifs.map(mapNotificationFromDb));
+      }
+    } catch (err) {
+      console.error('Error in handleRespondAssignment:', err);
+    }
   };
 
   // Handle Admin slot reassignment when a member declines
-  const handleReassignSlot = (assignmentId: string, oldIts: string, newIts: string) => {
-    setAssignments(prev => prev.map(as => {
-      if (as.id === assignmentId) {
-        const updatedUsers = as.assignedUsers.map(u => u === oldIts ? newIts : u);
-        if (!updatedUsers.includes(newIts)) {
-          updatedUsers.push(newIts);
-        }
-        const updatedStatuses = { ...(as.memberStatuses || {}) };
-        delete updatedStatuses[oldIts];
-        updatedStatuses[newIts] = 'pending';
-        return {
-          ...as,
-          assignedUsers: updatedUsers,
-          memberStatuses: updatedStatuses
-        };
+  const handleReassignSlot = async (assignmentId: string, oldIts: string, newIts: string) => {
+    const target = assignments.find(a => a.id === assignmentId);
+    if (!target) return;
+
+    const updatedUsers = target.assignedUsers.map(u => u === oldIts ? newIts : u);
+    if (!updatedUsers.includes(newIts)) {
+      updatedUsers.push(newIts);
+    }
+    const updatedStatuses = { ...(target.memberStatuses || {}) };
+    delete updatedStatuses[oldIts];
+    updatedStatuses[newIts] = 'pending';
+
+    const updatedReasons = { ...(target.memberDeclineReasons || {}) };
+    delete updatedReasons[oldIts];
+
+    const updatedAssignment: Assignment = {
+      ...target,
+      assignedUsers: updatedUsers,
+      memberStatuses: updatedStatuses,
+      memberDeclineReasons: updatedReasons
+    };
+
+    try {
+      const dbPayload = mapAssignmentToDb(updatedAssignment);
+      const { data, error } = await supabase
+        .from('assignments')
+        .update(dbPayload)
+        .eq('id', assignmentId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to reassign slot in Supabase:', error);
+        alert(lang === 'en' ? `Failed to reassign slot: ${error.message}` : `فشل إعادة التكليف: ${error.message}`);
+        return;
       }
-      return as;
-    }));
+
+      const saved = mapAssignmentFromDb(data);
+      setAssignments(prev => prev.map(as => as.id === saved.id ? saved : as));
+    } catch (err) {
+      console.error('Error in handleReassignSlot:', err);
+    }
   };
 
-  const handleUpdateAssignment = (updatedAssignment: Assignment) => {
-    setAssignments(prev => prev.map(as => as.id === updatedAssignment.id ? updatedAssignment : as));
+  const handleUpdateAssignment = async (updatedAssignment: Assignment) => {
+    try {
+      const dbPayload = mapAssignmentToDb(updatedAssignment);
+      const { data, error } = await supabase
+        .from('assignments')
+        .update(dbPayload)
+        .eq('id', updatedAssignment.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to update assignment in Supabase:', error);
+        alert(lang === 'en' ? `Failed to update assignment: ${error.message}` : `فشل تحديث التكليف: ${error.message}`);
+        return;
+      }
+
+      const saved = mapAssignmentFromDb(data);
+      setAssignments(prev => prev.map(as => as.id === saved.id ? saved : as));
+    } catch (err) {
+      console.error('Error in handleUpdateAssignment:', err);
+    }
   };
 
-  const handleMarkNotificationRead = (id: string) => {
+  const handleMarkNotificationRead = async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    try {
+      const { error } = await supabase
+        .from('assignment_notifications')
+        .update({ read: true })
+        .eq('id', id);
+      if (error) {
+        console.warn('Failed to mark notification read in Supabase:', error);
+      }
+    } catch (err) {
+      console.warn('Error in handleMarkNotificationRead:', err);
+    }
   };
 
   // Add Miqaat Handler
@@ -850,7 +891,7 @@ export default function App() {
   };
 
   // F. Submit or update a shot report
-  const handleSubmitReport = (newReport: Omit<ShotReport, 'id' | 'timestamp' | 'userName'>) => {
+  const handleSubmitReport = async (newReport: Omit<ShotReport, 'id' | 'timestamp' | 'userName'>) => {
     const userName = users.find(u => u.itsNumber === newReport.itsNumber)?.fullName || 'Photographer';
 
     setSubmissions(prev => {
@@ -886,10 +927,10 @@ export default function App() {
     });
 
     try {
-      supabase.from('shot_reports').upsert({
+      const { data: dbReport, error } = await supabase.from('shot_reports').upsert({
         its_number: newReport.itsNumber,
         user_name: userName,
-        assignment_id: newReport.assignmentId && !newReport.assignmentId.startsWith('as_gen_') ? newReport.assignmentId : null,
+        assignment_id: newReport.assignmentId || null,
         assignment_title: newReport.assignmentTitle,
         drive_link: newReport.driveLink || null,
         submission_method: newReport.submissionMethod || 'drive',
@@ -899,9 +940,19 @@ export default function App() {
         notes: newReport.notes || null,
         grade: newReport.grade || 'Pending',
         timestamp: new Date().toISOString()
-      }).then(({ error }) => {
-        if (error) console.warn('Supabase shot_reports upsert error:', error);
-      });
+      }, {
+        onConflict: 'assignment_id,its_number'
+      }).select().single();
+
+      if (error) {
+        console.warn('Supabase shot_reports upsert error:', error);
+      } else if (dbReport) {
+        setSubmissions(prev => prev.map(s => 
+          (newReport.assignmentId && s.assignmentId === newReport.assignmentId && s.itsNumber === newReport.itsNumber)
+            ? { ...s, id: dbReport.id }
+            : s
+        ));
+      }
     } catch (err) {
       console.warn('Could not sync shot report to Supabase:', err);
     }
@@ -987,30 +1038,30 @@ export default function App() {
     }
   };
 
-  // Miqaat Request Handlers
+  // Miqaat Request Handlers (Database-backed UUID generation)
   const handleAddMiqaatRequest = async (newRequest: Omit<MiqaatRequest, 'id' | 'createdAt'>) => {
-    const id = `req_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const createdAt = new Date().toISOString();
-    const fullRequest: MiqaatRequest = {
-      ...newRequest,
-      id,
-      createdAt
-    };
-
-    setMiqaatRequests(prev => [fullRequest, ...prev]);
-
     try {
-      await supabase.from('miqaat_requests').insert({
-        id: fullRequest.id,
-        miqaat_name: fullRequest.miqaatName,
-        from_date: fullRequest.fromDate,
-        to_date: fullRequest.toDate,
-        notes: fullRequest.notes || null,
-        members: fullRequest.members,
-        created_at: fullRequest.createdAt
+      const dbPayload = mapMiqaatRequestToDb({
+        ...newRequest,
+        createdBy: currentUser?.itsNumber || newRequest.createdBy
       });
+
+      const { data, error } = await supabase
+        .from('miqaat_requests')
+        .insert(dbPayload)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create miqaat request in Supabase:', error);
+        alert(lang === 'en' ? `Failed to create Miqaat request: ${error.message}` : `فشل إنشاء طلب الميقات: ${error.message}`);
+        return;
+      }
+
+      const saved = mapMiqaatRequestFromDb(data);
+      setMiqaatRequests(prev => [saved, ...prev]);
     } catch (err) {
-      console.warn('Could not sync miqaat request to Supabase:', err);
+      console.error('Error in handleAddMiqaatRequest:', err);
     }
   };
 
@@ -1020,44 +1071,25 @@ export default function App() {
     status: 'accepted' | 'declined',
     declineReason?: string
   ) => {
-    const respondedAt = new Date().toISOString();
-
-    let updatedRequest: MiqaatRequest | undefined;
-
-    setMiqaatRequests(prev =>
-      prev.map(req => {
-        if (req.id === requestId) {
-          const updatedMembers = req.members.map(m => {
-            if (m.itsNumber === itsNumber) {
-              return {
-                ...m,
-                status,
-                respondedAt,
-                declineReason: status === 'declined' ? declineReason : undefined
-              };
-            }
-            return m;
-          });
-          const modified = { ...req, members: updatedMembers };
-          updatedRequest = modified;
-          return modified;
-        }
-        return req;
-      })
-    );
-
     try {
-      if (updatedRequest) {
-        await supabase
-          .from('miqaat_requests')
-          .update({
-            members: (updatedRequest as MiqaatRequest).members,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', requestId);
+      const { data, error } = await supabase.rpc('respond_to_miqaat_request', {
+        target_request_id: requestId,
+        response_status: status,
+        decline_reason: declineReason || null
+      });
+
+      if (error) {
+        console.error('Supabase respond_to_miqaat_request error:', error);
+        alert(lang === 'en' ? `Failed to respond to Miqaat request: ${error.message}` : `فشل إرسال الرد على طلب الميقات: ${error.message}`);
+        return;
+      }
+
+      if (data) {
+        const saved = mapMiqaatRequestFromDb(data);
+        setMiqaatRequests(prev => prev.map(r => r.id === saved.id ? saved : r));
       }
     } catch (err) {
-      console.warn('Could not sync miqaat request response to Supabase:', err);
+      console.error('Error in handleRespondMiqaatRequest:', err);
     }
   };
 

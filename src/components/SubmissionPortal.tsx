@@ -4,7 +4,7 @@ import { translations, LanguageType } from '../utils/translations';
 import { 
   Camera, Video, Link as LinkIcon, FileText, CheckCircle2, 
   AlertCircle, ExternalLink, Calendar, MapPin, Star, Award, Clock, ListFilter,
-  Shield, Users, Check, Edit3, Plus, Search, RefreshCw, HardDrive, CalendarDays, UserX
+  Shield, Users, Check, X, Edit3, Plus, Search, RefreshCw, HardDrive, CalendarDays, UserX
 } from 'lucide-react';
 import { calculateStarRating, calculateUserAverageRating } from '../utils/starRating';
 import StarRatingDisplay from './StarRatingDisplay';
