@@ -260,6 +260,7 @@ input, select, textarea {
 /* Contrast Protection: Any white text or dark maroon background element must render white text */
 .editorial-card .\!text-white, .editorial-card-dense .\!text-white, .editorial-card-light .\!text-white,
 .editorial-card .text-white, .editorial-card-dense .text-white, .editorial-card-light .text-white,
+.editorial-card .bg-\[\#5C130F\], .editorial-card-dense .bg-\[\#5C130F\], .editorial-card-light .bg-\[\#5C130F\],
 .editorial-card .bg-\[\#5C130F\] *, .editorial-card-dense .bg-\[\#5C130F\] *, .editorial-card-light .bg-\[\#5C130F\] * {
   color: #FFFFFF !important;
 }

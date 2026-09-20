@@ -4,14 +4,13 @@ export interface SharafAllocation {
   id: string;
   itsNumber: string;
   eventType: string; // 'Waaz', 'Qadambosi', 'Nikah', 'Misaq', 'Ziyafat', or custom
-  // Waaz specific fields:
-  waazZone?: 'Masjid Sehan' | 'Bairoon Masjid' | 'Mawaid' | 'Relay Center' | string;
-  mohalla?: string;
-  isCustomZone?: boolean;
-  // Non-Waaz fields:
-  location?: string;
+  date?: string;
+  location: string;
+  zone?: string;
   fromTime?: string;
   toTime?: string;
+  dataCopyingDeadlineDate?: string;
+  dataCopyingDeadlineTime?: string;
 }
 
 export interface SharafEventDef {
@@ -30,6 +29,7 @@ export interface HRPermissions {
   approveOnboarding?: boolean;   // Admin-only toggle: approving/rejecting onboarding applications
   manageSharaf?: boolean;        // Admin-only toggle: Sharaf allocation
   systemSettings?: boolean;      // Admin-only toggle: system settings (Zones, Topics, Miqaats, Safar Mode)
+  manageDataDump?: boolean;      // Manage card receipt and copy status after events
 }
 
 export const DEFAULT_HR_PERMISSIONS: HRPermissions = {
@@ -42,7 +42,32 @@ export const DEFAULT_HR_PERMISSIONS: HRPermissions = {
   approveOnboarding: false,
   manageSharaf: false,
   systemSettings: false,
+  manageDataDump: false,
 };
+
+export interface DataDumpRecord {
+  id: string;
+  assignmentId?: string;
+  sharafAllocationId?: string;
+  itsNumber: string;
+  memberName?: string;
+  eventName?: string;
+  date?: string;
+  zone?: string;
+  cardReceived: boolean;
+  cardReceivedAt?: string;
+  cardReceivedBy?: string;
+  cardCopied: boolean;
+  cardCopiedAt?: string;
+  cardCopiedBy?: string;
+  notes?: string;
+  cardNotes?: string;
+  touchPointCompletionMode?: 'exact' | 'percentage';
+  completionPercentOverride?: 25 | 50 | 75 | 100;
+  completedTouchPoints?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface UserProfile {
   itsNumber: string;
@@ -83,6 +108,12 @@ export function hasRole(user: UserProfile | null | undefined, role: UserRole): b
   return getUserRoles(user).includes(role);
 }
 
+export function canAccessDataDump(user?: UserProfile | null): boolean {
+  if (!user) return false;
+  if (hasRole(user, 'admin') || user.role === 'admin') return true;
+  return Boolean(user.hrPermissions?.manageDataDump);
+}
+
 export function formatRoleBadgeLabel(user?: UserProfile | null): string {
   if (!user) return '';
   const roles = getUserRoles(user);
@@ -109,6 +140,11 @@ export interface MiqaatDef {
 export interface Assignment {
   id: string;
   date: string;
+  fromTime?: string;
+  toTime?: string;
+  endTime?: string;
+  dataCopyingDeadlineDate?: string;
+  dataCopyingDeadlineTime?: string;
   miqaatName?: string;
   zone: string;
   topic: string | string[]; // Single string or array of Touch Points
@@ -163,7 +199,10 @@ export interface ShotReport {
   userName: string;
   assignmentId: string;
   assignmentTitle: string;
-  driveLink: string;
+  driveLink?: string;
+  submissionMethod?: 'drive' | 'physical_card';
+  touchPointCompletionMode?: 'exact' | 'percentage';
+  completionPercentOverride?: 25 | 50 | 75 | 100;
   timestamp: string;
   notes?: string;
   grade: 'Pending' | 'A-Excellent' | 'B-Good' | 'C-Late-Incomplete';
@@ -194,3 +233,25 @@ export interface Topic {
   name: string;
   category: string;
 }
+
+export type MiqaatRequestMemberStatus = 'pending' | 'accepted' | 'declined';
+
+export interface MiqaatRequestMemberResponse {
+  itsNumber: string;
+  status: MiqaatRequestMemberStatus;
+  respondedAt?: string;
+  declineReason?: string;
+}
+
+export interface MiqaatRequest {
+  id: string;
+  miqaatName: string;
+  fromDate: string;
+  toDate: string;
+  notes?: string;
+  createdBy?: string;
+  memberResponses: Record<string, MiqaatRequestMemberResponse>;
+  createdAt: string;
+  updatedAt?: string;
+}
+

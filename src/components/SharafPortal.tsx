@@ -75,35 +75,34 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
                       key={alloc.id}
                       className="p-4 border border-[#5C130F]/20 rounded-none bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
-                      <div>
-                        <span className="bg-[#5C130F] !text-white text-xs font-mono font-bold px-2.5 py-0.5 rounded-none uppercase">
+                      <div className="space-y-1.5">
+                        <span className="bg-[#5C130F] !text-white text-xs font-mono font-bold px-2.5 py-0.5 rounded-none uppercase inline-block">
                           {alloc.eventType}
                         </span>
-                        {alloc.eventType.toLowerCase() === 'waaz' ? (
-                          <div className="mt-2 text-xs font-serif">
-                            <span className="text-[#3A1A14]/70 font-mono font-bold">ZONE: </span>
-                            <strong className="text-[#5C130F] font-bold">{alloc.waazZone}</strong>
-                            {alloc.mohalla && (
-                              <span className="text-xs text-[#3A1A14]/80 ml-2 italic">({alloc.mohalla})</span>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="mt-2 text-xs font-serif space-y-0.5">
+                        
+                        <div className="text-xs font-serif space-y-1 pt-1">
+                          <p>
+                            <span className="text-[#3A1A14]/70 font-mono font-bold text-[10px] uppercase">LOCATION: </span>
+                            <strong className="text-[#5C130F] font-bold">
+                              {alloc.location || <span className="text-amber-800 italic font-mono text-[11px]">Location not set</span>}
+                            </strong>
+                          </p>
+                          {alloc.zone && (
                             <p>
-                              <span className="text-[#3A1A14]/70 font-mono font-bold">LOCATION: </span>
-                              <strong className="text-[#5C130F] font-bold">{alloc.location}</strong>
+                              <span className="text-[#3A1A14]/70 font-mono font-bold text-[10px] uppercase">ZONE: </span>
+                              <span className="text-[#3A1A14] font-medium">{alloc.zone}</span>
                             </p>
-                            {(alloc.fromTime || alloc.toTime) && (
-                              <p className="text-[11px] font-mono text-[#3A1A14]/70 flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-[#BA8332]" />
-                                <span>Time Window: {alloc.fromTime} – {alloc.toTime}</span>
-                              </p>
-                            )}
-                          </div>
-                        )}
+                          )}
+                          {(alloc.fromTime || alloc.toTime) && (
+                            <p className="text-[11px] font-mono text-[#3A1A14]/70 flex items-center gap-1 pt-0.5">
+                              <Clock className="w-3 h-3 text-[#BA8332]" />
+                              <span>{alloc.fromTime || '—'} – {alloc.toTime || '—'}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                      <span className="text-[10px] font-mono font-bold bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 px-2 py-1 uppercase self-start sm:self-center">
+                      <span className="text-[10px] font-mono font-bold bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 px-2 py-1 uppercase self-start sm:self-center shrink-0">
                         Clearance Active
                       </span>
                     </div>

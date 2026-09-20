@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { UserProfile, Assignment, ShotReport, SharafAllocation, Zone, Topic, MiqaatDef, getUserRoles, hasRole, formatRoleBadgeLabel } from '../types';
+import { UserProfile, Assignment, ShotReport, SharafAllocation, Zone, Topic, MiqaatDef, DataDumpRecord, MiqaatRequest, getUserRoles, hasRole, canAccessDataDump, formatRoleBadgeLabel } from '../types';
 import { translations, LanguageType } from '../utils/translations';
 import { 
   Camera, Video, Link as LinkIcon, FileText, CheckCircle2, 
   AlertCircle, ExternalLink, Calendar, MapPin, Star, Award, Clock, ListFilter,
-  Shield, Users, Check, Edit3, Plus, Search, RefreshCw
+  Shield, Users, Check, Edit3, Plus, Search, RefreshCw, HardDrive, CalendarDays, UserX
 } from 'lucide-react';
 import { calculateStarRating, calculateUserAverageRating } from '../utils/starRating';
 import StarRatingDisplay from './StarRatingDisplay';
@@ -14,6 +14,7 @@ import DispatchedLensesRosterTable from './DispatchedLensesRosterTable';
 import ShotReportSubmissionsView from './ShotReportSubmissionsView';
 import CoverageAssignmentsView from './CoverageAssignmentsView';
 import OnboardingApprovalsView from './OnboardingApprovalsView';
+import DataDumpView from './DataDumpView';
 import { supabase } from '../utils/supabaseClient';
 
 interface SubmissionPortalProps {
@@ -25,6 +26,9 @@ interface SubmissionPortalProps {
   zones?: Zone[];
   topics?: Topic[];
   miqaats?: MiqaatDef[];
+  dataDumps?: DataDumpRecord[];
+  miqaatRequests?: MiqaatRequest[];
+  onUpdateDataDump?: (record: DataDumpRecord) => void;
   onSubmitReport: (report: Omit<ShotReport, 'id' | 'timestamp' | 'userName'>) => void;
   onRespondAssignment?: (assignmentId: string, itsNumber: string, action: 'accepted' | 'declined', reason?: string) => void;
   onAddAssignment?: (assignment: Omit<Assignment, 'id'>) => void;
@@ -39,6 +43,8 @@ interface SubmissionPortalProps {
   onSaveRatingOverride?: (reportId: string, goldStars: number, redStars: number, note: string, isOverride: boolean) => void;
   isSafarModeEnabled?: boolean;
   sharafAllocations?: SharafAllocation[];
+  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void;
+  onRespondMiqaatRequest?: (requestId: string, itsNumber: string, status: 'accepted' | 'declined', declineReason?: string) => void;
   initialTab?: string;
 }
 
@@ -51,6 +57,9 @@ export default function SubmissionPortal({
   zones = [],
   topics = [],
   miqaats = [],
+  dataDumps = [],
+  miqaatRequests = [],
+  onUpdateDataDump,
   onSubmitReport,
   onRespondAssignment,
   onAddAssignment,
@@ -63,9 +72,11 @@ export default function SubmissionPortal({
   onBulkAddTopics,
   onGradeSubmission,
   onSaveRatingOverride,
-  isSafarModeEnabled = false,
+  isSafarModeEnabled = true,
   sharafAllocations = [],
-  initialTab = 'assigned'
+  onAddMiqaatRequest,
+  onRespondMiqaatRequest,
+  initialTab
 }: SubmissionPortalProps) {
   const t = translations[lang];
   const isRtl = lang === 'ar';
@@ -78,6 +89,7 @@ export default function SubmissionPortal({
   const canReviewSubmissions = currentUser.hrPermissions?.reviewSubmissions ?? isHR;
   const canStarOverride = currentUser.hrPermissions?.starOverride ?? false;
   const canViewRoster = currentUser.hrPermissions?.viewRoster ?? isHR;
+  const canManageDataDump = canAccessDataDump(currentUser);
 
   const defaultTab = initialTab === 'sharaf' && isSafarModeEnabled 
     ? 'sharaf' 
@@ -153,6 +165,15 @@ export default function SubmissionPortal({
   const [declineCategory, setDeclineCategory] = useState<string>('Travel / Travel Conflict');
   const [declineNotes, setDeclineNotes] = useState<string>('');
   const [declineError, setDeclineError] = useState<string>('');
+
+  // State for Declining Miqaat Request
+  const [decliningMiqaatRequestId, setDecliningMiqaatRequestId] = useState<string | null>(null);
+  const [miqaatDeclineReason, setMiqaatDeclineReason] = useState<string>('');
+
+  // Filter Miqaat Requests for this member
+  const myMiqaatRequests = (miqaatRequests || []).filter(mr => 
+    mr.memberResponses && currentUser.itsNumber in mr.memberResponses
+  );
 
   // Filter assignments for this specific member
   const confirmedAssignments = assignments.filter(as => {
@@ -598,6 +619,21 @@ export default function SubmissionPortal({
                   <span>{lang === 'en' ? 'Team Roster' : 'سجل فريق العمل'}</span>
                 </button>
               )}
+
+              {canManageDataDump && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('hr_data_dump')}
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                    activeTab === 'hr_data_dump'
+                      ? 'option-card-selected'
+                      : 'option-card-unselected'
+                  }`}
+                >
+                  <HardDrive className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
+                  <span>{lang === 'en' ? 'Data Dump' : 'تفريغ الذاكرة'}</span>
+                </button>
+              )}
             </>
           )}
         </div>
@@ -607,6 +643,97 @@ export default function SubmissionPortal({
         {/* TAB 1: Assigned Coverage Schedules */}
         {activeTab === 'assigned' && (
           <div className="editorial-card p-6 sm:p-8 space-y-6">
+
+            {/* MIQAAT AVAILABILITY REQUESTS (CONFIRM AVAILABILITY) */}
+            {myMiqaatRequests.length > 0 && (
+              <div className="space-y-3 p-5 bg-[#BA8332]/10 border-2 border-[#BA8332]/40 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-[#BA8332]" />
+                    <h4 className="font-serif text-base sm:text-lg font-bold text-[#5C130F]">
+                      {lang === 'en' ? 'Miqaat Availability Requests' : 'طلبات التفرغ للميقات'}
+                    </h4>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-[#5C130F] text-white px-2.5 py-0.5 rounded">
+                    {myMiqaatRequests.length} Miqaat Request(s)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                  {myMiqaatRequests.map(req => {
+                    const myResp = req.memberResponses[currentUser.itsNumber];
+                    const status = myResp?.status || 'pending';
+
+                    return (
+                      <div key={req.id} className="p-4 bg-white border border-[#5C130F]/20 rounded-lg space-y-3 shadow-2xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="bg-[#5C130F] text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                              {req.miqaatName}
+                            </span>
+                            <p className="text-xs font-mono font-bold text-[#BA8332] mt-1.5 flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5 text-[#BA8332]" />
+                              <span>{req.fromDate} — {req.toDate}</span>
+                            </p>
+                          </div>
+
+                          <span className={`text-[9px] font-mono font-bold uppercase px-2.5 py-1 rounded ${
+                            status === 'accepted'
+                              ? 'bg-[#3E7458] text-white !text-white'
+                              : status === 'declined'
+                              ? 'bg-[#A13F36] text-white !text-white'
+                              : 'bg-[#BA8332] text-white !text-white animate-pulse'
+                          }`}>
+                            {status === 'accepted' ? '✓ Available' : status === 'declined' ? '✕ Not Available' : '● Pending Response'}
+                          </span>
+                        </div>
+
+                        {req.notes && (
+                          <p className="text-[11px] font-serif text-[#3A1A14]/85 italic bg-[#FDFAF3] p-2.5 rounded border border-[#5C130F]/10">
+                            "{req.notes}"
+                          </p>
+                        )}
+
+                        {/* Action Buttons */}
+                        {onRespondMiqaatRequest && (
+                          <div className="flex items-center gap-2 pt-2 border-t border-[#5C130F]/10">
+                            <button
+                              type="button"
+                              onClick={() => onRespondMiqaatRequest(req.id, currentUser.itsNumber, 'accepted')}
+                              className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                                status === 'accepted'
+                                  ? 'bg-[#305C45] text-white !text-white shadow-xs'
+                                  : 'bg-[#3E7458] hover:bg-[#305C45] text-white !text-white'
+                              }`}
+                            >
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span className="text-white !text-white">{lang === 'en' ? 'Available' : 'متفرغ'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDecliningMiqaatRequestId(req.id);
+                                setMiqaatDeclineReason('');
+                              }}
+                              className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                                status === 'declined'
+                                  ? 'bg-[#823028] text-white !text-white shadow-xs'
+                                  : 'bg-[#A13F36] hover:bg-[#823028] text-white !text-white'
+                              }`}
+                            >
+                              <X className="w-3.5 h-3.5 text-white" />
+                              <span className="text-white !text-white">{lang === 'en' ? 'Not Available' : 'غير متفرغ'}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center border-b border-[#5C130F]/20 pb-3">
               <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-2">
                 <Calendar className="w-6 h-6 text-[#BA8332]" />
@@ -635,16 +762,16 @@ export default function SubmissionPortal({
                       key={as.id} 
                       className={`p-5 border-2 rounded-xl space-y-4 transition-all bg-white/60 shadow-xs ${
                         memberStatus === 'accepted'
-                          ? 'border-emerald-700'
+                          ? 'border-[#4F6B57]'
                           : memberStatus === 'declined'
-                          ? 'border-red-600 opacity-75'
+                          ? 'border-[#8C3B32] opacity-75'
                           : 'border-[#BA8332]'
                       }`}
                     >
                       {/* Header Row */}
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="bg-[#5C130F] text-white text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md">
+                          <span className="bg-[#5C130F] text-[#F3E6D0] text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md">
                             {as.date}
                           </span>
                           {as.miqaatName && (
@@ -657,10 +784,10 @@ export default function SubmissionPortal({
                         {/* Individual Member Status Badge */}
                         <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
                           memberStatus === 'accepted'
-                            ? 'bg-emerald-700 text-white'
+                            ? 'bg-[#4F6B57] text-[#F3E6D0]'
                             : memberStatus === 'declined'
-                            ? 'bg-red-600 text-white'
-                            : 'bg-[#BA8332] text-white animate-pulse'
+                            ? 'bg-[#8C3B32] text-[#F3E6D0]'
+                            : 'bg-[#B8893B] text-[#F3E6D0] animate-pulse'
                         }`}>
                           {memberStatus === 'accepted'
                             ? (lang === 'en' ? '✓ Confirmed' : '✓ مؤكد')
@@ -700,9 +827,9 @@ export default function SubmissionPortal({
                         <div className="pt-2 border-t border-[#5C130F]/15 space-y-3">
                           {decliningAssignmentId === as.id ? (
                             /* Required Decline Reason Inline Form */
-                            <div className="p-3 bg-red-50/90 border border-red-200 rounded-md space-y-2 text-xs font-sans">
+                            <div className="p-3 bg-[#8C3B32]/10 border border-[#8C3B32]/30 rounded-md space-y-2 text-xs font-sans">
                               <div className="flex items-center justify-between">
-                                <span className="font-mono font-bold text-red-800 uppercase tracking-wider text-[10px]">
+                                <span className="font-mono font-bold text-[#8C3B32] uppercase tracking-wider text-[10px]">
                                   {lang === 'en' ? 'Decline Task — Reason Required' : 'سبب الاعتذار - مطلوب'}
                                 </span>
                                 <button
@@ -711,14 +838,14 @@ export default function SubmissionPortal({
                                     setDecliningAssignmentId(null);
                                     setDeclineError('');
                                   }}
-                                  className="text-[10px] font-mono text-red-700 hover:underline cursor-pointer"
+                                  className="text-[10px] font-mono text-[#8C3B32] hover:underline cursor-pointer"
                                 >
                                   {lang === 'en' ? 'Cancel' : 'إلغاء'}
                                 </button>
                               </div>
 
                               {declineError && (
-                                <p className="text-[11px] text-red-700 font-mono font-bold">
+                                <p className="text-[11px] text-[#8C3B32] font-mono font-bold">
                                   ⚠️ {declineError}
                                 </p>
                               )}
@@ -730,7 +857,7 @@ export default function SubmissionPortal({
                                 <select
                                   value={declineCategory}
                                   onChange={(e) => setDeclineCategory(e.target.value)}
-                                  className="w-full p-1.5 bg-white border border-red-300 rounded-md text-xs font-sans text-[#3A1A14]"
+                                  className="w-full p-1.5 bg-white border border-[#8C3B32]/30 rounded-md text-xs font-sans text-[#3A1A14]"
                                 >
                                   <option value="Travel / Travel Conflict">Travel / Travel Conflict</option>
                                   <option value="Health / Personal Emergency">Health / Personal Emergency</option>
@@ -752,7 +879,7 @@ export default function SubmissionPortal({
                                     if (e.target.value.trim().length > 0) setDeclineError('');
                                   }}
                                   placeholder={lang === 'en' ? 'e.g. Flight scheduled during coverage hours, pre-approved travel...' : 'أدخل سبب الاعتذار بالتفصيل...'}
-                                  className="w-full p-2 bg-white border border-red-300 rounded-md text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-red-600"
+                                  className="w-full p-2 bg-white border border-[#8C3B32]/30 rounded-md text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#8C3B32]"
                                 />
                               </div>
 
@@ -769,7 +896,7 @@ export default function SubmissionPortal({
                                   setDeclineNotes('');
                                   setDeclineError('');
                                 }}
-                                className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md shadow-xs"
+                                className="w-full py-2 bg-[#8C3B32] hover:bg-[#6E2824] text-[#F3E6D0] font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md shadow-xs"
                               >
                                 {lang === 'en' ? 'Submit Decline & Notify Admin' : 'تأكيد الاعتذار وإبلاغ الإدارة'}
                               </button>
@@ -780,7 +907,7 @@ export default function SubmissionPortal({
                               <button
                                 type="button"
                                 onClick={() => onRespondAssignment(as.id, currentUser.itsNumber, 'accepted')}
-                                className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-mono text-xs font-bold uppercase tracking-wider cursor-pointer shadow-xs transition-colors text-center rounded-md"
+                                className="flex-1 py-2 bg-[#4F6B57] hover:bg-[#3E5645] text-[#F3E6D0] font-mono text-xs font-bold uppercase tracking-wider cursor-pointer shadow-xs transition-colors text-center rounded-md"
                               >
                                 {lang === 'en' ? 'Accept Assignment' : 'قبول التكليف'}
                               </button>
@@ -791,7 +918,7 @@ export default function SubmissionPortal({
                                   setDeclineNotes('');
                                   setDeclineError('');
                                 }}
-                                className="flex-1 py-2 border border-red-600 text-red-700 hover:bg-red-50 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md"
+                                className="flex-1 py-2 border border-[#8C3B32]/50 text-[#8C3B32] hover:bg-[#8C3B32]/10 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md"
                               >
                                 {lang === 'en' ? 'Decline Task' : 'اعتذار عن التغطية'}
                               </button>
@@ -801,7 +928,7 @@ export default function SubmissionPortal({
                       )}
 
                       {memberStatus === 'accepted' && (
-                        <p className="text-[11px] font-serif text-emerald-800 bg-emerald-50 p-2 border border-emerald-200 rounded-md">
+                        <p className="text-[11px] font-serif text-[#3A5341] bg-[#4F6B57]/10 p-2.5 border border-[#4F6B57]/25 rounded-md">
                           {lang === 'en' ? 'You have confirmed this assignment. Please upload your shot report upon completion.' : 'لقد قمت بتأكيد التكليف بنجاح. يرجى رفع التقارير فور الانتهاء.'}
                         </p>
                       )}
@@ -1162,36 +1289,29 @@ export default function SubmissionPortal({
                       </span>
                     </div>
 
-                    {alloc.eventType.toLowerCase() === 'waaz' ? (
+                    <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-[#3A1A14]/70 font-mono uppercase font-bold">Waaz Seating Zone:</p>
+                        <p className="text-xs text-[#3A1A14]/70 font-mono uppercase font-bold">Event Location:</p>
                         <h4 className="font-serif text-lg font-bold text-[#5C130F] flex items-center gap-1.5 mt-0.5">
                           <MapPin className="w-4 h-4 text-[#BA8332]" />
-                          <span>{alloc.waazZone || 'Main Sehan'}</span>
+                          <span>{alloc.location || <span className="text-amber-800 italic font-mono text-sm">Location not set</span>}</span>
                         </h4>
-                        {alloc.mohalla && (
-                          <p className="text-xs text-[#3A1A14]/80 font-serif italic mt-1">
-                            Mohalla: {alloc.mohalla}
-                          </p>
-                        )}
                       </div>
-                    ) : (
-                      <div className="space-y-2">
+                      {alloc.zone && (
                         <div>
-                          <p className="text-xs text-[#3A1A14]/70 font-mono uppercase font-bold">Event Location:</p>
-                          <h4 className="font-serif text-lg font-bold text-[#5C130F] flex items-center gap-1.5 mt-0.5">
-                            <MapPin className="w-4 h-4 text-[#BA8332]" />
-                            <span>{alloc.location || 'Designated Venue'}</span>
-                          </h4>
-                        </div>
-                        {(alloc.fromTime || alloc.toTime) && (
-                          <p className="text-xs text-[#3A1A14]/80 font-mono flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-[#BA8332]" />
-                            <span>Time Window: {alloc.fromTime} – {alloc.toTime}</span>
+                          <p className="text-xs text-[#3A1A14]/70 font-mono uppercase font-bold">Coverage Zone:</p>
+                          <p className="text-sm text-[#3A1A14] font-medium font-serif mt-0.5">
+                            {alloc.zone}
                           </p>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
+                      {(alloc.fromTime || alloc.toTime) && (
+                        <p className="text-xs text-[#3A1A14]/80 font-mono flex items-center gap-1 pt-1">
+                          <Clock className="w-3.5 h-3.5 text-[#BA8332]" />
+                          <span>Time Window: {alloc.fromTime || '—'} – {alloc.toTime || '—'}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1207,6 +1327,7 @@ export default function SubmissionPortal({
             zones={zones}
             topics={topics}
             miqaats={miqaats}
+            miqaatRequests={miqaatRequests}
             lang={lang}
             canAssignCoverage={canAssignCoverage}
             onAddAssignment={onAddAssignment}
@@ -1216,6 +1337,8 @@ export default function SubmissionPortal({
             onBulkAddZones={onBulkAddZones}
             onAddTopic={onAddTopic}
             onBulkAddTopics={onBulkAddTopics}
+            onAddMiqaatRequest={onAddMiqaatRequest}
+            onRespondMiqaatRequest={onRespondMiqaatRequest}
           />
         )}
 
@@ -1235,13 +1358,87 @@ export default function SubmissionPortal({
         {activeTab === 'hr_roster' && isHR && canViewRoster && (
           <DispatchedLensesRosterTable
             users={users}
+            assignments={assignments}
+            submissions={submissions}
             lang={lang}
             isSafarModeEnabled={isSafarModeEnabled}
             canEditRoster={currentUser.hrPermissions?.editRoster ?? false}
           />
         )}
 
+        {/* HR TAB 4: Data Dump Operations */}
+        {activeTab === 'hr_data_dump' && isHR && canManageDataDump && (
+          <DataDumpView
+            lang={lang}
+            currentUser={currentUser}
+            users={users}
+            assignments={assignments}
+            sharafAllocations={sharafAllocations}
+            submissions={submissions}
+            dataDumps={dataDumps}
+            onUpdateDataDump={onUpdateDataDump || (() => {})}
+            onSaveShotReport={onSubmitReport}
+          />
+        )}
+
       </div>
+
+      {/* MIQAAT REQUEST DECLINE REASON MODAL */}
+      {decliningMiqaatRequestId && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#FDFAF3] border-2 border-[#5C130F] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#5C130F]/20 pb-3">
+              <h4 className="font-serif font-bold text-lg text-[#5C130F]">
+                {lang === 'en' ? 'Miqaat Availability: Not Available' : 'التفرغ للميقات: غير متفرغ'}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setDecliningMiqaatRequestId(null)}
+                className="text-[#5C130F]/60 hover:text-[#5C130F] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs font-serif text-[#3A1A14]/80">
+              {lang === 'en' 
+                ? 'Please share any context or reason for your unavailability (optional):' 
+                : 'يرجى تقديم سبب عدم التفرغ (اختياري):'}
+            </p>
+
+            <textarea
+              value={miqaatDeclineReason}
+              onChange={(e) => setMiqaatDeclineReason(e.target.value)}
+              placeholder="e.g. Prior travel commitment, out of city, academic exams..."
+              rows={3}
+              className="w-full p-2.5 border border-[#5C130F]/30 bg-white rounded-md font-serif text-xs"
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#5C130F]/15">
+              <button
+                type="button"
+                onClick={() => setDecliningMiqaatRequestId(null)}
+                className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onRespondMiqaatRequest && decliningMiqaatRequestId) {
+                    onRespondMiqaatRequest(decliningMiqaatRequestId, currentUser.itsNumber, 'declined', miqaatDeclineReason.trim() || undefined);
+                    setDecliningMiqaatRequestId(null);
+                    setMiqaatDeclineReason('');
+                  }
+                }}
+                className="px-5 py-2 bg-[#A13F36] hover:bg-[#823028] text-white !text-white font-mono text-xs font-bold uppercase rounded cursor-pointer shadow-xs"
+              >
+                Confirm Unavailable
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

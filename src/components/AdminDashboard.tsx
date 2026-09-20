@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Assignment, ShotReport, Zone, Topic, SharafEventDef, SharafAllocation, MiqaatDef, HRPermissions, UserRole, DEFAULT_HR_PERMISSIONS, getUserRoles, hasRole, formatRoleBadgeLabel } from '../types';
+import { UserProfile, Assignment, ShotReport, Zone, Topic, SharafEventDef, SharafAllocation, MiqaatDef, HRPermissions, UserRole, DEFAULT_HR_PERMISSIONS, DataDumpRecord, MiqaatRequest, getUserRoles, hasRole, formatRoleBadgeLabel } from '../types';
 import { translations, LanguageType } from '../utils/translations';
 import Logo from './Logo';
 import { 
-  Users, Calendar, FileText, BarChart2, ShieldCheck, 
+  Users, Calendar, FileText, ShieldCheck, 
   Check, X, Plus, Sparkles, MapPin, Link as LinkIcon, 
-  Award, RefreshCw, Layers, Server, Activity, UserPlus, Search,
+  Award, RefreshCw, Layers, UserPlus, Search,
   Settings, Upload, Clock, Trash2, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight,
-  Star, Edit3, Shield, Key, UserCheck, ShieldAlert, Camera
+  Star, Edit3, Shield, Key, UserCheck, ShieldAlert, Camera, HardDrive
 } from 'lucide-react';
 import AvatarPlaceholder from './AvatarPlaceholder';
 import BulkAddModal from './BulkAddModal';
@@ -20,6 +20,7 @@ import DispatchedLensesRosterTable from './DispatchedLensesRosterTable';
 import ShotReportSubmissionsView from './ShotReportSubmissionsView';
 import CoverageAssignmentsView from './CoverageAssignmentsView';
 import OnboardingApprovalsView from './OnboardingApprovalsView';
+import DataDumpView from './DataDumpView';
 
 interface AdminDashboardProps {
   lang: LanguageType;
@@ -30,6 +31,10 @@ interface AdminDashboardProps {
   zones: Zone[];
   topics: Topic[];
   miqaats?: MiqaatDef[];
+  dataDumps?: DataDumpRecord[];
+  miqaatRequests?: MiqaatRequest[];
+  onUpdateDataDump?: (record: DataDumpRecord) => void;
+  onSaveShotReport?: (report: Partial<ShotReport>) => void | Promise<void>;
   onApproveUser: (its: string, permissions?: HRPermissions) => void;
   onRejectUser: (its: string) => void;
   onUpdateUserPermissions?: (its: string, roles: UserRole[], permissions?: HRPermissions) => void;
@@ -54,6 +59,8 @@ interface AdminDashboardProps {
   onBulkAddZones?: (names: string[]) => void;
   onAddTopic?: (name: string) => void;
   onBulkAddTopics?: (names: string[]) => void;
+  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void;
+  onRespondMiqaatRequest?: (requestId: string, itsNumber: string, status: 'accepted' | 'declined', declineReason?: string) => void;
   onSaveRatingOverride?: (reportId: string, goldStars: number, redStars: number, note: string, isOverride: boolean) => void;
   onUpdateAvatar?: (its: string, avatarUrl: string) => void;
 }
@@ -67,6 +74,10 @@ export default function AdminDashboard({
   zones,
   topics,
   miqaats = [],
+  dataDumps = [],
+  miqaatRequests = [],
+  onUpdateDataDump,
+  onSaveShotReport,
   onApproveUser,
   onRejectUser,
   onUpdateUserPermissions,
@@ -90,12 +101,14 @@ export default function AdminDashboard({
   onBulkAddZones,
   onAddTopic,
   onBulkAddTopics,
+  onAddMiqaatRequest,
+  onRespondMiqaatRequest,
   onSaveRatingOverride
 }: AdminDashboardProps) {
   const t = translations[lang];
   const isRtl = lang === 'ar';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'assignments' | 'submissions' | 'sharaf' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'assignments' | 'submissions' | 'sharaf' | 'data_dump'>('overview');
 
   // Star Rating Override Modal State
   const [overrideModalReport, setOverrideModalReport] = useState<ShotReport | null>(null);
@@ -179,23 +192,24 @@ export default function AdminDashboard({
   const [editingUserRoles, setEditingUserRoles] = useState<UserRole[]>([]);
   const [editingHRPermissions, setEditingHRPermissions] = useState<HRPermissions>(DEFAULT_HR_PERMISSIONS);
 
-  // Sharaf state allocation
+  // Sharaf state allocation (Legacy individual seat pass)
   const [sharafUserIts, setSharafUserIts] = useState('');
-  const [sharafZone, setSharafZone] = useState('Hazrat Aliyah');
-  const [sharafSeat, setSharafSeat] = useState('Row A - Seat 5');
+  const [legacySharafZone, setLegacySharafZone] = useState('Hazrat Aliyah');
+  const [legacySharafSeat, setLegacySharafSeat] = useState('Row A - Seat 5');
 
   // Enhanced Sharaf System Local States
   const [sharafMemberIts, setSharafMemberIts] = useState('');
   const [sharafMemberSearchQuery, setSharafMemberSearchQuery] = useState('');
   const [sharafEventType, setSharafEventType] = useState('Waaz');
+  const [sharafDate, setSharafDate] = useState('2026-07-22');
+  const [sharafDeadlineDate, setSharafDeadlineDate] = useState('2026-07-22');
+  const [sharafDeadlineTime, setSharafDeadlineTime] = useState('10:00 PM');
   const [inlineCustomEventName, setInlineCustomEventName] = useState('');
   const [isAddingInlineEvent, setIsAddingInlineEvent] = useState(false);
-  const [waazZone, setWaazZone] = useState('Masjid Sehan');
-  const [waazMohalla, setWaazMohalla] = useState(MOHALLA_OPTIONS[0]);
-  const [customWaazZone, setCustomWaazZone] = useState('');
-  const [nonWaazLocation, setNonWaazLocation] = useState('Hazrat Aliyah Stage');
-  const [fromTime, setFromTime] = useState('09:00 AM');
-  const [toTime, setToTime] = useState('12:00 PM');
+  const [sharafLocation, setSharafLocation] = useState('');
+  const [sharafZone, setSharafZone] = useState('');
+  const [fromTime, setFromTime] = useState('06:00 PM');
+  const [toTime, setToTime] = useState('07:30 PM');
   const [sharafSearchQuery, setSharafSearchQuery] = useState('');
 
   // Modals state
@@ -262,6 +276,10 @@ export default function AdminDashboard({
       alert(lang === 'en' ? 'Please select a team member.' : 'يرجى اختيار عضو الفريق.');
       return;
     }
+    if (!sharafLocation.trim()) {
+      alert(lang === 'en' ? 'Location is required.' : 'يرجى تحديد الموقع.');
+      return;
+    }
     if (!onAddSharafAllocation) return;
 
     let targetEventType = sharafEventType;
@@ -282,39 +300,26 @@ export default function AdminDashboard({
       setInlineCustomEventName('');
     }
 
-    if (targetEventType.toLowerCase() === 'waaz') {
-      const finalZone = waazZone === '+ Add custom zone' ? customWaazZone : waazZone;
-      if (!finalZone) {
-        alert(lang === 'en' ? 'Please specify the Waaz zone.' : 'يرجى تحديد منطقة مجالس الوعظ.');
-        return;
-      }
-      onAddSharafAllocation({
-        itsNumber: sharafMemberIts,
-        eventType: 'Waaz',
-        waazZone: finalZone,
-        mohalla: waazZone === 'Relay Center' ? waazMohalla : undefined,
-        isCustomZone: waazZone === '+ Add custom zone'
-      });
-    } else {
-      if (!nonWaazLocation) {
-        alert(lang === 'en' ? 'Please specify the location.' : 'يرجى تحديد الموقع.');
-        return;
-      }
-      onAddSharafAllocation({
-        itsNumber: sharafMemberIts,
-        eventType: targetEventType,
-        location: nonWaazLocation,
-        fromTime,
-        toTime
-      });
-    }
+    onAddSharafAllocation({
+      itsNumber: sharafMemberIts,
+      eventType: targetEventType,
+      date: sharafDate.trim() || undefined,
+      location: sharafLocation.trim(),
+      zone: sharafZone.trim() || undefined,
+      fromTime: fromTime.trim() || undefined,
+      toTime: toTime.trim() || undefined,
+      dataCopyingDeadlineDate: sharafDeadlineDate.trim() || sharafDate.trim() || undefined,
+      dataCopyingDeadlineTime: sharafDeadlineTime.trim() || undefined
+    });
 
     setSharafMemberIts('');
     setSharafMemberSearchQuery('');
+    setSharafLocation('');
+    setSharafZone('');
     alert(lang === 'en' ? `Sharaf allocated for ${targetEventType} successfully!` : `تم تخصيص شرف ${targetEventType} بنجاح!`);
   };
 
-  // CSV Parsing & Validation Function
+  // CSV Parsing & Validation Function supporting 9 columns (with 6-column backward compatibility)
   const parseAndValidateCsv = (text: string) => {
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     if (lines.length === 0) {
@@ -336,13 +341,42 @@ export default function AdminDashboard({
       const parts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
       const rowNum = i + 1;
 
-      if (parts.length < 2) {
-        errorRows.push({ row: rowNum, reason: 'Row contains insufficient columns (at least ITS_ID and Event_Type required).', raw: line });
+      if (parts.length < 3) {
+        errorRows.push({ row: rowNum, reason: 'Row contains insufficient columns (at least ITS_ID, Event_Type, and Location required).', raw: line });
         continue;
       }
 
-      const its = parts[0];
-      const eventName = parts[1];
+      // Check if 9 columns (recommended: ITS_ID, Event_Type, Date, Location, Zone, From_Time, To_Time, Data_Copying_Deadline_Date, Data_Copying_Deadline_Time)
+      // or legacy 6 columns (ITS_ID, Event_Type, Location, Zone, From_Time, To_Time)
+      let its = parts[0];
+      let eventName = parts[1];
+      let dateVal: string | undefined;
+      let location: string;
+      let zone: string | undefined;
+      let fTime: string | undefined;
+      let tTime: string | undefined;
+      let deadlineDateVal: string | undefined;
+      let deadlineTimeVal: string | undefined;
+
+      if (parts.length >= 7 && parts[2].match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // 9-column or date-inclusive schema
+        dateVal = parts[2];
+        location = parts[3];
+        zone = parts[4];
+        fTime = parts[5];
+        tTime = parts[6];
+        deadlineDateVal = parts[7] || dateVal;
+        deadlineTimeVal = parts[8];
+      } else {
+        // Legacy 6-column schema
+        location = parts[2];
+        zone = parts[3];
+        fTime = parts[4];
+        tTime = parts[5];
+        dateVal = '2026-07-22';
+        deadlineDateVal = dateVal;
+        deadlineTimeVal = '10:00 PM';
+      }
 
       // Validate Member ITS
       const memberExists = approvedPVs.some(u => u.itsNumber === its);
@@ -358,27 +392,23 @@ export default function AdminDashboard({
         continue;
       }
 
-      if (matchedEvent.name.toLowerCase() === 'waaz') {
-        const zone = parts[2] || 'Masjid Sehan';
-        const mohalla = parts[3] || undefined;
-        validRows.push({
-          itsNumber: its,
-          eventType: 'Waaz',
-          waazZone: zone,
-          mohalla: zone.toLowerCase().includes('relay') ? mohalla : undefined
-        });
-      } else {
-        const location = parts[4] || parts[2] || 'Main Venue';
-        const fTime = parts[5] || parts[3] || '09:00 AM';
-        const tTime = parts[6] || parts[4] || '12:00 PM';
-        validRows.push({
-          itsNumber: its,
-          eventType: matchedEvent.name,
-          location,
-          fromTime: fTime,
-          toTime: tTime
-        });
+      // Validate Location
+      if (!location || !location.trim()) {
+        errorRows.push({ row: rowNum, reason: 'Location is required.', raw: line });
+        continue;
       }
+
+      validRows.push({
+        itsNumber: its,
+        eventType: matchedEvent.name,
+        date: dateVal && dateVal.trim() ? dateVal.trim() : undefined,
+        location: location.trim(),
+        zone: zone && zone.trim() ? zone.trim() : undefined,
+        fromTime: fTime && fTime.trim() ? fTime.trim() : undefined,
+        toTime: tTime && tTime.trim() ? tTime.trim() : undefined,
+        dataCopyingDeadlineDate: deadlineDateVal && deadlineDateVal.trim() ? deadlineDateVal.trim() : undefined,
+        dataCopyingDeadlineTime: deadlineTimeVal && deadlineTimeVal.trim() ? deadlineTimeVal.trim() : undefined
+      });
     }
 
     setCsvPreview({ valid: validRows, errors: errorRows });
@@ -397,7 +427,6 @@ export default function AdminDashboard({
   // Stats Counters
   const pendingUsers = users.filter(u => u.status === 'pending');
   const approvedPVs = users.filter(u => u.status === 'approved' && !hasRole(u, 'admin'));
-  const totalUploadsGb = submissions.length * 15.4; // simulated GBs
 
   // Filter members matching selected mohalla
   const mohallaPVs = approvedPVs.filter(u => 
@@ -507,7 +536,7 @@ export default function AdminDashboard({
       alert(lang === 'en' ? 'Please select a photographer.' : 'يرجى اختيار المصور.');
       return;
     }
-    onAllocateSharaf(sharafUserIts, sharafZone, sharafSeat);
+    onAllocateSharaf(sharafUserIts, legacySharafZone, legacySharafSeat);
     setSharafUserIts('');
     alert(lang === 'en' ? 'Sharaf coordinate seating allocated!' : 'تم تخصيص إحداثيات الشرف بنجاح!');
   };
@@ -662,7 +691,7 @@ export default function AdminDashboard({
         </div>
 
         {/* METRICS SUMMARY ROWS */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="editorial-card p-5 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-mono font-bold">{lang === 'en' ? 'Active Photographers' : 'المصورين النشطين'}</p>
@@ -692,23 +721,13 @@ export default function AdminDashboard({
               <FileText className="w-6 h-6" />
             </div>
           </div>
-
-          <div className="editorial-card p-5 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-mono font-bold">{lang === 'en' ? 'Archived Media Space' : 'الحجم الكلي للمواد'}</p>
-              <p className="text-2xl font-mono font-bold text-[#5C130F] mt-1">{totalUploadsGb.toFixed(1)} GB</p>
-            </div>
-            <div className="p-3 bg-white/40 border border-[#BA8332]/30 text-[#BA8332]">
-              <Server className="w-6 h-6" />
-            </div>
-          </div>
         </div>
 
         {/* ADMIN NAV GRID CARDS OR SUB-TABS (DYNAMIC DENSITY) */}
         <div className={`grid grid-cols-2 ${isSafarModeEnabled ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3`}>
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] ${
+            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'overview'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -719,7 +738,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('approvals')}
-            className={`relative py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] ${
+            className={`relative py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'approvals'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -735,7 +754,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('assignments')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] ${
+            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'assignments'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -746,7 +765,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('submissions')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] ${
+            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'submissions'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -755,10 +774,22 @@ export default function AdminDashboard({
             {t.submissionTitle}
           </button>
 
+          <button
+            onClick={() => setActiveTab('data_dump')}
+            className={`flex items-center justify-center gap-1.5 py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+              activeTab === 'data_dump'
+                ? 'option-card-selected'
+                : 'option-card-unselected'
+            }`}
+          >
+            <HardDrive className="w-3.5 h-3.5" />
+            <span>{lang === 'en' ? 'Data Dump' : 'تفريغ الذاكرة'}</span>
+          </button>
+
           {isSafarModeEnabled && (
             <button
               onClick={() => setActiveTab('sharaf')}
-              className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] ${
+              className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
                 activeTab === 'sharaf'
                   ? 'option-card-selected'
                   : 'option-card-unselected'
@@ -767,17 +798,6 @@ export default function AdminDashboard({
               {lang === 'en' ? 'Sharaf Allocate' : 'تخصيص الشرف'}
             </button>
           )}
-
-          <button
-            onClick={() => setActiveTab('monitoring')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] ${
-              activeTab === 'monitoring'
-                ? 'option-card-selected'
-                : 'option-card-unselected'
-            }`}
-          >
-            {t.monitoringTitle}
-          </button>
         </div>
 
         {/* ----------------- SUB-TABS VIEWS ----------------- */}
@@ -786,6 +806,8 @@ export default function AdminDashboard({
         {activeTab === 'overview' && (
           <DispatchedLensesRosterTable
             users={users}
+            assignments={assignments}
+            submissions={submissions}
             lang={lang}
             isSafarModeEnabled={isSafarModeEnabled}
             onQuickAssignUser={handleQuickAssignUser}
@@ -816,6 +838,7 @@ export default function AdminDashboard({
             zones={zones}
             topics={topics}
             miqaats={miqaats}
+            miqaatRequests={miqaatRequests}
             lang={lang}
             canAssignCoverage={true}
             onAddAssignment={onAddAssignment}
@@ -826,6 +849,8 @@ export default function AdminDashboard({
             onBulkAddZones={onBulkAddZones}
             onAddTopic={onAddTopic}
             onBulkAddTopics={onBulkAddTopics}
+            onAddMiqaatRequest={onAddMiqaatRequest}
+            onRespondMiqaatRequest={onRespondMiqaatRequest}
           />
         )}
 
@@ -1022,104 +1047,127 @@ export default function AdminDashboard({
                     )}
                   </div>
 
-                  {/* Conditional Form Fields Based on Event Type */}
-                  {sharafEventType.toLowerCase() === 'waaz' ? (
-                    /* WAAZ SPECIFIC LOGIC */
-                    <div className="space-y-3 p-3 bg-white/40 border border-[#5C130F]/20 rounded-none">
-                      <span className="text-[10px] font-mono font-bold text-[#5C130F] uppercase tracking-wider block border-b border-[#5C130F]/15 pb-1">
-                        Waaz Special Proximity Zone Parameters
-                      </span>
+                  {/* UNIFIED LOCATION & COVERAGE DETAILS FOR ALL EVENT TYPES */}
+                  <div className="space-y-3 p-3 bg-white/40 border border-[#5C130F]/20 rounded-none font-sans">
+                    <span className="text-[10px] font-mono font-bold text-[#5C130F] uppercase tracking-wider block border-b border-[#5C130F]/15 pb-1">
+                      {lang === 'en' ? 'Location & Coverage Details' : 'تفاصيل الموقع والتغطية'}
+                    </span>
 
-                      {/* Zone Select */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.waazZoneLabel}</label>
-                        <select
-                          value={waazZone}
-                          onChange={(e) => setWaazZone(e.target.value)}
-                          className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif"
-                        >
-                          <option value="Masjid Sehan">Masjid Sehan</option>
-                          <option value="Bairoon Masjid">Bairoon Masjid</option>
-                          <option value="Mawaid">Mawaid</option>
-                          <option value="Relay Center">Relay Center</option>
-                          <option value="+ Add custom zone">+ Add custom zone</option>
-                        </select>
-                      </div>
-
-                      {/* Conditional Mohalla Field if Relay Center */}
-                      {waazZone === 'Relay Center' && (
-                        <div className="flex flex-col gap-1.5 animate-fadeIn">
-                          <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.whichMohallaLabel}</label>
-                          <select
-                            value={waazMohalla}
-                            onChange={(e) => setWaazMohalla(e.target.value)}
-                            className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif"
-                          >
-                            {MOHALLA_OPTIONS.map(m => (
-                              <option key={m} value={m}>{m}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      {/* Conditional Custom Zone Text Field */}
-                      {waazZone === '+ Add custom zone' && (
-                        <div className="flex flex-col gap-1.5 animate-fadeIn">
-                          <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.customZoneLabel}</label>
-                          <input
-                            type="text"
-                            value={customWaazZone}
-                            onChange={(e) => setCustomWaazZone(e.target.value)}
-                            placeholder="e.g. Dalan North Balcony"
-                            className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
-                          />
-                        </div>
-                      )}
+                    {/* Event Date Input */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                        {lang === 'en' ? 'Event Date' : 'تاريخ المناسبة'}
+                      </label>
+                      <input
+                        type="date"
+                        value={sharafDate}
+                        onChange={(e) => {
+                          setSharafDate(e.target.value);
+                          if (!sharafDeadlineDate || sharafDeadlineDate === sharafDate) {
+                            setSharafDeadlineDate(e.target.value);
+                          }
+                        }}
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-mono text-xs"
+                      />
                     </div>
-                  ) : (
-                    /* NON-WAAZ LOGIC (Qadambosi, Nikah, Misaq, Ziyafat, Custom) */
-                    <div className="space-y-3 p-3 bg-white/40 border border-[#5C130F]/20 rounded-none">
-                      <span className="text-[10px] font-mono font-bold text-[#5C130F] uppercase tracking-wider block border-b border-[#5C130F]/15 pb-1">
-                        {sharafEventType} Location & Time Parameters
-                      </span>
 
-                      {/* Location Input */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.locationLabel}</label>
+                    {/* Location Input (Required) */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                        {lang === 'en' ? 'Location *' : 'الموقع *'}
+                      </label>
+                      <input
+                        type="text"
+                        value={sharafLocation}
+                        onChange={(e) => setSharafLocation(e.target.value)}
+                        placeholder="e.g. Nadir Burhani Hall, Hazrat Aliyah Hall..."
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif text-xs sm:text-sm"
+                        required
+                      />
+                      <p className="text-[10px] text-[#3A1A14]/70 italic font-serif">
+                        {lang === 'en' ? 'Venue where the member should report' : 'المكان الذي يجب على العضو التواجد فيه'}
+                      </p>
+                    </div>
+
+                    {/* Zone Input (Optional) */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                        {lang === 'en' ? 'Zone (Optional)' : 'المنطقة / المحطة (اختياري)'}
+                      </label>
+                      <input
+                        type="text"
+                        list="sharaf-zone-suggestions"
+                        value={sharafZone}
+                        onChange={(e) => setSharafZone(e.target.value)}
+                        placeholder="e.g. Stage, Qibla, Masjid Sehan, Relay Center..."
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif text-xs sm:text-sm"
+                      />
+                      <datalist id="sharaf-zone-suggestions">
+                        <option value="Masjid Sehan" />
+                        <option value="Bairoon Masjid" />
+                        <option value="Mawaid" />
+                        <option value="Stage" />
+                        <option value="Qibla" />
+                        <option value="Relay Center" />
+                        <option value="Entrance" />
+                      </datalist>
+                      <p className="text-[10px] text-[#3A1A14]/70 italic font-serif">
+                        {lang === 'en' ? 'Specific area inside the venue to cover (optional)' : 'الموقع الداخلي المخصص للتغطية (اختياري)'}
+                      </p>
+                    </div>
+
+                    {/* Time Range Inputs */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.fromTimeLabel}</label>
                         <input
                           type="text"
-                          value={nonWaazLocation}
-                          onChange={(e) => setNonWaazLocation(e.target.value)}
-                          placeholder="e.g., Hazrat Aliyah Stage / VIP Hall"
-                          className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif"
+                          value={fromTime}
+                          onChange={(e) => setFromTime(e.target.value)}
+                          placeholder="06:00 PM"
+                          className="w-full px-2.5 py-1.5 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] font-mono text-xs focus:outline-none focus:border-[#5C130F]"
                         />
                       </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.toTimeLabel}</label>
+                        <input
+                          type="text"
+                          value={toTime}
+                          onChange={(e) => setToTime(e.target.value)}
+                          placeholder="07:30 PM"
+                          className="w-full px-2.5 py-1.5 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] font-mono text-xs focus:outline-none focus:border-[#5C130F]"
+                        />
+                      </div>
+                    </div>
 
-                      {/* Time Range Inputs */}
+                    {/* Data Copying Deadline Grid */}
+                    <div className="p-2.5 bg-[#5C130F]/5 border border-[#5C130F]/15 space-y-2">
+                      <label className="text-xs font-mono font-bold uppercase text-[#BA8332] block">
+                        {lang === 'en' ? 'Data Copying Deadline' : 'الموعد النهائي لتفريغ الذاكرة'}
+                      </label>
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.fromTimeLabel}</label>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-mono text-[#5C130F]/70">Deadline Date</span>
                           <input
-                            type="text"
-                            value={fromTime}
-                            onChange={(e) => setFromTime(e.target.value)}
-                            placeholder="09:00 AM"
-                            className="w-full px-2.5 py-1.5 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] font-mono text-xs focus:outline-none focus:border-[#5C130F]"
+                            type="date"
+                            value={sharafDeadlineDate}
+                            onChange={(e) => setSharafDeadlineDate(e.target.value)}
+                            className="w-full px-2 py-1.5 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] font-mono text-xs focus:outline-none focus:border-[#5C130F]"
                           />
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.toTimeLabel}</label>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-mono text-[#5C130F]/70">Deadline Time</span>
                           <input
                             type="text"
-                            value={toTime}
-                            onChange={(e) => setToTime(e.target.value)}
-                            placeholder="12:00 PM"
-                            className="w-full px-2.5 py-1.5 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] font-mono text-xs focus:outline-none focus:border-[#5C130F]"
+                            value={sharafDeadlineTime}
+                            onChange={(e) => setSharafDeadlineTime(e.target.value)}
+                            placeholder="10:00 PM"
+                            className="w-full px-2 py-1.5 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] font-mono text-xs focus:outline-none focus:border-[#5C130F]"
                           />
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Submit Button */}
                   <button
@@ -1160,7 +1208,7 @@ export default function AdminDashboard({
                 </div>
 
                 {/* Sharaf Allocations Cards */}
-                <div className="space-y-3.5 max-h-[520px] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
                   {sharafAllocations.length === 0 ? (
                     <div className="py-12 text-center text-[#3A1A14]/60 space-y-2">
                       <Award className="w-10 h-10 text-[#BA8332] mx-auto opacity-50" />
@@ -1178,8 +1226,8 @@ export default function AdminDashboard({
                           alloc.itsNumber.includes(q) ||
                           alloc.eventType.toLowerCase().includes(q) ||
                           (user && user.fullName.toLowerCase().includes(q)) ||
-                          (alloc.waazZone && alloc.waazZone.toLowerCase().includes(q)) ||
-                          (alloc.location && alloc.location.toLowerCase().includes(q))
+                          (alloc.location && alloc.location.toLowerCase().includes(q)) ||
+                          (alloc.zone && alloc.zone.toLowerCase().includes(q))
                         );
                       })
                       .map(alloc => {
@@ -1187,56 +1235,70 @@ export default function AdminDashboard({
                         return (
                           <div
                             key={alloc.id}
-                            className="p-4 border border-[#5C130F]/20 rounded-none bg-white/40 hover:bg-[#BA8332]/10 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                            className="grid grid-cols-1 md:grid-cols-[minmax(190px,1.2fr)_120px_minmax(220px,2fr)_140px_40px] items-center gap-3.5 p-3.5 border border-[#5C130F]/20 rounded-none bg-white/40 hover:bg-[#BA8332]/10 transition-colors font-sans"
                           >
-                            <div className="flex items-center gap-3">
-                              <AvatarPlaceholder src={user?.avatarUrl} alt={user?.fullName} sizeClassName="w-10 h-10" iconSizeClassName="w-5 h-5" />
-                              <div>
-                                <h4 className="font-serif font-bold text-[#5C130F] text-sm leading-tight">
+                            {/* Member Column */}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <AvatarPlaceholder src={user?.avatarUrl} alt={user?.fullName} sizeClassName="w-9 h-9" iconSizeClassName="w-4 h-4" />
+                              <div className="truncate">
+                                <h4 className="font-serif font-bold text-[#5C130F] text-xs sm:text-sm leading-tight truncate" title={user?.fullName || alloc.itsNumber}>
                                   {user ? user.fullName : `ITS: ${alloc.itsNumber}`}
                                 </h4>
-                                <p className="text-[10px] text-[#3A1A14]/70 font-mono">ITS: {alloc.itsNumber}</p>
+                                {user && (
+                                  <p className="text-[10px] text-[#3A1A14]/70 font-mono">ITS: {alloc.itsNumber}</p>
+                                )}
                               </div>
                             </div>
 
-                            {/* Details & Event Badge */}
-                            <div className="flex flex-col sm:items-end gap-1">
-                              <span className="inline-flex items-center gap-1 bg-[#5C130F] !text-white text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-none uppercase">
+                            {/* Event Column */}
+                            <div className="flex items-center">
+                              <span className="inline-flex items-center gap-1 bg-[#5C130F] !text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-none uppercase">
                                 <Award className="w-3 h-3 text-[#BA8332]" />
                                 <span className="!text-white">{alloc.eventType}</span>
                               </span>
+                            </div>
 
-                              {alloc.eventType.toLowerCase() === 'waaz' ? (
-                                <p className="text-xs text-[#3A1A14] font-serif font-bold">
-                                  Zone: <strong className="text-[#5C130F]">{alloc.waazZone}</strong>
-                                  {alloc.mohalla && <span className="text-[10px] font-mono text-[#3A1A14]/75 block sm:inline sm:ml-1">({alloc.mohalla})</span>}
-                                </p>
-                              ) : (
-                                <div className="text-right text-xs">
-                                  <p className="font-serif font-bold text-[#3A1A14]">
-                                    Location: <strong className="text-[#5C130F]">{alloc.location}</strong>
-                                  </p>
-                                  {(alloc.fromTime || alloc.toTime) && (
-                                    <p className="text-[10px] font-mono text-[#3A1A14]/70 flex items-center gap-1 justify-end mt-0.5">
-                                      <Clock className="w-3 h-3 text-[#BA8332]" />
-                                      <span>{alloc.fromTime} – {alloc.toTime}</span>
-                                    </p>
-                                  )}
+                            {/* Allocation Details Column */}
+                            <div className="space-y-0.5 min-w-0">
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-[9px] font-mono font-bold uppercase text-[#3A1A14]/60 shrink-0">LOCATION:</span>
+                                <span className="font-serif font-bold text-[#5C130F] text-xs sm:text-sm truncate" title={alloc.location || 'Location not set'}>
+                                  {alloc.location || <span className="text-amber-800 italic font-mono text-[11px]">Location not set</span>}
+                                </span>
+                              </div>
+                              {alloc.zone && (
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-[9px] font-mono font-bold uppercase text-[#3A1A14]/60 shrink-0">ZONE:</span>
+                                  <span className="font-serif text-xs text-[#3A1A14] font-medium truncate" title={alloc.zone}>{alloc.zone}</span>
                                 </div>
                               )}
                             </div>
 
-                            {/* Remove action button */}
-                            {onRemoveSharafAllocation && (
-                              <button
-                                type="button"
-                                onClick={() => onRemoveSharafAllocation(alloc.id)}
-                                className="p-1.5 text-[#5C130F]/60 hover:text-[#5C130F] hover:bg-[#5C130F]/10 rounded-none transition-colors self-end sm:self-center"
-                                title="Revoke Allocation"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            {/* Time Column */}
+                            <div className="text-left rtl:text-right text-xs">
+                              {(alloc.fromTime || alloc.toTime) ? (
+                                <p className="text-[11px] font-mono text-[#3A1A14]/80 flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-[#BA8332] shrink-0" />
+                                  <span>{alloc.fromTime || '—'} – {alloc.toTime || '—'}</span>
+                                </p>
+                              ) : (
+                                <span className="text-[#3A1A14]/40 font-mono text-xs">—</span>
+                              )}
+                            </div>
+
+                            {/* Action Column */}
+                            <div className="flex items-center justify-center">
+                              {onRemoveSharafAllocation && (
+                                <button
+                                  type="button"
+                                  onClick={() => onRemoveSharafAllocation(alloc.id)}
+                                  className="p-1 text-[#5C130F]/60 hover:text-[#5C130F] hover:bg-[#5C130F]/10 rounded-none transition-colors cursor-pointer"
+                                  title="Revoke Allocation"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         );
                       })
@@ -1347,12 +1409,15 @@ export default function AdminDashboard({
 
                   {/* CSV Header Guide */}
                   <div className="p-3 bg-white/70 border border-[#5C130F]/20 text-[11px] font-mono space-y-1">
-                    <span className="font-bold text-[#5C130F] block uppercase">Suggested CSV Format Header:</span>
-                    <code className="text-[10px] text-[#3A1A14] block bg-[#FDFAF3] p-1.5 border border-[#5C130F]/15">
-                      ITS_ID, Event_Type, Zone, Mohalla, Location, From_Time, To_Time
+                    <span className="font-bold text-[#5C130F] block uppercase">Recommended CSV Format Header (9 Columns):</span>
+                    <code className="text-[10px] text-[#3A1A14] block bg-[#FDFAF3] p-1.5 border border-[#5C130F]/15 overflow-x-auto">
+                      ITS_ID, Event_Type, Date, Location, Zone, From_Time, To_Time, Data_Copying_Deadline_Date, Data_Copying_Deadline_Time
                     </code>
-                    <p className="text-[10px] text-[#3A1A14]/70 italic pt-1">
-                      Example: 50412345, Waaz, Masjid Sehan,,, or 30498765, Nikah,,, Hazrat Aliyah Stage, 10:00 AM, 12:00 PM
+                    <p className="text-[10px] text-[#3A1A14]/70 italic pt-1 leading-relaxed">
+                      Examples:<br />
+                      • 50412345, Waaz, 2026-07-22, Nadir Burhani Hall, Masjid Sehan, 09:00 AM, 12:00 PM, 2026-07-22, 02:00 PM<br />
+                      • 30498765, Qadambosi, 2026-07-22, Hazrat Aliyah Hall, Stage, 06:00 PM, 07:30 PM, 2026-07-22, 10:00 PM<br />
+                      • 50412345, Ziyafat, 2026-07-22, Abdullah Bhai Residence,, 08:00 PM, 10:00 PM, 2026-07-22, 11:30 PM
                     </p>
                   </div>
 
@@ -1510,70 +1575,22 @@ export default function AdminDashboard({
           </div>
         )}
 
-        {/* VIEW 6: COVERAGE REAL-TIME MONITORING */}
-        {activeTab === 'monitoring' && (
-          <div className="editorial-card-dense p-6 sm:p-8 space-y-6">
-            <h2 className="font-serif text-2xl font-bold text-[#5C130F] border-b border-[#5C130F]/20 pb-3 uppercase tracking-wider">
-              {t.monitoringBanner}
-            </h2>
-
-            {/* Quick dashboard metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Metric 1 */}
-              <div className="p-5 bg-white/40 border border-[#5C130F]/20 rounded-none text-center space-y-1">
-                <p className="text-[10px] text-[#5C130F] font-mono font-bold uppercase tracking-wider">{t.monActiveCams}</p>
-                <p className="text-4xl font-mono font-bold text-[#5C130F]">12 / {approvedPVs.length}</p>
-                <p className="text-[10px] text-[#3A1A14]/80 font-serif">{lang === 'en' ? 'Dispatched to primary locations' : 'موزعون على المواقع الرئيسية'}</p>
-              </div>
-
-              {/* Metric 2 */}
-              <div className="p-5 bg-white/40 border border-[#5C130F]/20 rounded-none text-center space-y-1">
-                <p className="text-[10px] text-[#5C130F] font-mono font-bold uppercase tracking-wider">{t.monCoverageRate}</p>
-                <p className="text-4xl font-mono font-bold text-[#5C130F]">84%</p>
-                <p className="text-[10px] text-[#3A1A14]/80 font-serif">{lang === 'en' ? 'All dynamic zones completed daily' : 'جميع المناطق الحيوية مغطاة يومياً'}</p>
-              </div>
-
-              {/* Metric 3 */}
-              <div className="p-5 bg-white/40 border border-[#5C130F]/20 rounded-none text-center space-y-1">
-                <p className="text-[10px] text-[#5C130F] font-mono font-bold uppercase tracking-wider">{t.monReportedShots}</p>
-                <p className="text-4xl font-mono font-bold text-[#5C130F]">138.4 GB</p>
-                <p className="text-[10px] text-[#3A1A14]/80 font-serif">{lang === 'en' ? 'Ingested content in cloud pool' : 'المساحة الكلية للمواد المستلمة'}</p>
-              </div>
-            </div>
-
-            {/* Monitoring graphical simulator representing zones */}
-            <div className="space-y-4 pt-4">
-              <h3 className="font-serif text-xl font-bold text-[#5C130F] uppercase tracking-wider">{lang === 'en' ? 'Active Coverage Status across Miqaat Zones' : 'حالة التغطية النشطة عبر مناطق الميقات'}</h3>
-
-              <div className="space-y-3.5">
-                {zones.map((z, idx) => {
-                  // Simulate progress percentage based on index
-                  const percentages = [90, 80, 50, 100, 70, 95, 30];
-                  const progress = percentages[idx % percentages.length];
-                  
-                  return (
-                    <div key={z.id} className="space-y-1">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-serif font-bold text-[#5C130F]">{z.name}</span>
-                        <span className="font-mono text-[#5C130F] font-bold">{progress}% Covered</span>
-                      </div>
-                      <div className="h-3 w-full bg-white/40 rounded-none border border-[#5C130F]/20 overflow-hidden flex">
-                        <div 
-                          className="h-full bg-[#5C130F] transition-all duration-1000"
-                          style={{ width: `${progress}%` }}
-                        />
-                        <div 
-                          className="h-full bg-[#BA8332] opacity-40"
-                          style={{ width: `${Math.max(0, 100 - progress)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+        {/* VIEW: DATA DUMP OPERATIONS */}
+        {activeTab === 'data_dump' && (
+          <DataDumpView
+            lang={lang}
+            currentUser={currentUser}
+            users={users}
+            assignments={assignments}
+            sharafAllocations={sharafAllocations}
+            submissions={submissions}
+            dataDumps={dataDumps}
+            onUpdateDataDump={onUpdateDataDump || (() => {})}
+            onSaveShotReport={onSaveShotReport}
+          />
         )}
+
+
 
         {/* MODAL 3: SCHEDULE NEW ZONE COVERAGE (WIDE HORIZONTAL DESKTOP MODAL) */}
         {isNewAssignmentModalOpen && (
@@ -2480,6 +2497,20 @@ export default function AdminDashboard({
                           System Settings <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                         </span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage zones, topics & Safar mode</span>
+                      </div>
+                    </label>
+
+                    {/* 10. Data Dump */}
+                    <label className="flex items-start gap-2.5 p-2.5 bg-[#FDFAF3] border border-[#5C130F]/15 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={editingHRPermissions.manageDataDump ?? false}
+                        onChange={(e) => setEditingHRPermissions(prev => ({ ...prev, manageDataDump: e.target.checked }))}
+                        className="mt-0.5 accent-[#BA8332] w-4 h-4"
+                      />
+                      <div>
+                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Data Dump Operations</span>
+                        <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage card receipt and copy status after events</span>
                       </div>
                     </label>
                   </div>

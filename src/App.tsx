@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Assignment, ShotReport, SharafEventDef, SharafAllocation, MiqaatDef, Zone, Topic, AssignmentNotification, HRPermissions, UserRole, getUserRoles, DEFAULT_HR_PERMISSIONS } from './types';
+import { UserProfile, Assignment, ShotReport, SharafEventDef, SharafAllocation, MiqaatDef, Zone, Topic, AssignmentNotification, HRPermissions, UserRole, DataDumpRecord, getUserRoles, DEFAULT_HR_PERMISSIONS, MiqaatRequest } from './types';
 import { 
   INITIAL_ASSIGNMENTS, 
   INITIAL_SUBMISSIONS, 
@@ -7,7 +7,8 @@ import {
   INITIAL_TOPICS,
   DEFAULT_SHARAF_EVENTS,
   INITIAL_SHARAF_ALLOCATIONS,
-  INITIAL_MIQAATS
+  INITIAL_MIQAATS,
+  INITIAL_MIQAAT_REQUESTS
 } from './utils/mockData';
 import { LanguageType } from './utils/translations';
 
@@ -35,6 +36,20 @@ const sanitizeUserProfile = (u: UserProfile): UserProfile => {
   }
   return u;
 };
+
+// Helper to normalize Sharaf allocations from legacy or DB schema if needed
+const normalizeSharafAllocation = (raw: any): SharafAllocation => ({
+  id: raw.id || `alloc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+  itsNumber: raw.itsNumber || raw.its_number,
+  eventType: raw.eventType || raw.event_type,
+  date: raw.date || undefined,
+  location: raw.location || '',
+  zone: raw.zone || raw.waazZone || undefined,
+  fromTime: raw.fromTime || raw.from_time,
+  toTime: raw.toTime || raw.to_time,
+  dataCopyingDeadlineDate: raw.dataCopyingDeadlineDate || raw.data_copying_deadline_date || undefined,
+  dataCopyingDeadlineTime: raw.dataCopyingDeadlineTime || raw.data_copying_deadline_time || undefined
+});
 
 export default function App() {
   // 1. Core State Hooks
@@ -78,6 +93,15 @@ export default function App() {
       return Array.isArray(parsed) ? parsed : INITIAL_SUBMISSIONS;
     } catch {
       return INITIAL_SUBMISSIONS;
+    }
+  });
+
+  const [dataDumps, setDataDumps] = useState<DataDumpRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('al_musawareen_datadumps');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
   });
 
@@ -125,7 +149,7 @@ export default function App() {
       const saved = localStorage.getItem('al_musawareen_sharaf_allocations');
       if (!saved) return INITIAL_SHARAF_ALLOCATIONS;
       const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_SHARAF_ALLOCATIONS;
+      return Array.isArray(parsed) ? parsed.map(normalizeSharafAllocation) : INITIAL_SHARAF_ALLOCATIONS;
     } catch {
       return INITIAL_SHARAF_ALLOCATIONS;
     }
@@ -167,6 +191,18 @@ export default function App() {
     }
   });
 
+  // Miqaat Requests List
+  const [miqaatRequests, setMiqaatRequests] = useState<MiqaatRequest[]>(() => {
+    try {
+      const saved = localStorage.getItem('al_musawareen_miqaat_requests');
+      if (!saved) return INITIAL_MIQAAT_REQUESTS;
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_MIQAAT_REQUESTS;
+    } catch {
+      return INITIAL_MIQAAT_REQUESTS;
+    }
+  });
+
   const [activeView, setActiveView] = useState<string>(() => {
     const savedUser = localStorage.getItem('al_musawareen_session');
     if (savedUser) {
@@ -192,6 +228,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('al_musawareen_submissions', JSON.stringify(submissions));
   }, [submissions]);
+
+  useEffect(() => {
+    localStorage.setItem('al_musawareen_datadumps', JSON.stringify(dataDumps));
+  }, [dataDumps]);
 
   useEffect(() => {
     localStorage.setItem('al_musawareen_lang', lang);
@@ -222,6 +262,10 @@ export default function App() {
   }, [topics]);
 
   useEffect(() => {
+    localStorage.setItem('al_musawareen_miqaat_requests', JSON.stringify(miqaatRequests));
+  }, [miqaatRequests]);
+
+  useEffect(() => {
     localStorage.setItem('al_musawareen_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
@@ -248,67 +292,159 @@ export default function App() {
     };
   }, []);
 
-  // Fetch all registered members from Supabase database to populate Admin approval queue and user DPs
+  // Fetch all registered members and data dumps from Supabase database
   useEffect(() => {
-    const fetchMembersFromSupabase = async () => {
+    const fetchMembersAndDumps = async () => {
       try {
         const { data: dbMembers, error } = await supabase.from('members').select('*');
-        if (error || !dbMembers || dbMembers.length === 0) return;
+        if (!error && dbMembers && dbMembers.length > 0) {
+          const mappedMembers: UserProfile[] = dbMembers.map(member => ({
+            itsNumber: member.its_id,
+            fullName: member.full_name,
+            fullNameAr: member.full_name_ar,
+            role: member.role as any,
+            roles: member.roles || (member.role ? [member.role] : undefined),
+            hrPermissions: member.hr_permissions || (member.role === 'coordinator' ? DEFAULT_HR_PERMISSIONS : undefined),
+            mobile: member.mobile,
+            email: member.email,
+            avatarUrl: member.dp_url || member.avatar_url || member.avatarUrl,
+            cityRaza: member.city_raza,
+            mohalla: member.mohalla,
+            status: member.status as any,
+            sharafStatus: member.sharaf_status as any,
+            sharafZone: member.sharaf_zone,
+            sharafSeat: member.sharaf_seat,
+            createdAt: member.created_at,
+            cameras: member.cameras,
+            lenses: member.lenses,
+            otherEquipment: member.other_equipment
+          }));
 
-        const mappedMembers: UserProfile[] = dbMembers.map(member => ({
-          itsNumber: member.its_id,
-          fullName: member.full_name,
-          fullNameAr: member.full_name_ar,
-          role: member.role as any,
-          mobile: member.mobile,
-          email: member.email,
-          avatarUrl: member.dp_url || member.avatar_url || member.avatarUrl,
-          cityRaza: member.city_raza,
-          mohalla: member.mohalla,
-          status: member.status as any,
-          sharafStatus: member.sharaf_status as any,
-          sharafZone: member.sharaf_zone,
-          sharafSeat: member.sharaf_seat,
-          createdAt: member.created_at,
-          cameras: member.cameras,
-          lenses: member.lenses,
-          otherEquipment: member.other_equipment
-        }));
-
-        setUsers(prev => {
-          const updated = [...prev];
-          mappedMembers.forEach(dbm => {
-            const index = updated.findIndex(u => u.itsNumber === dbm.itsNumber);
-            if (index >= 0) {
-              updated[index] = {
-                ...updated[index],
-                ...dbm,
-                avatarUrl: dbm.avatarUrl || updated[index].avatarUrl
-              };
-            } else {
-              updated.push(dbm);
-            }
+          setUsers(prev => {
+            const updated = [...prev];
+            mappedMembers.forEach(dbm => {
+              const index = updated.findIndex(u => u.itsNumber === dbm.itsNumber);
+              if (index >= 0) {
+                updated[index] = {
+                  ...updated[index],
+                  ...dbm,
+                  avatarUrl: dbm.avatarUrl || updated[index].avatarUrl,
+                  hrPermissions: dbm.hrPermissions || updated[index].hrPermissions,
+                  roles: dbm.roles || updated[index].roles
+                };
+              } else {
+                updated.push(dbm);
+              }
+            });
+            return updated;
           });
-          return updated;
-        });
 
-        // Immediately sync Supabase dp_url into active logged-in user profile
-        setCurrentUser(prevUser => {
-          if (!prevUser) return null;
-          const dbMatch = mappedMembers.find(m => m.itsNumber === prevUser.itsNumber);
-          if (dbMatch && dbMatch.avatarUrl) {
-            const updatedUser = { ...prevUser, avatarUrl: dbMatch.avatarUrl };
-            localStorage.setItem('al_musawareen_session', JSON.stringify(updatedUser));
-            return updatedUser;
-          }
-          return prevUser;
-        });
+          // Immediately sync Supabase dp_url into active logged-in user profile
+          setCurrentUser(prevUser => {
+            if (!prevUser) return null;
+            const dbMatch = mappedMembers.find(m => m.itsNumber === prevUser.itsNumber);
+            if (dbMatch) {
+              const updatedUser = { 
+                ...prevUser, 
+                avatarUrl: dbMatch.avatarUrl || prevUser.avatarUrl,
+                hrPermissions: dbMatch.hrPermissions || prevUser.hrPermissions,
+                roles: dbMatch.roles || prevUser.roles
+              };
+              localStorage.setItem('al_musawareen_session', JSON.stringify(updatedUser));
+              return updatedUser;
+            }
+            return prevUser;
+          });
+        }
+
+        // Fetch Data Dump records from Supabase
+        const { data: dbDumps, error: dumpErr } = await supabase.from('data_dumps').select('*');
+        if (!dumpErr && dbDumps && dbDumps.length > 0) {
+          const mappedDumps: DataDumpRecord[] = dbDumps.map(d => ({
+            id: d.id,
+            assignmentId: d.assignment_id || undefined,
+            sharafAllocationId: d.sharaf_allocation_id || undefined,
+            itsNumber: d.its_number,
+            eventName: d.event_name || undefined,
+            date: d.date || undefined,
+            zone: d.zone || undefined,
+            cardReceived: Boolean(d.card_received),
+            cardReceivedAt: d.card_received_at || undefined,
+            cardReceivedBy: d.card_received_by || undefined,
+            cardCopied: Boolean(d.card_copied),
+            cardCopiedAt: d.card_copied_at || undefined,
+            cardCopiedBy: d.card_copied_by || undefined,
+            notes: d.notes || undefined,
+            cardNotes: d.card_notes || undefined,
+            touchPointCompletionMode: d.touch_point_completion_mode || undefined,
+            completionPercentOverride: d.completion_percent_override || undefined,
+            completedTouchPoints: d.completed_touch_points || undefined,
+            createdAt: d.created_at,
+            updatedAt: d.updated_at
+          }));
+          setDataDumps(mappedDumps);
+        }
+
+        // Fetch Shot Reports from Supabase
+        const { data: dbReports, error: reportsErr } = await supabase.from('shot_reports').select('*');
+        if (!reportsErr && dbReports && dbReports.length > 0) {
+          const mappedReports: ShotReport[] = dbReports.map(sr => ({
+            id: sr.id,
+            itsNumber: sr.its_number,
+            userName: sr.user_name,
+            assignmentId: sr.assignment_id || undefined,
+            assignmentTitle: sr.assignment_title,
+            driveLink: sr.drive_link || undefined,
+            submissionMethod: sr.submission_method || 'drive',
+            touchPointCompletionMode: sr.touch_point_completion_mode || 'exact',
+            completionPercentOverride: sr.completion_percent_override || undefined,
+            completedTouchPoints: sr.completed_touch_points || [],
+            adminOverride: sr.admin_override || undefined,
+            redStarFlags: sr.red_star_flags || undefined,
+            timestamp: sr.timestamp,
+            notes: sr.notes || undefined,
+            grade: sr.grade || 'Pending'
+          }));
+          setSubmissions(prev => {
+            const combined = [...mappedReports];
+            // Include local reports not yet in DB
+            prev.forEach(p => {
+              if (!combined.some(c => c.id === p.id || (p.assignmentId && c.assignmentId === p.assignmentId && c.itsNumber === p.itsNumber))) {
+                combined.push(p);
+              }
+            });
+            return combined;
+          });
+        }
+
+        // Fetch Miqaat Requests from Supabase
+        const { data: dbMiqaatReqs, error: miqaatReqsErr } = await supabase.from('miqaat_requests').select('*');
+        if (!miqaatReqsErr && dbMiqaatReqs && dbMiqaatReqs.length > 0) {
+          const mappedReqs: MiqaatRequest[] = dbMiqaatReqs.map(mr => ({
+            id: mr.id,
+            miqaatName: mr.miqaat_name,
+            fromDate: mr.from_date,
+            toDate: mr.to_date,
+            notes: mr.notes || undefined,
+            members: mr.members || [],
+            createdAt: mr.created_at
+          }));
+          setMiqaatRequests(prev => {
+            const combined = [...mappedReqs];
+            prev.forEach(p => {
+              if (!combined.some(c => c.id === p.id)) {
+                combined.push(p);
+              }
+            });
+            return combined;
+          });
+        }
       } catch (err) {
-        console.warn('Could not fetch members from Supabase:', err);
+        console.warn('Could not fetch data from Supabase:', err);
       }
     };
 
-    fetchMembersFromSupabase();
+    fetchMembersAndDumps();
   }, []);
 
   const loadUserProfile = async (userId: string) => {
@@ -336,6 +472,8 @@ export default function App() {
           fullName: member.full_name,
           fullNameAr: member.full_name_ar,
           role: member.role as any,
+          roles: member.roles || (member.role ? [member.role] : undefined),
+          hrPermissions: member.hr_permissions || (member.role === 'coordinator' ? DEFAULT_HR_PERMISSIONS : undefined),
           mobile: member.mobile,
           email: member.email,
           avatarUrl: member.dp_url,
@@ -398,10 +536,12 @@ export default function App() {
   
   // A. Approve a pending user registration (with optional custom HR permissions)
   const handleApproveUser = async (its: string, permissions?: HRPermissions) => {
+    const existing = users.find(u => u.itsNumber === its);
+    const existingRoles = existing ? getUserRoles(existing) : ['photographer' as UserRole];
+    const hrPermsToApply = permissions || existing?.hrPermissions || (existing?.role === 'coordinator' || existingRoles.includes('coordinator') ? DEFAULT_HR_PERMISSIONS : undefined);
+
     setUsers(prev => prev.map(u => {
       if (u.itsNumber === its) {
-        const existingRoles = getUserRoles(u);
-        const hrPermsToApply = permissions || u.hrPermissions || (u.role === 'coordinator' || existingRoles.includes('coordinator') ? DEFAULT_HR_PERMISSIONS : undefined);
         return {
           ...u,
           status: 'approved',
@@ -413,21 +553,26 @@ export default function App() {
     }));
 
     try {
-      await supabase.from('members').update({ status: 'approved' }).eq('its_id', its);
+      await supabase.from('members').update({ 
+        status: 'approved',
+        roles: existingRoles,
+        hr_permissions: hrPermsToApply
+      }).eq('its_id', its);
     } catch (err) {
       console.warn('Failed to sync approval to Supabase database:', err);
     }
   };
 
   // Grant, extend, revoke HR permissions, or update user roles
-  const handleUpdateUserPermissions = (its: string, newRoles: UserRole[], permissions?: HRPermissions) => {
+  const handleUpdateUserPermissions = async (its: string, newRoles: UserRole[], permissions?: HRPermissions) => {
+    const updatedRoles = Array.from(new Set(newRoles));
+    // Primary role fallback: keep admin if admin, else first non-admin role or primary role
+    const primaryRole = updatedRoles.includes('admin')
+      ? 'admin'
+      : updatedRoles[0] || 'photographer';
+
     setUsers(prev => prev.map(u => {
       if (u.itsNumber === its) {
-        const updatedRoles = Array.from(new Set(newRoles));
-        // Primary role fallback: keep admin if admin, else first non-admin role or primary role
-        const primaryRole = updatedRoles.includes('admin')
-          ? 'admin'
-          : updatedRoles[0] || u.role;
         return {
           ...u,
           role: primaryRole,
@@ -437,6 +582,78 @@ export default function App() {
       }
       return u;
     }));
+
+    // Update currentUser if modifying logged-in user
+    setCurrentUser(prev => {
+      if (prev && prev.itsNumber === its) {
+        const updated = {
+          ...prev,
+          role: primaryRole,
+          roles: updatedRoles,
+          hrPermissions: permissions
+        };
+        localStorage.setItem('al_musawareen_session', JSON.stringify(updated));
+        return updated;
+      }
+      return prev;
+    });
+
+    try {
+      await supabase.from('members').update({
+        role: primaryRole,
+        roles: updatedRoles,
+        hr_permissions: permissions
+      }).eq('its_id', its);
+    } catch (err) {
+      console.warn('Could not sync user permissions to Supabase:', err);
+    }
+  };
+
+  // Data Dump update handler
+  const handleUpdateDataDump = async (record: DataDumpRecord) => {
+    setDataDumps(prev => {
+      const idx = prev.findIndex(d => 
+        d.id === record.id || 
+        (record.assignmentId && d.assignmentId === record.assignmentId && d.itsNumber === record.itsNumber) ||
+        (record.sharafAllocationId && d.sharafAllocationId === record.sharafAllocationId && d.itsNumber === record.itsNumber)
+      );
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = record;
+        return next;
+      }
+      return [record, ...prev];
+    });
+
+    try {
+      const { error } = await supabase.from('data_dumps').upsert({
+        assignment_id: record.assignmentId && !record.assignmentId.startsWith('as_gen_') ? record.assignmentId : null,
+        sharaf_allocation_id: record.sharafAllocationId && !record.sharafAllocationId.startsWith('alloc_') ? record.sharafAllocationId : null,
+        its_number: record.itsNumber,
+        event_name: record.eventName,
+        date: record.date,
+        zone: record.zone,
+        card_received: record.cardReceived,
+        card_received_at: record.cardReceivedAt,
+        card_received_by: record.cardReceivedBy,
+        card_copied: record.cardCopied,
+        card_copied_at: record.cardCopiedAt,
+        card_copied_by: record.cardCopiedBy,
+        notes: record.notes,
+        card_notes: record.cardNotes || record.notes,
+        touch_point_completion_mode: record.touchPointCompletionMode || 'exact',
+        completion_percent_override: record.completionPercentOverride ?? null,
+        completed_touch_points: record.completedTouchPoints || null,
+        updated_at: new Date().toISOString()
+      });
+      if (error) {
+        console.warn('Supabase data_dumps upsert error:', error);
+        throw error;
+      }
+    } catch (err) {
+      console.warn('Could not sync data dump record to Supabase:', err);
+      throw err;
+    }
   };
 
   // B. Reject a pending user registration
@@ -638,17 +855,21 @@ export default function App() {
 
     setSubmissions(prev => {
       const existingIndex = prev.findIndex(
-        s => s.assignmentId === newReport.assignmentId && s.itsNumber === newReport.itsNumber
+        s => (newReport.assignmentId && s.assignmentId === newReport.assignmentId && s.itsNumber === newReport.itsNumber) ||
+             (!newReport.assignmentId && s.assignmentTitle === newReport.assignmentTitle && s.itsNumber === newReport.itsNumber)
       );
 
       if (existingIndex >= 0) {
         const updated = [...prev];
         updated[existingIndex] = {
           ...updated[existingIndex],
-          driveLink: newReport.driveLink,
-          notes: newReport.notes,
-          completedTouchPoints: newReport.completedTouchPoints,
-          grade: 'Pending',
+          driveLink: newReport.driveLink !== undefined ? newReport.driveLink : updated[existingIndex].driveLink,
+          submissionMethod: newReport.submissionMethod || updated[existingIndex].submissionMethod || 'drive',
+          touchPointCompletionMode: newReport.touchPointCompletionMode || updated[existingIndex].touchPointCompletionMode,
+          completionPercentOverride: newReport.completionPercentOverride !== undefined ? newReport.completionPercentOverride : updated[existingIndex].completionPercentOverride,
+          completedTouchPoints: newReport.completedTouchPoints || updated[existingIndex].completedTouchPoints,
+          notes: newReport.notes !== undefined ? newReport.notes : updated[existingIndex].notes,
+          grade: updated[existingIndex].grade || 'Pending',
           timestamp: new Date().toISOString()
         };
         return updated;
@@ -657,11 +878,33 @@ export default function App() {
       const fullReport: ShotReport = {
         ...newReport,
         id: `sub_${Date.now()}`,
+        submissionMethod: newReport.submissionMethod || 'drive',
         timestamp: new Date().toISOString(),
         userName
       };
       return [fullReport, ...prev];
     });
+
+    try {
+      supabase.from('shot_reports').upsert({
+        its_number: newReport.itsNumber,
+        user_name: userName,
+        assignment_id: newReport.assignmentId && !newReport.assignmentId.startsWith('as_gen_') ? newReport.assignmentId : null,
+        assignment_title: newReport.assignmentTitle,
+        drive_link: newReport.driveLink || null,
+        submission_method: newReport.submissionMethod || 'drive',
+        touch_point_completion_mode: newReport.touchPointCompletionMode || 'exact',
+        completion_percent_override: newReport.completionPercentOverride ?? null,
+        completed_touch_points: newReport.completedTouchPoints || null,
+        notes: newReport.notes || null,
+        grade: newReport.grade || 'Pending',
+        timestamp: new Date().toISOString()
+      }).then(({ error }) => {
+        if (error) console.warn('Supabase shot_reports upsert error:', error);
+      });
+    } catch (err) {
+      console.warn('Could not sync shot report to Supabase:', err);
+    }
   };
 
   // G. Legacy allocate Sharaf seating
@@ -741,6 +984,80 @@ export default function App() {
     setSharafEvents(prev => prev.filter(e => e.id !== eventId));
     if (eventToDelete) {
       setSharafAllocations(prev => prev.filter(a => a.eventType.toLowerCase() !== eventToDelete.name.toLowerCase()));
+    }
+  };
+
+  // Miqaat Request Handlers
+  const handleAddMiqaatRequest = async (newRequest: Omit<MiqaatRequest, 'id' | 'createdAt'>) => {
+    const id = `req_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const createdAt = new Date().toISOString();
+    const fullRequest: MiqaatRequest = {
+      ...newRequest,
+      id,
+      createdAt
+    };
+
+    setMiqaatRequests(prev => [fullRequest, ...prev]);
+
+    try {
+      await supabase.from('miqaat_requests').insert({
+        id: fullRequest.id,
+        miqaat_name: fullRequest.miqaatName,
+        from_date: fullRequest.fromDate,
+        to_date: fullRequest.toDate,
+        notes: fullRequest.notes || null,
+        members: fullRequest.members,
+        created_at: fullRequest.createdAt
+      });
+    } catch (err) {
+      console.warn('Could not sync miqaat request to Supabase:', err);
+    }
+  };
+
+  const handleRespondMiqaatRequest = async (
+    requestId: string,
+    itsNumber: string,
+    status: 'accepted' | 'declined',
+    declineReason?: string
+  ) => {
+    const respondedAt = new Date().toISOString();
+
+    let updatedRequest: MiqaatRequest | undefined;
+
+    setMiqaatRequests(prev =>
+      prev.map(req => {
+        if (req.id === requestId) {
+          const updatedMembers = req.members.map(m => {
+            if (m.itsNumber === itsNumber) {
+              return {
+                ...m,
+                status,
+                respondedAt,
+                declineReason: status === 'declined' ? declineReason : undefined
+              };
+            }
+            return m;
+          });
+          const modified = { ...req, members: updatedMembers };
+          updatedRequest = modified;
+          return modified;
+        }
+        return req;
+      })
+    );
+
+    try {
+      if (updatedRequest) {
+        await supabase
+          .from('miqaat_requests')
+          .update({
+            members: (updatedRequest as MiqaatRequest).members,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', requestId);
+      }
+    } catch (err) {
+      console.warn('Could not sync miqaat request response to Supabase:', err);
     }
   };
 
@@ -890,6 +1207,10 @@ export default function App() {
             miqaats={miqaats}
             zones={zones}
             topics={topics}
+            dataDumps={dataDumps}
+            miqaatRequests={miqaatRequests}
+            onUpdateDataDump={handleUpdateDataDump}
+            onSaveShotReport={handleSubmitReport}
             onApproveUser={handleApproveUser}
             onRejectUser={handleRejectUser}
             onUpdateUserPermissions={handleUpdateUserPermissions}
@@ -913,6 +1234,8 @@ export default function App() {
             onBulkAddZones={handleBulkAddZones}
             onAddTopic={handleAddTopic}
             onBulkAddTopics={handleBulkAddTopics}
+            onAddMiqaatRequest={handleAddMiqaatRequest}
+            onRespondMiqaatRequest={handleRespondMiqaatRequest}
             onSaveRatingOverride={(reportId, goldStars, redStars, note, isOverride) => {
               setSubmissions(prev =>
                 prev.map(sub => {
@@ -944,6 +1267,9 @@ export default function App() {
             zones={zones}
             topics={topics}
             miqaats={miqaats}
+            dataDumps={dataDumps}
+            miqaatRequests={miqaatRequests}
+            onUpdateDataDump={handleUpdateDataDump}
             onSubmitReport={handleSubmitReport}
             onRespondAssignment={handleRespondAssignment}
             onAddAssignment={handleAddAssignment}
@@ -955,6 +1281,8 @@ export default function App() {
             onAddTopic={handleAddTopic}
             onBulkAddTopics={handleBulkAddTopics}
             onGradeSubmission={handleGradeSubmission}
+            onAddMiqaatRequest={handleAddMiqaatRequest}
+            onRespondMiqaatRequest={handleRespondMiqaatRequest}
             onSaveRatingOverride={(reportId, goldStars, redStars, note, isOverride) => {
               setSubmissions(prev =>
                 prev.map(sub => {

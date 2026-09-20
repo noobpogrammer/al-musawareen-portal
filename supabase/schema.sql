@@ -54,18 +54,23 @@ CREATE TABLE IF NOT EXISTS public.sharaf_allocations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     its_number TEXT NOT NULL REFERENCES public.members(its_id) ON DELETE CASCADE,
     event_type TEXT NOT NULL,
-    waaz_zone TEXT,
-    mohalla TEXT,
-    is_custom_zone BOOLEAN DEFAULT false,
-    location TEXT,
+    date DATE,
+    location TEXT NOT NULL,
+    zone TEXT,
     from_time TEXT,
-    to_time TEXT
+    to_time TEXT,
+    data_copying_deadline_date DATE,
+    data_copying_deadline_time TEXT
 );
 
 -- 7. Create Assignments Table
 CREATE TABLE IF NOT EXISTS public.assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date DATE NOT NULL,
+    from_time TEXT,
+    to_time TEXT,
+    data_copying_deadline_date DATE,
+    data_copying_deadline_time TEXT,
     miqaat_name TEXT,
     zone TEXT NOT NULL,
     topics JSONB, -- list of topics or touchpoints
@@ -95,7 +100,13 @@ CREATE TABLE IF NOT EXISTS public.shot_reports (
     user_name TEXT NOT NULL,
     assignment_id UUID REFERENCES public.assignments(id) ON DELETE SET NULL,
     assignment_title TEXT NOT NULL,
-    drive_link TEXT NOT NULL,
+    drive_link TEXT,
+    submission_method TEXT DEFAULT 'drive',
+    touch_point_completion_mode TEXT DEFAULT 'exact',
+    completion_percent_override INTEGER,
+    completed_touch_points JSONB,
+    admin_override JSONB,
+    red_star_flags JSONB,
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     notes TEXT,
     grade TEXT NOT NULL DEFAULT 'Pending'
@@ -238,9 +249,121 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- 11. Create Data Dump tracking table
+CREATE TABLE IF NOT EXISTS public.data_dumps (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID REFERENCES public.assignments(id) ON DELETE SET NULL,
+    sharaf_allocation_id UUID REFERENCES public.sharaf_allocations(id) ON DELETE CASCADE,
+    its_number TEXT NOT NULL REFERENCES public.members(its_id) ON DELETE CASCADE,
+    event_name TEXT,
+    date DATE,
+    zone TEXT,
+    card_received BOOLEAN NOT NULL DEFAULT false,
+    card_received_at TIMESTAMP WITH TIME ZONE,
+    card_received_by TEXT,
+    card_copied BOOLEAN NOT NULL DEFAULT false,
+    card_copied_at TIMESTAMP WITH TIME ZONE,
+    card_copied_by TEXT,
+    notes TEXT,
+    card_notes TEXT,
+    touch_point_completion_mode TEXT DEFAULT 'exact',
+    completion_percent_override INTEGER,
+    completed_touch_points JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    CONSTRAINT unique_assignment_its_number UNIQUE (assignment_id, its_number),
+    CONSTRAINT check_card_copied_requires_received CHECK (card_copied = false OR card_received = true)
+);
+
+ALTER TABLE public.data_dumps ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow admin and authorized hr select data dumps" 
+ON public.data_dumps FOR SELECT TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members 
+        WHERE id = auth.uid() 
+        AND (
+            role = 'admin' 
+            OR (hr_permissions IS NOT NULL AND (hr_permissions->>'manageDataDump')::boolean = true)
+        )
+    )
+);
+
+CREATE POLICY "Allow admin and authorized hr write data dumps" 
+ON public.data_dumps FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members 
+        WHERE id = auth.uid() 
+        AND (
+            role = 'admin' 
+            OR (hr_permissions IS NOT NULL AND (hr_permissions->>'manageDataDump')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members 
+        WHERE id = auth.uid() 
+        AND (
+            role = 'admin' 
+            OR (hr_permissions IS NOT NULL AND (hr_permissions->>'manageDataDump')::boolean = true)
+        )
+    )
+);
+
 -- Trigger execution on auth.users insert
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_member();
+
+-- 14. Create Miqaat Requests Table
+CREATE TABLE IF NOT EXISTS public.miqaat_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    miqaat_name TEXT NOT NULL,
+    from_date DATE NOT NULL,
+    to_date DATE NOT NULL,
+    notes TEXT,
+    created_by TEXT,
+    member_responses JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.miqaat_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow select miqaat requests for authenticated"
+ON public.miqaat_requests FOR SELECT TO authenticated
+USING (true);
+
+CREATE POLICY "Allow all for admin and authorized hr miqaat requests"
+ON public.miqaat_requests FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members 
+        WHERE id = auth.uid() 
+        AND (
+            role = 'admin' 
+            OR (hr_permissions IS NOT NULL AND (hr_permissions->>'assignCoverage')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members 
+        WHERE id = auth.uid() 
+        AND (
+            role = 'admin' 
+            OR (hr_permissions IS NOT NULL AND (hr_permissions->>'assignCoverage')::boolean = true)
+        )
+    )
+);
+
+CREATE POLICY "Allow member response update miqaat requests"
+ON public.miqaat_requests FOR UPDATE TO authenticated
+USING (true)
+WITH CHECK (true);
+
 

@@ -77,7 +77,6 @@ export const translations = {
     approveBtn: 'Approve Profile',
     rejectBtn: 'Reject Profile',
     sharafTitle: 'Sharaf Allocation Hub',
-    monitoringTitle: 'Live Coverage Analytics',
     assignmentTitle: 'Coverage & Zone Assignments',
     submissionTitle: 'Shot Report Submissions',
     
@@ -119,7 +118,7 @@ export const translations = {
     gradeGood: 'B - Standard Acceptable',
     gradeLate: 'C - Late / Incomplete Coverage',
 
-    // Sharaf & Monitoring
+    // Sharaf
     sharafBanner: 'Sharaf (شرف) Seating Allocations',
     sharafDesc: 'Access privileged seating coordinates and proximity permits authorized for Al Musawareen members.',
     sharafStatusLabel: 'Your Authorized Sharaf Status',
@@ -128,10 +127,6 @@ export const translations = {
     notAllocated: 'Sharaf pending administrative zone assignment.',
     sharafCardTitle: 'Official Proximity Pass',
     printPass: 'Print Pass Card',
-    monitoringBanner: 'Real-Time Miqaat Coverage Stream',
-    monActiveCams: 'Active Dispatched Lenses',
-    monCoverageRate: 'Zone Completion Percentage',
-    monReportedShots: 'Reported Media gigabytes',
     safarModeToggleLabel: "Moula's Tus Safar Mode",
     safarModeStatusOn: 'SAFAR MODE ACTIVE',
     safarModeStatusOff: 'SAFAR MODE INACTIVE',
@@ -231,7 +226,6 @@ export const translations = {
     approveBtn: 'تصديق الملف الشخصي',
     rejectBtn: 'رفض الملف الشخصي',
     sharafTitle: 'مركز شرف وتخصيص المقاعد',
-    monitoringTitle: 'التحليلات والمراقبة الحية',
     assignmentTitle: 'تكليفات التغطية والمناطق',
     submissionTitle: 'تقارير التسليمات والتقييم',
 
@@ -273,7 +267,7 @@ export const translations = {
     gradeGood: 'ب - تغطية مقبولة ووافية',
     gradeLate: 'ج - تغطية متأخرة أو ناقصة',
 
-    // Sharaf & Monitoring
+    // Sharaf
     sharafBanner: 'تخصيصات شرف مقاعد المصورين',
     sharafDesc: 'الوصول إلى تنسيقات المقاعد المتميزة وتصاريح القرب المعتمدة لأعضاء المصورين المعتمدين.',
     sharafStatusLabel: 'حالة تصريح الشرف الممنوح لك',
@@ -282,10 +276,6 @@ export const translations = {
     notAllocated: 'طلب الشرف معلق بانتظار تعيين المنطقة من قبل الإدارة.',
     sharafCardTitle: 'بطاقة تصريح القرب الرسمي',
     printPass: 'طباعة بطاقة التصريح',
-    monitoringBanner: 'البث المباشر لحالة تغطية الميقات',
-    monActiveCams: 'العدسات والآلات النشطة ميدانياً',
-    monCoverageRate: 'نسبة إكمال تغطية المناطق',
-    monReportedShots: 'إجمالي حجم المواد المسلمة بالغيغابايت',
     safarModeToggleLabel: 'نمط سفر المولى (ط.ع)',
     safarModeStatusOn: 'نمط السفر نشط',
     safarModeStatusOff: 'نمط السفر غير نشط',

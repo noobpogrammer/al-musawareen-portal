@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { UserProfile, Assignment, Zone, Topic, MiqaatDef, getUserRoles, hasRole, formatRoleBadgeLabel } from '../types';
+import { UserProfile, Assignment, Zone, Topic, MiqaatDef, MiqaatRequest, getUserRoles, hasRole, formatRoleBadgeLabel } from '../types';
 import { translations, LanguageType } from '../utils/translations';
-import { Calendar, MapPin, Plus, Search, Check, AlertCircle, RefreshCw, X, Edit3, Shield, UserCheck, CheckCircle2, Layers } from 'lucide-react';
+import { 
+  Calendar, MapPin, Plus, Search, Check, AlertCircle, RefreshCw, X, Edit3, 
+  Shield, UserCheck, CheckCircle2, Layers, Users, Clock, Send, CheckSquare, 
+  Square, CalendarDays, HelpCircle, ChevronDown, ChevronUp, UserX
+} from 'lucide-react';
 import AvatarPlaceholder from './AvatarPlaceholder';
 import BulkAddModal from './BulkAddModal';
 
@@ -11,6 +15,7 @@ interface CoverageAssignmentsViewProps {
   zones: Zone[];
   topics: Topic[];
   miqaats?: MiqaatDef[];
+  miqaatRequests?: MiqaatRequest[];
   lang: LanguageType;
   canAssignCoverage?: boolean;
   onAddAssignment?: (assignment: Omit<Assignment, 'id'>) => void;
@@ -21,6 +26,8 @@ interface CoverageAssignmentsViewProps {
   onBulkAddZones?: (names: string[]) => void;
   onAddTopic?: (name: string) => void;
   onBulkAddTopics?: (names: string[]) => void;
+  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void;
+  onRespondMiqaatRequest?: (requestId: string, itsNumber: string, status: 'accepted' | 'declined', declineReason?: string) => void;
 }
 
 export default function CoverageAssignmentsView({
@@ -29,6 +36,7 @@ export default function CoverageAssignmentsView({
   zones,
   topics,
   miqaats = [],
+  miqaatRequests = [],
   lang,
   canAssignCoverage = true,
   onAddAssignment,
@@ -38,7 +46,9 @@ export default function CoverageAssignmentsView({
   onAddZone,
   onBulkAddZones,
   onAddTopic,
-  onBulkAddTopics
+  onBulkAddTopics,
+  onAddMiqaatRequest,
+  onRespondMiqaatRequest
 }: CoverageAssignmentsViewProps) {
   const t = translations[lang];
   const approvedPVs = users.filter(u => u.status === 'approved' && !hasRole(u, 'admin'));
@@ -57,6 +67,10 @@ export default function CoverageAssignmentsView({
 
   // Form State for Dispatching / Editing Coverage
   const [assignDate, setAssignDate] = useState('2026-07-21');
+  const [assignFromTime, setAssignFromTime] = useState('02:00 PM');
+  const [assignToTime, setAssignToTime] = useState('05:00 PM');
+  const [assignDeadlineDate, setAssignDeadlineDate] = useState('2026-07-21');
+  const [assignDeadlineTime, setAssignDeadlineTime] = useState('08:00 PM');
   const [assignMiqaat, setAssignMiqaat] = useState(miqaats[0]?.name || 'Ashara Mubarakah 1448H');
   const [assignZone, setAssignZone] = useState(zones[0]?.name || '');
   const [assignTopics, setAssignTopics] = useState<string[]>(topics[0]?.name ? [topics[0].name] : []);
@@ -79,6 +93,30 @@ export default function CoverageAssignmentsView({
   const [isAddingInlineTopic, setIsAddingInlineTopic] = useState(false);
   const [newInlineTopic, setNewInlineTopic] = useState('');
 
+  // Section toggle: 'active_coverage' vs 'miqaat_requests'
+  const [activeSection, setActiveSection] = useState<'active_coverage' | 'miqaat_requests'>('active_coverage');
+
+  // Miqaat Request creation & response view state
+  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
+  const [isNewMiqaatRequestModalOpen, setIsNewMiqaatRequestModalOpen] = useState(false);
+  const [reqMiqaat, setReqMiqaat] = useState(miqaats[0]?.name || 'Ashara Mubarakah 1448H');
+  const [reqFromDate, setReqFromDate] = useState('2026-07-01');
+  const [reqToDate, setReqToDate] = useState('2026-07-05');
+  const [reqNotes, setReqNotes] = useState('');
+  const [reqSelectedIts, setReqSelectedIts] = useState<string[]>([]);
+  const [reqMemberSearch, setReqMemberSearch] = useState('');
+  const [isAddingReqInlineMiqaat, setIsAddingReqInlineMiqaat] = useState(false);
+  const [newReqInlineMiqaat, setNewReqInlineMiqaat] = useState('');
+
+  // Context for prefilled assignment from accepted member
+  const [miqaatRequestContext, setMiqaatRequestContext] = useState<{
+    fromDate: string;
+    toDate: string;
+    miqaatName: string;
+    memberName: string;
+    itsNumber: string;
+  } | null>(null);
+
   // Extract unique Mohallas from approved team
   const availableMohallas = Array.from(new Set(approvedPVs.map(u => u.mohalla || u.cityDomicile).filter(Boolean))) as string[];
 
@@ -92,7 +130,12 @@ export default function CoverageAssignmentsView({
 
   const handleOpenCreateModal = () => {
     setEditingAssignmentId(null);
+    setMiqaatRequestContext(null);
     setAssignDate('2026-07-21');
+    setAssignFromTime('02:00 PM');
+    setAssignToTime('05:00 PM');
+    setAssignDeadlineDate('2026-07-21');
+    setAssignDeadlineTime('08:00 PM');
     setAssignMiqaat(miqaats[0]?.name || 'Ashara Mubarakah 1448H');
     setAssignZone(zones[0]?.name || '');
     setAssignTopics(topics[0]?.name ? [topics[0].name] : []);
@@ -110,7 +153,12 @@ export default function CoverageAssignmentsView({
 
   const handleOpenEditModal = (as: Assignment) => {
     setEditingAssignmentId(as.id);
+    setMiqaatRequestContext(null);
     setAssignDate(as.date || '2026-07-21');
+    setAssignFromTime(as.fromTime || '02:00 PM');
+    setAssignToTime(as.toTime || '05:00 PM');
+    setAssignDeadlineDate(as.dataCopyingDeadlineDate || as.date || '2026-07-21');
+    setAssignDeadlineTime(as.dataCopyingDeadlineTime || '08:00 PM');
     setAssignMiqaat(as.miqaatName || miqaats[0]?.name || 'Ashara Mubarakah 1448H');
     setAssignZone(as.zone || zones[0]?.name || '');
     setAssignTopics(getAssignmentTouchPoints(as));
@@ -124,6 +172,127 @@ export default function CoverageAssignmentsView({
     setIsAddingInlineZone(false);
     setIsAddingInlineTopic(false);
     setIsAssignmentModalOpen(true);
+  };
+
+  const handleAssignCoverageFromAcceptedMember = (request: MiqaatRequest, memberIts: string) => {
+    const member = users.find(u => u.itsNumber === memberIts);
+    const memberName = member?.fullName || memberIts;
+
+    setEditingAssignmentId(null);
+    setAssignDate(request.fromDate);
+    setAssignFromTime('02:00 PM');
+    setAssignToTime('05:00 PM');
+    setAssignDeadlineDate(request.fromDate);
+    setAssignDeadlineTime('08:00 PM');
+    setAssignMiqaat(request.miqaatName);
+    setAssignZone(zones[0]?.name || '');
+    setAssignTopics(topics[0]?.name ? [topics[0].name] : []);
+    setAssignUsers([memberIts]);
+    setAssignNotes('');
+    setAssignmentMode('individual');
+    setSelectedMohalla('');
+    setMemberSearchQuery('');
+    setTopicSearchQuery('');
+    setIsAddingInlineMiqaat(false);
+    setIsAddingInlineZone(false);
+    setIsAddingInlineTopic(false);
+
+    setMiqaatRequestContext({
+      fromDate: request.fromDate,
+      toDate: request.toDate,
+      miqaatName: request.miqaatName,
+      memberName,
+      itsNumber: memberIts
+    });
+
+    setIsAssignmentModalOpen(true);
+  };
+
+  const handleOpenNewMiqaatRequestModal = () => {
+    setReqMiqaat(miqaats[0]?.name || 'Ashara Mubarakah 1448H');
+    setReqFromDate('2026-07-01');
+    setReqToDate('2026-07-05');
+    setReqNotes('');
+    setReqSelectedIts([]);
+    setReqMemberSearch('');
+    setIsAddingReqInlineMiqaat(false);
+    setIsNewMiqaatRequestModalOpen(true);
+  };
+
+  const handleSelectAllPhotographers = () => {
+    const pIts = approvedPVs.filter(u => hasRole(u, 'photographer')).map(u => u.itsNumber);
+    setReqSelectedIts(prev => Array.from(new Set([...prev, ...pIts])));
+  };
+
+  const handleSelectAllVideographers = () => {
+    const vIts = approvedPVs.filter(u => hasRole(u, 'videographer')).map(u => u.itsNumber);
+    setReqSelectedIts(prev => Array.from(new Set([...prev, ...vIts])));
+  };
+
+  const handleSelectAllMembers = () => {
+    setReqSelectedIts(approvedPVs.map(u => u.itsNumber));
+  };
+
+  const handleClearAllSelected = () => {
+    setReqSelectedIts([]);
+  };
+
+  const handleToggleReqMember = (its: string) => {
+    setReqSelectedIts(prev => 
+      prev.includes(its) ? prev.filter(i => i !== its) : [...prev, its]
+    );
+  };
+
+  const handleCreateReqInlineMiqaat = () => {
+    const trimmed = newReqInlineMiqaat.trim();
+    if (!trimmed) return;
+    if (onAddMiqaat) {
+      onAddMiqaat(trimmed);
+    }
+    setReqMiqaat(trimmed);
+    setNewReqInlineMiqaat('');
+    setIsAddingReqInlineMiqaat(false);
+  };
+
+  const handleCreateMiqaatRequestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reqMiqaat.trim()) {
+      alert(lang === 'en' ? 'Please select or enter a Miqaat name.' : 'يرجى اختيار أو إدخال اسم الميقات.');
+      return;
+    }
+    if (!reqFromDate || !reqToDate) {
+      alert(lang === 'en' ? 'Please select both From and To dates.' : 'يرجى اختيار تاريخ البداية والنهاية.');
+      return;
+    }
+    if (reqFromDate > reqToDate) {
+      alert(lang === 'en' ? 'From Date cannot be later than To Date.' : 'تاريخ البداية لا يمكن أن يكون بعد تاريخ النهاية.');
+      return;
+    }
+    if (reqSelectedIts.length === 0) {
+      alert(lang === 'en' ? 'Please select at least one member to request availability from.' : 'يرجى اختيار عضو واحد على الأقل لإرسال طلب التفرغ.');
+      return;
+    }
+
+    const memberResponses: Record<string, any> = {};
+    reqSelectedIts.forEach(its => {
+      memberResponses[its] = {
+        itsNumber: its,
+        status: 'pending'
+      };
+    });
+
+    if (onAddMiqaatRequest) {
+      onAddMiqaatRequest({
+        miqaatName: reqMiqaat.trim(),
+        fromDate: reqFromDate,
+        toDate: reqToDate,
+        notes: reqNotes.trim() || undefined,
+        memberResponses
+      });
+    }
+
+    setIsNewMiqaatRequestModalOpen(false);
+    alert(lang === 'en' ? `Miqaat Request dispatched to ${reqSelectedIts.length} member(s)!` : `تم إرسال طلب الميقات إلى ${reqSelectedIts.length} من الأعضاء!`);
   };
 
   const handleSaveAssignment = () => {
@@ -148,6 +317,10 @@ export default function CoverageAssignmentsView({
           onUpdateAssignment({
             ...existing,
             date: assignDate,
+            fromTime: assignFromTime.trim() || undefined,
+            toTime: assignToTime.trim() || undefined,
+            dataCopyingDeadlineDate: assignDeadlineDate.trim() || assignDate,
+            dataCopyingDeadlineTime: assignDeadlineTime.trim() || undefined,
             miqaatName: assignMiqaat,
             zone: assignZone,
             topic: assignTopics[0] || 'General Coverage',
@@ -162,6 +335,10 @@ export default function CoverageAssignmentsView({
       if (onAddAssignment) {
         onAddAssignment({
           date: assignDate,
+          fromTime: assignFromTime.trim() || undefined,
+          toTime: assignToTime.trim() || undefined,
+          dataCopyingDeadlineDate: assignDeadlineDate.trim() || assignDate,
+          dataCopyingDeadlineTime: assignDeadlineTime.trim() || undefined,
           miqaatName: assignMiqaat,
           zone: assignZone,
           topic: assignTopics[0] || 'General Coverage',
@@ -216,205 +393,471 @@ export default function CoverageAssignmentsView({
 
   return (
     <div className="editorial-card-dense p-6 sm:p-8 space-y-6">
-      {/* Header Ribbon with New coverage button */}
+      
+      {/* Top Segment Tab Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#5C130F]/20 pb-4">
-        <div>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#5C130F] uppercase tracking-wider">
-            {lang === 'en' ? 'Active Coverage Rosters' : 'قوائم التغطية الحيوية الجارية'}
-          </h3>
-          <p className="text-xs text-[#3A1A14]/80 font-serif mt-1">
-            {lang === 'en' ? 'Manage and monitor operational coverage across all active Miqaat zones.' : 'إدارة ومراقبة التغطية الميدانية عبر جميع مناطق الميقات الحيوية.'}
-          </p>
+        <div className="flex items-center gap-1.5 p-1 bg-[#5C130F]/10 rounded-lg w-fit border border-[#5C130F]/20">
+          <button
+            type="button"
+            onClick={() => setActiveSection('active_coverage')}
+            className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer flex items-center gap-2 ${
+              activeSection === 'active_coverage'
+                ? 'bg-[#5C130F] !text-white shadow-xs'
+                : 'text-[#5C130F] hover:bg-[#5C130F]/10'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{lang === 'en' ? 'Active Coverage' : 'التغطية الحالية'}</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+              activeSection === 'active_coverage' ? 'bg-white/20 text-white' : 'bg-[#5C130F]/15 text-[#5C130F]'
+            }`}>
+              {assignments.length}
+            </span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setActiveSection('miqaat_requests')}
+            className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer flex items-center gap-2 ${
+              activeSection === 'miqaat_requests'
+                ? 'bg-[#5C130F] !text-white shadow-xs'
+                : 'text-[#5C130F] hover:bg-[#5C130F]/10'
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            <span>{lang === 'en' ? 'Miqaat Requests' : 'طلبات الميقات'}</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+              activeSection === 'miqaat_requests' ? 'bg-white/20 text-white' : 'bg-[#5C130F]/15 text-[#5C130F]'
+            }`}>
+              {miqaatRequests.length}
+            </span>
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="bg-editorial-ink text-white text-xs font-mono px-3 py-1.5 rounded-none font-bold">
-            {assignments.length} Total
-          </span>
-
-          {canAssignCoverage && (
+          {activeSection === 'active_coverage' && canAssignCoverage && (
             <button
               type="button"
               onClick={handleOpenCreateModal}
-              className="px-4 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold rounded-none flex items-center gap-1.5 transition-all shadow-sm cursor-pointer uppercase tracking-wider"
+              className="px-4 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white !text-white font-mono text-xs font-bold rounded-none flex items-center gap-1.5 transition-all shadow-sm cursor-pointer uppercase tracking-wider"
             >
-              <Plus className="w-4 h-4" />
-              <span>{lang === 'en' ? 'New Coverage' : 'تغطية جديدة'}</span>
+              <Plus className="w-4 h-4 text-[#5C130F] shrink-0" />
+              <span className="text-white !text-white">{lang === 'en' ? 'New Coverage' : 'تغطية جديدة'}</span>
+            </button>
+          )}
+
+          {activeSection === 'miqaat_requests' && canAssignCoverage && (
+            <button
+              type="button"
+              onClick={handleOpenNewMiqaatRequestModal}
+              className="px-4 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white !text-white font-mono text-xs font-bold rounded-none flex items-center gap-1.5 transition-all shadow-sm cursor-pointer uppercase tracking-wider"
+            >
+              <Plus className="w-4 h-4 text-[#5C130F] shrink-0" />
+              <span className="text-white !text-white">{lang === 'en' ? 'New Miqaat Request' : 'طلب ميقات جديد'}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* List of active assignments with fixed responsive scroll container */}
-      <div className="space-y-4 max-h-[calc(100vh-280px)] min-h-[400px] overflow-y-auto pr-2">
-        {assignments.length === 0 ? (
-          <div className="py-16 text-center text-[#3A1A14]/60 bg-white/30 border border-[#5C130F]/15 p-8">
-            <Calendar className="w-12 h-12 text-[#BA8332] mx-auto mb-3" />
-            <p className="text-base font-serif font-bold text-[#5C130F]">
-              {lang === 'en' ? 'No active coverage assignments scheduled.' : 'لا توجد تكليفات تغطية مجدولة حالياً.'}
-            </p>
-            {canAssignCoverage && (
-              <button
-                type="button"
-                onClick={handleOpenCreateModal}
-                className="mt-4 px-4 py-2 bg-[#BA8332] text-white font-mono text-xs font-bold uppercase rounded-none cursor-pointer flex items-center gap-1.5 mx-auto"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{lang === 'en' ? 'Schedule First Coverage' : 'جدولة التغطية الأولى'}</span>
-              </button>
-            )}
+      {/* SECTION 1: ACTIVE COVERAGE ROSTERS */}
+      {activeSection === 'active_coverage' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider">
+                {lang === 'en' ? 'Active Coverage Rosters' : 'قوائم التغطية الحيوية الجارية'}
+              </h3>
+              <p className="text-xs text-[#3A1A14]/80 font-serif mt-0.5">
+                {lang === 'en' ? 'Manage and monitor operational coverage across all active Miqaat zones.' : 'إدارة ومراقبة التغطية الميدانية عبر جميع مناطق الميقات الحيوية.'}
+              </p>
+            </div>
+            <span className="bg-editorial-ink text-white text-xs font-mono px-3 py-1.5 rounded-none font-bold">
+              {assignments.length} Total
+            </span>
           </div>
-        ) : (
-          assignments.map((as) => (
-            <div key={as.id} className="p-5 border border-[#5C130F]/20 rounded-xl flex flex-col gap-3.5 hover:bg-[#BA8332]/10 transition-colors bg-white/40 shadow-xs">
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="bg-[#5C130F] !text-white text-[10px] font-mono px-2.5 py-0.5 rounded-md font-bold">
-                      {as.date}
-                    </span>
-                    {as.miqaatName && (
-                      <span className="bg-[#BA8332] !text-white text-[10px] font-mono px-2.5 py-0.5 rounded-md font-bold">
-                        {as.miqaatName}
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="font-serif text-lg font-bold text-[#5C130F] mt-1.5">
-                    {Array.isArray(as.topic) ? as.topic.join(', ') : as.topic}
-                  </h4>
-                  <p className="text-xs text-[#3A1A14]/80 flex items-center gap-1 mt-1 font-serif">
-                    <MapPin className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
-                    <span>{as.zone}</span>
-                  </p>
 
-                  {/* Multi-Touch Point Tag Chips */}
-                  {(() => {
-                    const rawTouchPoints = getAssignmentTouchPoints(as);
-                    if (rawTouchPoints.length === 0) return null;
-                    const isExpanded = !!expandedCardTopics[as.id];
-                    const visibleTouchPoints = isExpanded ? rawTouchPoints : rawTouchPoints.slice(0, 3);
-                    const hiddenCount = rawTouchPoints.length - 3;
-
-                    return (
-                      <div className="mt-2.5 space-y-1">
-                        <span className="text-[10px] font-mono font-bold text-[#5C130F] uppercase tracking-wider block">
-                          {lang === 'en' ? 'Touch Points:' : 'نقاط التغطية:'}
-                        </span>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {visibleTouchPoints.map((tp, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/35 text-[11px] font-serif font-bold px-2 py-0.5 rounded-md"
-                            >
-                              {tp}
-                            </span>
-                          ))}
-
-                          {rawTouchPoints.length > 3 && (
-                            <button
-                              type="button"
-                              onClick={() => setExpandedCardTopics(prev => ({ ...prev, [as.id]: !prev[as.id] }))}
-                              className="bg-[#5C130F] !text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md hover:bg-[#3A1A14] transition-all cursor-pointer"
-                            >
-                              {isExpanded
-                                ? (lang === 'en' ? 'Show less' : 'عرض أقل')
-                                : `+${hiddenCount} ${lang === 'en' ? 'more' : 'المزيد'}`}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {canAssignCoverage && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditModal(as)}
-                      className="px-3 py-1 bg-[#5C130F]/10 hover:bg-[#5C130F] active:bg-[#5C130F] rounded-md transition-colors border border-[#5C130F]/20 flex items-center gap-1 cursor-pointer group"
-                    >
-                      <Edit3 className="w-3.5 h-3.5 text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] transition-colors" />
-                      <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-[11px] font-mono font-bold transition-colors">
-                        {lang === 'en' ? 'Edit Assignment' : 'تعديل التكليف'}
-                      </span>
-                    </button>
-                  )}
-
-                  <span className={`text-[10px] font-bold font-mono uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                    as.status === 'completed' ? 'bg-[#5C130F] !text-white border border-[#5C130F]' : 'bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 animate-pulse'
-                  }`}>
-                    {as.status}
-                  </span>
-                </div>
-              </div>
-
-              {as.notes && (
-                <p className="text-xs text-[#3A1A14]/85 bg-white/60 p-3 rounded-md border border-[#5C130F]/20 font-serif">
-                  {as.notes}
+          <div className="space-y-4 max-h-[calc(100vh-320px)] min-h-[400px] overflow-y-auto pr-2">
+            {assignments.length === 0 ? (
+              <div className="py-16 text-center text-[#3A1A14]/60 bg-white/30 border border-[#5C130F]/15 p-8">
+                <Calendar className="w-12 h-12 text-[#BA8332] mx-auto mb-3" />
+                <p className="text-base font-serif font-bold text-[#5C130F]">
+                  {lang === 'en' ? 'No active coverage assignments scheduled.' : 'لا توجد تكليفات تغطية مجدولة حالياً.'}
                 </p>
-              )}
+                {canAssignCoverage && (
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateModal}
+                    className="mt-4 px-4 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white !text-white font-mono text-xs font-bold uppercase rounded-none cursor-pointer flex items-center gap-1.5 mx-auto shadow-xs"
+                  >
+                    <Plus className="w-4 h-4 text-[#5C130F] shrink-0" />
+                    <span className="text-white !text-white">{lang === 'en' ? 'Schedule First Coverage' : 'جدولة التغطية الأولى'}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              assignments.map((as) => (
+                <div key={as.id} className="p-5 border border-[#5C130F]/20 rounded-xl flex flex-col gap-3.5 hover:bg-[#BA8332]/10 transition-colors bg-white/40 shadow-xs">
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="bg-[#5C130F] !text-white text-[10px] font-mono px-2.5 py-0.5 rounded-md font-bold">
+                          {as.date}
+                        </span>
+                        {as.miqaatName && (
+                          <span className="bg-[#BA8332] !text-white text-[10px] font-mono px-2.5 py-0.5 rounded-md font-bold">
+                            {as.miqaatName}
+                          </span>
+                        )}
+                        {(as.fromTime || as.toTime) && (
+                          <span className="bg-[#5C130F]/10 text-[#5C130F] text-[10px] font-mono px-2 py-0.5 rounded-md font-bold">
+                            {as.fromTime || '—'} – {as.toTime || '—'}
+                          </span>
+                        )}
+                        {(as.dataCopyingDeadlineDate || as.dataCopyingDeadlineTime) && (
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-mono px-2 py-0.5 rounded-md font-bold" title="Data Copying Deadline">
+                            Deadline: {as.dataCopyingDeadlineDate || as.date} {as.dataCopyingDeadlineTime || ''}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-serif text-lg font-bold text-[#5C130F] mt-1.5">
+                        {Array.isArray(as.topic) ? as.topic.join(', ') : as.topic}
+                      </h4>
+                      <p className="text-xs text-[#3A1A14]/80 flex items-center gap-1 mt-1 font-serif">
+                        <MapPin className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
+                        <span>{as.zone}</span>
+                      </p>
 
-              {/* Assigned PV list with Individual Status Tags & Slot Reassignment */}
-              <div className="space-y-2 border-t border-[#5C130F]/15 pt-3">
-                <span className="text-[10px] text-[#5C130F] font-mono font-bold uppercase tracking-wider block">
-                  {lang === 'en' ? 'ASSIGNED TEAM STATUS:' : 'حالة أعضاء الفريق المكلف:'}
-                </span>
-                
-                <div className="flex flex-wrap items-center gap-2">
-                  {as.assignedUsers.map(its => {
-                    const matchedUser = users.find(u => u.itsNumber === its);
-                    const memberStatus = (as.memberStatuses && as.memberStatuses[its]) || 'pending';
+                      {/* Multi-Touch Point Tag Chips */}
+                      {(() => {
+                        const rawTouchPoints = getAssignmentTouchPoints(as);
+                        if (rawTouchPoints.length === 0) return null;
+                        const isExpanded = !!expandedCardTopics[as.id];
+                        const visibleTouchPoints = isExpanded ? rawTouchPoints : rawTouchPoints.slice(0, 3);
+                        const hiddenCount = rawTouchPoints.length - 3;
 
-                    return (
-                      <div key={its} className="flex flex-col gap-1.5 bg-white border border-[#5C130F]/20 p-2.5 rounded-lg shadow-2xs min-w-[210px]">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <AvatarPlaceholder src={matchedUser?.avatarUrl} alt={matchedUser?.fullName} sizeClassName="w-6 h-6 shrink-0" iconSizeClassName="w-3.5 h-3.5" />
-                            <div className="min-w-0">
-                              <span className="font-serif font-bold text-[#5C130F] text-xs truncate block">
-                                {matchedUser ? matchedUser.fullName : its}
-                              </span>
-                              <span className="text-[9px] font-mono text-[#3A1A14]/70 block">ITS: {its}</span>
+                        return (
+                          <div className="mt-2.5 space-y-1">
+                            <span className="text-[10px] font-mono font-bold text-[#5C130F] uppercase tracking-wider block">
+                              {lang === 'en' ? 'Touch Points:' : 'نقاط التغطية:'}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {visibleTouchPoints.map((tp, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/35 text-[11px] font-serif font-bold px-2 py-0.5 rounded-md"
+                                >
+                                  {tp}
+                                </span>
+                              ))}
+
+                              {rawTouchPoints.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedCardTopics(prev => ({ ...prev, [as.id]: !prev[as.id] }))}
+                                  className="bg-[#5C130F] !text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md hover:bg-[#3A1A14] transition-all cursor-pointer"
+                                >
+                                  {isExpanded
+                                    ? (lang === 'en' ? 'Show less' : 'عرض أقل')
+                                    : `+${hiddenCount} ${lang === 'en' ? 'more' : 'المزيد'}`}
+                                </button>
+                              )}
                             </div>
                           </div>
+                        );
+                      })()}
+                    </div>
 
-                          {/* Member Status Tag */}
-                          <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 shrink-0 rounded ${
-                            memberStatus === 'accepted'
-                              ? 'bg-emerald-700 text-white'
-                              : memberStatus === 'declined'
-                              ? 'bg-red-600 text-white'
-                              : 'bg-[#BA8332] text-white'
-                          }`}>
-                            {memberStatus === 'accepted' ? 'Confirmed' : memberStatus === 'declined' ? 'Declined' : 'Pending'}
+                    <div className="flex items-center gap-2">
+                      {canAssignCoverage && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(as)}
+                          className="px-3 py-1 bg-[#5C130F]/10 hover:bg-[#5C130F] active:bg-[#5C130F] rounded-md transition-colors border border-[#5C130F]/20 flex items-center gap-1 cursor-pointer group"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] transition-colors" />
+                          <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-[11px] font-mono font-bold transition-colors">
+                            {lang === 'en' ? 'Edit Assignment' : 'تعديل التكليف'}
+                          </span>
+                        </button>
+                      )}
+
+                      <span className={`text-[10px] font-bold font-mono uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                        as.status === 'completed' ? 'bg-[#5C130F] !text-white border border-[#5C130F]' : 'bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 animate-pulse'
+                      }`}>
+                        {as.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {as.notes && (
+                    <p className="text-xs text-[#3A1A14]/85 bg-white/60 p-3 rounded-md border border-[#5C130F]/20 font-serif">
+                      {as.notes}
+                    </p>
+                  )}
+
+                  {/* Assigned PV list with Individual Status Tags & Slot Reassignment */}
+                  <div className="space-y-2 border-t border-[#5C130F]/15 pt-3">
+                    <span className="text-[10px] text-[#5C130F] font-mono font-bold uppercase tracking-wider block">
+                      {lang === 'en' ? 'ASSIGNED TEAM STATUS:' : 'حالة أعضاء الفريق المكلف:'}
+                    </span>
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      {as.assignedUsers.map(its => {
+                        const matchedUser = users.find(u => u.itsNumber === its);
+                        const memberStatus = (as.memberStatuses && as.memberStatuses[its]) || 'pending';
+
+                        return (
+                          <div key={its} className="flex flex-col gap-1.5 bg-white border border-[#5C130F]/20 p-2.5 rounded-lg shadow-2xs min-w-[210px]">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <AvatarPlaceholder src={matchedUser?.avatarUrl} alt={matchedUser?.fullName} sizeClassName="w-6 h-6 shrink-0" iconSizeClassName="w-3.5 h-3.5" />
+                                <div className="min-w-0">
+                                  <span className="font-serif font-bold text-[#5C130F] text-xs truncate block">
+                                    {matchedUser ? matchedUser.fullName : its}
+                                  </span>
+                                  <span className="text-[9px] font-mono text-[#3A1A14]/70 block">ITS: {its}</span>
+                                </div>
+                              </div>
+
+                              {/* Member Status Tag */}
+                              <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 shrink-0 rounded ${
+                                memberStatus === 'accepted'
+                                  ? 'bg-[#4F6B57] text-[#F3E6D0]'
+                                  : memberStatus === 'declined'
+                                  ? 'bg-[#8C3B32] text-[#F3E6D0]'
+                                  : 'bg-[#B8893B] text-[#F3E6D0]'
+                              }`}>
+                                {memberStatus === 'accepted' ? 'Confirmed' : memberStatus === 'declined' ? 'Declined' : 'Pending'}
+                              </span>
+                            </div>
+
+                            {/* Reassign Slot Action Button (When Member Declined) */}
+                            {memberStatus === 'declined' && onReassignSlot && canAssignCoverage && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReassignModalTarget({ assignment: as, oldIts: its });
+                                  setSelectedReplacementIts('');
+                                  setReassignSearchQuery('');
+                                }}
+                                className="mt-1 w-full py-1 bg-[#8C3B32] hover:bg-[#6E2824] text-[#F3E6D0] font-mono text-[9px] font-bold uppercase cursor-pointer text-center rounded flex items-center justify-center gap-1 shadow-xs"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                <span>{lang === 'en' ? 'Reassign Slot' : 'إعادة تكليف'}</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 2: MIQAAT REQUESTS (AVAILABILITY WORKFLOW) */}
+      {activeSection === 'miqaat_requests' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider">
+                {lang === 'en' ? 'Miqaat Requests' : 'طلبات التفرغ للميقات'}
+              </h3>
+              <p className="text-xs text-[#3A1A14]/80 font-serif mt-0.5">
+                {lang === 'en' 
+                  ? 'Request, track, and review member availability across upcoming Miqaats.' 
+                  : 'إرسال ومتابعة واستعراض تفرغ الأعضاء للمناسبات والميقات القادم.'}
+              </p>
+            </div>
+            <span className="bg-editorial-ink text-white text-xs font-mono px-3 py-1.5 rounded-none font-bold">
+              {miqaatRequests.length} Total
+            </span>
+          </div>
+
+          <div className="space-y-4 max-h-[calc(100vh-320px)] min-h-[400px] overflow-y-auto pr-2">
+            {miqaatRequests.length === 0 ? (
+              <div className="py-16 text-center text-[#3A1A14]/60 bg-white/30 border border-[#5C130F]/15 p-8">
+                <CalendarDays className="w-12 h-12 text-[#BA8332] mx-auto mb-3" />
+                <p className="text-base font-serif font-bold text-[#5C130F]">
+                  {lang === 'en' ? 'No Miqaat Requests created yet.' : 'لا توجد طلبات ميقات مسجلة حالياً.'}
+                </p>
+                <p className="text-xs text-[#3A1A14]/70 font-serif mt-1 max-w-md mx-auto">
+                  {lang === 'en'
+                    ? 'Create a Miqaat Request to ask photographers and videographers for their operational availability over a specific date range.'
+                    : 'أنشئ طلب ميقات لطلب التفرغ الميداني من المصورين عبر فترة زمنية محددة.'}
+                </p>
+                {canAssignCoverage && (
+                  <button
+                    type="button"
+                    onClick={handleOpenNewMiqaatRequestModal}
+                    className="mt-4 px-4 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white !text-white font-mono text-xs font-bold uppercase rounded-none cursor-pointer flex items-center gap-1.5 mx-auto shadow-xs"
+                  >
+                    <Plus className="w-4 h-4 text-[#5C130F] shrink-0" />
+                    <span className="text-white !text-white">{lang === 'en' ? 'Create First Miqaat Request' : 'إنشاء أول طلب ميقات'}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              miqaatRequests.map((req) => {
+                const totalRequested = Object.keys(req.memberResponses || {}).length;
+                const acceptedCount = Object.values(req.memberResponses || {}).filter((r: any) => r.status === 'accepted').length;
+                const declinedCount = Object.values(req.memberResponses || {}).filter((r: any) => r.status === 'declined').length;
+                const pendingCount = Object.values(req.memberResponses || {}).filter((r: any) => !r.status || r.status === 'pending').length;
+                const isExpanded = expandedRequestId === req.id;
+
+                return (
+                  <div key={req.id} className="p-5 border border-[#5C130F]/20 rounded-xl flex flex-col gap-4 bg-white/50 hover:bg-[#BA8332]/5 transition-all shadow-xs">
+                    
+                    {/* Request Top Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="bg-[#5C130F] text-white text-[11px] font-mono px-2.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                            {req.miqaatName}
+                          </span>
+                          <span className="bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/35 text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-[#BA8332]" />
+                            <span>{req.fromDate} — {req.toDate}</span>
                           </span>
                         </div>
 
-                        {/* Reassign Slot Action Button (When Member Declined) */}
-                        {memberStatus === 'declined' && onReassignSlot && canAssignCoverage && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setReassignModalTarget({ assignment: as, oldIts: its });
-                              setSelectedReplacementIts('');
-                              setReassignSearchQuery('');
-                            }}
-                            className="mt-1 w-full py-1 bg-red-700 hover:bg-red-800 text-white font-mono text-[9px] font-bold uppercase cursor-pointer text-center rounded flex items-center justify-center gap-1 shadow-xs"
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                            <span>{lang === 'en' ? 'Reassign Slot' : 'إعادة تكليف'}</span>
-                          </button>
+                        {req.notes && (
+                          <p className="text-xs text-[#3A1A14]/80 font-serif italic mt-1">
+                            "{req.notes}"
+                          </p>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+
+                      {/* Summary Metrics Pills */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="bg-[#5C130F]/10 text-[#5C130F] border border-[#5C130F]/20 text-[10px] font-mono px-2.5 py-1 rounded-md font-bold">
+                          Requested: {totalRequested}
+                        </span>
+                        <span className="bg-[#4F6B57]/12 text-[#3A5341] border border-[#4F6B57]/30 text-[10px] font-mono px-2.5 py-1 rounded-md font-bold">
+                          Accepted: {acceptedCount}
+                        </span>
+                        <span className="bg-[#8C3B32]/12 text-[#7A302C] border border-[#8C3B32]/30 text-[10px] font-mono px-2.5 py-1 rounded-md font-bold">
+                          Declined: {declinedCount}
+                        </span>
+                        <span className="bg-[#B8893B]/12 text-[#8F6423] border border-[#B8893B]/30 text-[10px] font-mono px-2.5 py-1 rounded-md font-bold">
+                          Pending: {pendingCount}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setExpandedRequestId(isExpanded ? null : req.id)}
+                          className="px-3 py-1.5 bg-[#5C130F] text-[#F3E6D0] hover:bg-[#3A1A14] text-xs font-mono font-bold uppercase rounded-md flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                        >
+                          <span>{isExpanded ? (lang === 'en' ? 'Hide Responses' : 'إخفاء الردود') : (lang === 'en' ? 'View Responses' : 'عرض الردود')}</span>
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[#F3E6D0]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#F3E6D0]" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expandable Member Responses Panel */}
+                    {isExpanded && (
+                      <div className="mt-2 pt-4 border-t border-[#5C130F]/15 space-y-3 animate-fadeIn">
+                        <div className="flex items-center justify-between gap-3">
+                          <h5 className="font-mono text-xs font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 text-[#BA8332]" />
+                            <span>{lang === 'en' ? 'Member Availability Status' : 'حالة تفرغ الأعضاء'}</span>
+                          </h5>
+                          <span className="text-[10px] font-mono text-[#3A1A14]/70">
+                            {acceptedCount} of {totalRequested} Available
+                          </span>
+                        </div>
+
+                        <div className="divide-y divide-[#5C130F]/10 border border-[#5C130F]/20 rounded-lg bg-white overflow-hidden shadow-2xs">
+                          {Object.entries(req.memberResponses || {}).map(([its, resp]: [string, any]) => {
+                            const matchedUser = users.find(u => u.itsNumber === its);
+                            const status = resp.status || 'pending';
+
+                            return (
+                              <div key={its} className="p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FDFAF3] transition-colors">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <AvatarPlaceholder src={matchedUser?.avatarUrl} alt={matchedUser?.fullName} sizeClassName="w-8 h-8 shrink-0" iconSizeClassName="w-4 h-4" />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-serif font-bold text-xs text-[#5C130F] truncate">
+                                        {matchedUser ? matchedUser.fullName : its}
+                                      </span>
+                                      {matchedUser && (
+                                        <span className="text-[9px] font-mono bg-[#5C130F]/10 text-[#5C130F] px-1.5 py-0.2 rounded font-bold">
+                                          {formatRoleBadgeLabel(matchedUser)}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] font-mono text-[#3A1A14]/70">
+                                      <span>ITS: {its}</span>
+                                      {matchedUser?.mohalla && <span>• {matchedUser.mohalla}</span>}
+                                      {resp.respondedAt && (
+                                        <span>• Responded: {new Date(resp.respondedAt).toLocaleDateString()}</span>
+                                      )}
+                                    </div>
+                                    {status === 'declined' && resp.declineReason && (
+                                      <p className="text-[11px] font-serif text-[#8C3B32] italic mt-0.5">
+                                        Reason: {resp.declineReason}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                                  {/* Status Pill */}
+                                  <span className={`text-[10px] font-mono font-bold uppercase px-2.5 py-1 rounded-md flex items-center gap-1 ${
+                                    status === 'accepted'
+                                      ? 'bg-[#3E7458] text-white !text-white'
+                                      : status === 'declined'
+                                      ? 'bg-[#A13F36] text-white !text-white'
+                                      : 'bg-[#BA8332] text-white !text-white'
+                                  }`}>
+                                    {status === 'accepted' ? (
+                                      <>
+                                        <Check className="w-3 h-3 text-white" />
+                                        <span className="text-white !text-white">Available</span>
+                                      </>
+                                    ) : status === 'declined' ? (
+                                      <>
+                                        <UserX className="w-3 h-3 text-white" />
+                                        <span className="text-white !text-white">Declined</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Clock className="w-3 h-3 text-white" />
+                                        <span className="text-white !text-white">Pending</span>
+                                      </>
+                                    )}
+                                  </span>
+
+                                  {/* Assign Coverage Button (for Accepted Members) */}
+                                  {status === 'accepted' && canAssignCoverage && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAssignCoverageFromAcceptedMember(req, its)}
+                                      className="px-3 py-1 bg-[#BA8332] hover:bg-[#a06e28] text-white !text-white text-[11px] font-mono font-bold rounded-md flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                                      title="Open Coverage Assignment form with pre-filled member and Miqaat context"
+                                    >
+                                      <Plus className="w-3.5 h-3.5 text-[#5C130F] shrink-0" />
+                                      <span className="text-white !text-white">{lang === 'en' ? 'Assign Coverage' : 'تكليف تغطية'}</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* UNIFIED CREATE / EDIT COVERAGE ASSIGNMENT MODAL (SINGLE SOURCE OF TRUTH FOR ADMIN & HR) */}
       {isAssignmentModalOpen && (
@@ -450,13 +893,55 @@ export default function CoverageAssignmentsView({
 
             {/* Form Fields */}
             <div className="space-y-5 text-xs font-serif">
+              
+              {/* Miqaat Request Context Banner (if pre-filled from an accepted Miqaat Request) */}
+              {miqaatRequestContext && (
+                <div className="p-3 bg-[#BA8332]/10 border border-[#BA8332]/35 rounded-lg flex items-center justify-between text-[#5C130F]">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-[#BA8332] shrink-0" />
+                    <span className="font-serif text-xs">
+                      Assigning coverage for <strong>{miqaatRequestContext.memberName}</strong> (ITS: {miqaatRequestContext.itsNumber}) based on confirmed availability for <strong>{miqaatRequestContext.miqaatName}</strong> ({miqaatRequestContext.fromDate} to {miqaatRequestContext.toDate}).
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMiqaatRequestContext(null)}
+                    className="text-[10px] font-mono text-[#5C130F]/70 hover:text-[#5C130F] underline shrink-0 cursor-pointer"
+                  >
+                    Clear Context
+                  </button>
+                </div>
+              )}
+
+              {/* Date Range Validation Warning */}
+              {miqaatRequestContext && (assignDate < miqaatRequestContext.fromDate || assignDate > miqaatRequestContext.toDate) && (
+                <div className="p-3.5 bg-amber-500/15 border-2 border-amber-500/50 rounded-lg flex items-start gap-2.5 text-amber-900 shadow-2xs">
+                  <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-mono text-xs font-bold uppercase tracking-wider text-amber-900">
+                      {lang === 'en' ? 'Date Outside Accepted Miqaat Availability' : 'التاريخ خارج فترة التفرغ المقبولة للميقات'}
+                    </p>
+                    <p className="text-xs font-serif mt-0.5 text-amber-950/90 leading-relaxed">
+                      {lang === 'en'
+                        ? `This assignment date (${assignDate}) is outside the member's accepted Miqaat availability period (${miqaatRequestContext.fromDate} to ${miqaatRequestContext.toDate}).`
+                        : `تاريخ التكليف هذا (${assignDate}) يقع خارج فترة التفرغ المقبولة للعضو (${miqaatRequestContext.fromDate} إلى ${miqaatRequestContext.toDate}).`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-mono font-bold text-[#5C130F] block mb-1">Date:</label>
+                  <label className="font-mono font-bold text-[#5C130F] block mb-1">Event Date:</label>
                   <input
                     type="date"
                     value={assignDate}
-                    onChange={(e) => setAssignDate(e.target.value)}
+                    onChange={(e) => {
+                      setAssignDate(e.target.value);
+                      if (!assignDeadlineDate || assignDeadlineDate === assignDate) {
+                        setAssignDeadlineDate(e.target.value);
+                      }
+                    }}
                     className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs"
                   />
                 </div>
@@ -503,6 +988,66 @@ export default function CoverageAssignmentsView({
                       </button>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Event Timing & Data Copying Deadline Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 bg-[#FDFAF3] border border-[#5C130F]/15 rounded-lg shadow-2xs">
+                {/* Event Time */}
+                <div className="space-y-1.5">
+                  <label className="font-mono font-bold text-[#5C130F] text-[11px] uppercase tracking-wider block">
+                    Event Time (Start & End):
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] font-mono text-[#5C130F]/70 block">From Time</span>
+                      <input
+                        type="text"
+                        value={assignFromTime}
+                        onChange={(e) => setAssignFromTime(e.target.value)}
+                        placeholder="02:00 PM"
+                        className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs text-[#3A1A14]"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono text-[#5C130F]/70 block">To Time</span>
+                      <input
+                        type="text"
+                        value={assignToTime}
+                        onChange={(e) => setAssignToTime(e.target.value)}
+                        placeholder="05:00 PM"
+                        className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs text-[#3A1A14]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Data Copying Deadline */}
+                <div className="space-y-1.5">
+                  <label className="font-mono font-bold text-[#BA8332] text-[11px] uppercase tracking-wider block">
+                    Data Copying Deadline:
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] font-mono text-[#5C130F]/70 block">Deadline Date</span>
+                      <input
+                        type="date"
+                        value={assignDeadlineDate}
+                        onChange={(e) => setAssignDeadlineDate(e.target.value)}
+                        className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs text-[#3A1A14]"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono text-[#5C130F]/70 block">Deadline Time</span>
+                      <input
+                        type="text"
+                        value={assignDeadlineTime}
+                        onChange={(e) => setAssignDeadlineTime(e.target.value)}
+                        placeholder="08:00 PM"
+                        className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs text-[#3A1A14]"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -984,6 +1529,232 @@ export default function CoverageAssignmentsView({
         onClose={() => setIsBulkAddTopicsOpen(false)}
         lang={lang}
       />
+
+      {/* MODAL: CREATE NEW MIQAAT REQUEST */}
+      {isNewMiqaatRequestModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#FDFAF3] border-2 border-[#5C130F] rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-6 my-8 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-[#5C130F]/20 pb-4">
+              <div>
+                <h3 className="font-serif font-bold text-xl text-[#5C130F] flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5 text-[#BA8332]" />
+                  <span>{lang === 'en' ? 'Create New Miqaat Request' : 'إنشاء طلب ميقات جديد'}</span>
+                </h3>
+                <p className="text-xs text-[#3A1A14]/75 font-serif mt-0.5">
+                  {lang === 'en' 
+                    ? 'Request operational availability from eligible photographers and videographers.' 
+                    : 'طلب التفرغ الميداني من المصورين المعتمدين لمناسبة أو ميقات محدد.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewMiqaatRequestModalOpen(false)}
+                className="p-1 text-[#5C130F]/60 hover:text-[#5C130F] hover:bg-[#5C130F]/10 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateMiqaatRequestSubmit} className="space-y-5 text-xs font-serif">
+              {/* 1. Miqaat Event Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-mono font-bold text-[#5C130F]">Miqaat Event / Name:</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingReqInlineMiqaat(!isAddingReqInlineMiqaat)}
+                    className="text-[10px] font-mono text-[#BA8332] hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>{isAddingReqInlineMiqaat ? 'Cancel' : 'Add new'}</span>
+                  </button>
+                </div>
+
+                {!isAddingReqInlineMiqaat ? (
+                  <select
+                    value={reqMiqaat}
+                    onChange={(e) => setReqMiqaat(e.target.value)}
+                    className="w-full p-2.5 border border-[#5C130F]/30 bg-white rounded-md font-serif text-xs text-[#3A1A14]"
+                  >
+                    {(miqaats.length > 0 ? miqaats : [{ id: 'm1', name: 'Ashara Mubarakah 1448H' }]).map(m => (
+                      <option key={m.id} value={m.name}>{m.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-1.5 animate-fadeIn">
+                    <input
+                      type="text"
+                      value={newReqInlineMiqaat}
+                      onChange={(e) => setNewReqInlineMiqaat(e.target.value)}
+                      placeholder="Enter new Miqaat name..."
+                      className="flex-1 p-2 border border-[#BA8332] bg-white rounded-md font-serif text-xs text-[#3A1A14]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateReqInlineMiqaat}
+                      className="px-3 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold rounded-md cursor-pointer"
+                    >
+                      Save
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Requested Date Range */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 bg-[#FDFAF3] border border-[#5C130F]/15 rounded-lg">
+                <div>
+                  <label className="font-mono font-bold text-[#5C130F] block mb-1">From Date (Start):</label>
+                  <input
+                    type="date"
+                    required
+                    value={reqFromDate}
+                    onChange={(e) => setReqFromDate(e.target.value)}
+                    className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs text-[#3A1A14]"
+                  />
+                </div>
+                <div>
+                  <label className="font-mono font-bold text-[#5C130F] block mb-1">To Date (End):</label>
+                  <input
+                    type="date"
+                    required
+                    value={reqToDate}
+                    onChange={(e) => setReqToDate(e.target.value)}
+                    className="w-full p-2 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs text-[#3A1A14]"
+                  />
+                </div>
+              </div>
+
+              {/* 3. Optional Instructions / Notes */}
+              <div>
+                <label className="font-mono font-bold text-[#5C130F] block mb-1">Notes & Context (Optional):</label>
+                <textarea
+                  value={reqNotes}
+                  onChange={(e) => setReqNotes(e.target.value)}
+                  placeholder="e.g. Morning & evening Waaz coverage in Karachi. Please confirm all days if possible."
+                  rows={2}
+                  className="w-full p-2.5 border border-[#5C130F]/30 bg-white rounded-md font-serif text-xs text-[#3A1A14]"
+                />
+              </div>
+
+              {/* 4. Target Member Selection with Quick Actions */}
+              <div className="space-y-2.5 border-t border-[#5C130F]/15 pt-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="font-mono font-bold text-[#5C130F] uppercase tracking-wider block">
+                    Select Eligible Team Members ({reqSelectedIts.length} selected):
+                  </label>
+                </div>
+
+                {/* Quick Selection Buttons */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllMembers}
+                    className="px-2.5 py-1 bg-[#5C130F] text-white text-[10px] font-mono font-bold uppercase rounded hover:bg-[#3A1A14] transition-colors cursor-pointer"
+                  >
+                    [ Select All ({approvedPVs.length}) ]
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllPhotographers}
+                    className="px-2.5 py-1 bg-[#BA8332] text-white text-[10px] font-mono font-bold uppercase rounded hover:bg-[#a06e28] transition-colors cursor-pointer"
+                  >
+                    [ Select Photographers ]
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllVideographers}
+                    className="px-2.5 py-1 bg-[#BA8332] text-white text-[10px] font-mono font-bold uppercase rounded hover:bg-[#a06e28] transition-colors cursor-pointer"
+                  >
+                    [ Select Videographers ]
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearAllSelected}
+                    className="px-2.5 py-1 bg-white border border-[#5C130F]/30 text-[#5C130F] text-[10px] font-mono font-bold uppercase rounded hover:bg-[#5C130F]/10 transition-colors cursor-pointer"
+                  >
+                    [ Clear All ]
+                  </button>
+                </div>
+
+                {/* Member Search */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-[#5C130F]/50 absolute left-2.5 top-2.5" />
+                  <input
+                    type="text"
+                    value={reqMemberSearch}
+                    onChange={(e) => setReqMemberSearch(e.target.value)}
+                    placeholder="Search member by name or ITS..."
+                    className="w-full pl-8 pr-3 py-1.5 border border-[#5C130F]/30 bg-white rounded-md font-mono text-xs"
+                  />
+                </div>
+
+                {/* Member Checkbox List */}
+                <div className="max-h-56 overflow-y-auto divide-y divide-[#5C130F]/10 border border-[#5C130F]/20 rounded-lg bg-white">
+                  {approvedPVs
+                    .filter(pv => {
+                      if (!reqMemberSearch) return true;
+                      const q = reqMemberSearch.toLowerCase();
+                      return pv.fullName.toLowerCase().includes(q) || pv.itsNumber.includes(q);
+                    })
+                    .map(pv => {
+                      const isChecked = reqSelectedIts.includes(pv.itsNumber);
+                      return (
+                        <div
+                          key={pv.itsNumber}
+                          onClick={() => handleToggleReqMember(pv.itsNumber)}
+                          className={`p-2.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-[#BA8332]/10 transition-colors ${
+                            isChecked ? 'bg-[#BA8332]/15' : ''
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="text-[#5C130F]">
+                              {isChecked ? <CheckSquare className="w-4 h-4 text-[#BA8332]" /> : <Square className="w-4 h-4 text-[#5C130F]/40" />}
+                            </div>
+                            <AvatarPlaceholder src={pv.avatarUrl} alt={pv.fullName} sizeClassName="w-7 h-7" iconSizeClassName="w-3.5 h-3.5" />
+                            <div className="min-w-0">
+                              <span className="font-serif font-bold text-xs text-[#5C130F] truncate block">
+                                {pv.fullName}
+                              </span>
+                              <span className="text-[10px] font-mono text-[#3A1A14]/70">
+                                ITS: {pv.itsNumber} • {formatRoleBadgeLabel(pv)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                            isChecked ? 'bg-[#BA8332] text-white' : 'bg-[#5C130F]/10 text-[#5C130F]'
+                          }`}>
+                            {isChecked ? 'Selected' : 'Click to select'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end gap-3 border-t border-[#5C130F]/20 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsNewMiqaatRequestModalOpen(false)}
+                  className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded-md hover:bg-[#5C130F]/10 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={reqSelectedIts.length === 0}
+                  className="px-5 py-2 bg-[#5C130F] hover:bg-[#3A1A14] disabled:opacity-50 text-white font-mono text-xs font-bold rounded-md flex items-center gap-1.5 shadow-md cursor-pointer uppercase tracking-wider"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Dispatch Miqaat Request ({reqSelectedIts.length})</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

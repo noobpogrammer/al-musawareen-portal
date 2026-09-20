@@ -1,5 +1,46 @@
 import { ShotReport, Assignment, UserProfile, StarRating } from '../types';
 
+export function parseDateTimeToMillis(dateStr?: string, timeStr?: string): number | null {
+  if (!dateStr) return null;
+  const cleanDate = dateStr.trim();
+  
+  if (timeStr && timeStr.trim()) {
+    const cleanTime = timeStr.trim();
+    const match12 = cleanTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    const match24 = cleanTime.match(/^(\d{1,2}):(\d{2})$/);
+    
+    let hours = 23;
+    let minutes = 59;
+    
+    if (match12) {
+      hours = parseInt(match12[1], 10);
+      minutes = parseInt(match12[2], 10);
+      const ampm = match12[3].toUpperCase();
+      if (ampm === 'PM' && hours < 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+    } else if (match24) {
+      hours = parseInt(match24[1], 10);
+      minutes = parseInt(match24[2], 10);
+    }
+    
+    const parts = cleanDate.split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), hours, minutes, 0);
+      return d.getTime();
+    }
+  }
+
+  // Fallback: End of that date
+  const parts = cleanDate.split('-');
+  if (parts.length === 3) {
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 23, 59, 59);
+    return d.getTime();
+  }
+  
+  const parsed = new Date(cleanDate).getTime();
+  return isNaN(parsed) ? null : parsed;
+}
+
 export function calculateStarRating(
   report: ShotReport,
   assignment?: Assignment,
@@ -24,11 +65,18 @@ export function calculateStarRating(
 
   // 2. Determine completed touch points count & detailed breakdown
   let completedCount = totalTouchPoints;
-  if (report.completedTouchPoints) {
-    completedCount = report.completedTouchPoints.length;
-  }
+  let completionPercent = 100;
 
-  const completionPercent = totalTouchPoints > 0 ? Math.min(100, Math.max(0, (completedCount / totalTouchPoints) * 100)) : 100;
+  if (report.touchPointCompletionMode === 'percentage' && report.completionPercentOverride !== undefined) {
+    completionPercent = report.completionPercentOverride;
+    completedCount = Math.round((completionPercent / 100) * totalTouchPoints);
+  } else if (report.completedTouchPoints) {
+    completedCount = report.completedTouchPoints.length;
+    completionPercent = totalTouchPoints > 0 ? Math.min(100, Math.max(0, (completedCount / totalTouchPoints) * 100)) : 100;
+  } else {
+    completedCount = totalTouchPoints;
+    completionPercent = 100;
+  }
 
   const completedList = report.completedTouchPoints || [];
   const touchPointDetails = assignedTopicList.map(tp => ({
@@ -50,16 +98,16 @@ export function calculateStarRating(
     touchPointGoldStars = 0.0;
   }
 
-  // 4. On-Time Bonus calculation (+1 Gold Star if submitted before or on due date)
+  // 4. On-Time Bonus calculation (+1 Gold Star if submitted before or on Data Copying Deadline)
   let isOnTime = true;
-  const dueDateStr = report.dueDate || assignment?.date;
+  const deadlineDate = assignment?.dataCopyingDeadlineDate || report.dueDate || assignment?.date;
+  const deadlineTime = assignment?.dataCopyingDeadlineTime;
 
-  if (dueDateStr && report.timestamp) {
+  if (deadlineDate && report.timestamp) {
     try {
       const subTime = new Date(report.timestamp).getTime();
-      // If dueDate is a date string like '2026-07-21', consider end of that day or exact ISO string
-      const dueTime = new Date(dueDateStr.includes('T') ? dueDateStr : `${dueDateStr}T23:59:59Z`).getTime();
-      if (!isNaN(subTime) && !isNaN(dueTime) && subTime > dueTime) {
+      const dueTime = parseDateTimeToMillis(deadlineDate, deadlineTime);
+      if (!isNaN(subTime) && dueTime !== null && subTime > dueTime) {
         isOnTime = false;
       }
     } catch {

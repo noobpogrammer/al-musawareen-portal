@@ -4,7 +4,7 @@ import { translations, LanguageType } from '../utils/translations';
 import { calculateStarRating } from '../utils/starRating';
 import StarRatingDisplay from './StarRatingDisplay';
 import StarOverrideModal from './StarOverrideModal';
-import { FileText, Link as LinkIcon, Edit3 } from 'lucide-react';
+import { FileText, Link as LinkIcon, Edit3, HardDrive, CheckCircle2 } from 'lucide-react';
 
 interface ShotReportSubmissionsViewProps {
   submissions: ShotReport[];
@@ -75,15 +75,30 @@ export default function ShotReportSubmissionsView({
                   )}
 
                   <div className="pt-2">
-                    <a
-                      href={sub.driveLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-[#5C130F] font-mono font-bold hover:underline"
-                    >
-                      <LinkIcon className="w-3.5 h-3.5" />
-                      <span>{lang === 'en' ? 'Open Google Drive Folder' : 'فتح مجلد Google Drive'}</span>
-                    </a>
+                    {sub.submissionMethod === 'physical_card' ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#BA8332]/15 text-[#5C130F] text-xs font-mono font-bold rounded-md border border-[#BA8332]/30">
+                          <HardDrive className="w-3.5 h-3.5 text-[#BA8332]" />
+                          <span>{lang === 'en' ? 'Submission Method: Physical Card' : 'طريقة التسليم: كارت فعلي'}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-800 text-xs font-mono font-bold rounded-md border border-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>{lang === 'en' ? 'Status: Card Copied' : 'الحالة: تم نسخ الكارت'}</span>
+                        </span>
+                      </div>
+                    ) : (
+                      sub.driveLink ? (
+                        <a
+                          href={sub.driveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-[#5C130F] font-mono font-bold hover:underline"
+                        >
+                          <LinkIcon className="w-3.5 h-3.5" />
+                          <span>{lang === 'en' ? 'Open Google Drive Folder' : 'فتح مجلد Google Drive'}</span>
+                        </a>
+                      ) : null
+                    )}
                   </div>
                 </div>
 

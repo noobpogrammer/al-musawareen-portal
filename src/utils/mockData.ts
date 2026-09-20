@@ -1,4 +1,4 @@
-import { UserProfile, Assignment, ShotReport, Zone, Topic, SharafEventDef, SharafAllocation, MiqaatDef, DEFAULT_HR_PERMISSIONS } from '../types';
+import { UserProfile, Assignment, ShotReport, Zone, Topic, SharafEventDef, SharafAllocation, MiqaatDef, MiqaatRequest, DEFAULT_HR_PERMISSIONS } from '../types';
 
 export const INITIAL_MIQAATS: MiqaatDef[] = [
   { id: 'm1', name: 'Ashara Mubarakah 1448H' },
@@ -20,13 +20,15 @@ export const INITIAL_SHARAF_ALLOCATIONS: SharafAllocation[] = [
     id: 'alloc_1',
     itsNumber: '50412345',
     eventType: 'Waaz',
-    waazZone: 'Masjid Sehan'
+    location: 'Nadir Burhani Hall',
+    zone: 'Masjid Sehan'
   },
   {
     id: 'alloc_2',
     itsNumber: '50412345',
     eventType: 'Nikah',
-    location: 'Hazrat Aliyah Stage',
+    location: 'Hazrat Aliyah Hall',
+    zone: 'Stage',
     fromTime: '10:00 AM',
     toTime: '12:00 PM'
   },
@@ -34,8 +36,8 @@ export const INITIAL_SHARAF_ALLOCATIONS: SharafAllocation[] = [
     id: 'alloc_3',
     itsNumber: '30498765',
     eventType: 'Waaz',
-    waazZone: 'Relay Center',
-    mohalla: 'Shabbirabad / Shabbiri'
+    location: 'Burhani Masjid',
+    zone: 'Relay Center'
   },
   {
     id: 'alloc_4',
@@ -318,3 +320,58 @@ export const MOCK_GALLERY_IMAGES = [
     credit: 'Al Musawareen Archive'
   }
 ];
+
+export const INITIAL_MIQAAT_REQUESTS: MiqaatRequest[] = [
+  {
+    id: 'mr_1',
+    miqaatName: 'Ashara Mubarakah 1448H',
+    fromDate: '2026-07-01',
+    toDate: '2026-07-05',
+    notes: 'Please confirm your operational availability for morning and evening Waaz sessions in Karachi South.',
+    createdBy: '40486680',
+    memberResponses: {
+      '50489217': {
+        itsNumber: '50489217',
+        status: 'accepted',
+        respondedAt: '2026-06-20T10:30:00Z'
+      },
+      '50412345': {
+        itsNumber: '50412345',
+        status: 'accepted',
+        respondedAt: '2026-06-20T11:15:00Z'
+      },
+      '30498765': {
+        itsNumber: '30498765',
+        status: 'pending'
+      },
+      '40499887': {
+        itsNumber: '40499887',
+        status: 'declined',
+        respondedAt: '2026-06-21T09:00:00Z',
+        declineReason: 'Out of town / Prior travel commitment'
+      }
+    },
+    createdAt: '2026-06-19T08:00:00Z'
+  },
+  {
+    id: 'mr_2',
+    miqaatName: 'Chehlum Imam Husain 1448H',
+    fromDate: '2026-08-20',
+    toDate: '2026-08-22',
+    notes: 'Availabilities requested for Chehlum procession coverage and relay centers.',
+    createdBy: '40486680',
+    memberResponses: {
+      '50489217': {
+        itsNumber: '50489217',
+        status: 'pending'
+      },
+      '50412345': {
+        itsNumber: '50412345',
+        status: 'accepted',
+        respondedAt: '2026-07-01T14:00:00Z'
+      }
+    },
+    createdAt: '2026-06-25T12:00:00Z'
+  }
+];
+

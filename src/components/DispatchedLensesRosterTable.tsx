@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { UserProfile, getUserRoles, hasRole, formatRoleBadgeLabel } from '../types';
+import React, { useState, useMemo } from 'react';
+import { UserProfile, getUserRoles, hasRole, formatRoleBadgeLabel, Assignment, ShotReport } from '../types';
 import { translations, LanguageType } from '../utils/translations';
-import { Users, Search, Shield, Plus } from 'lucide-react';
+import { Users, Search, Shield, Plus, Star } from 'lucide-react';
 import AvatarPlaceholder from './AvatarPlaceholder';
+import { calculateUserAverageRating } from '../utils/starRating';
 
 interface DispatchedLensesRosterTableProps {
   users: UserProfile[];
+  assignments?: Assignment[];
+  submissions?: ShotReport[];
   lang: LanguageType;
   isSafarModeEnabled?: boolean;
   onQuickAssignUser?: (itsNumber: string) => void;
@@ -15,6 +18,8 @@ interface DispatchedLensesRosterTableProps {
 
 export default function DispatchedLensesRosterTable({
   users,
+  assignments = [],
+  submissions = [],
   lang,
   isSafarModeEnabled = true,
   onQuickAssignUser,
@@ -33,9 +38,18 @@ export default function DispatchedLensesRosterTable({
       pv.fullName.toLowerCase().includes(q) ||
       pv.itsNumber.includes(q) ||
       (pv.mohalla && pv.mohalla.toLowerCase().includes(q)) ||
+      (pv.cityRaza && pv.cityRaza.toLowerCase().includes(q)) ||
       formatRoleBadgeLabel(pv).toLowerCase().includes(q)
     );
   });
+
+  const ratingsByUser = useMemo(() => {
+    const map: Record<string, { averageGold: number; totalRedStars: number; reportsCount: number; redStarBreakdown: string[] }> = {};
+    approvedPVs.forEach(pv => {
+      map[pv.itsNumber] = calculateUserAverageRating(submissions, assignments, pv);
+    });
+    return map;
+  }, [approvedPVs, submissions, assignments]);
 
   return (
     <div className="w-full editorial-card-dense p-6 sm:p-8 space-y-6">
@@ -70,35 +84,25 @@ export default function DispatchedLensesRosterTable({
         <table className="w-full text-left rtl:text-right text-xs font-sans border-collapse">
           <thead>
             <tr className="border-b border-[#5C130F]/20 text-[#5C130F] uppercase tracking-wider pb-3 font-mono font-bold">
-              <th className="py-3 pr-2 font-mono font-bold">{lang === 'en' ? 'Member' : 'العضو'}</th>
-              <th className="py-3 px-2 font-mono font-bold">ITS</th>
-              <th className="py-3 px-2 font-mono font-bold whitespace-nowrap min-w-[150px]">{lang === 'en' ? 'Role Tracks' : 'المسارات'}</th>
+              <th className="py-3 pr-2 font-mono font-bold w-[18%] min-w-[150px]">{lang === 'en' ? 'Member' : 'العضو'}</th>
+              <th className="py-3 px-2 font-mono font-bold w-[8%]">ITS</th>
+              <th className="py-3 px-2 font-mono font-bold whitespace-nowrap w-[10%]">{lang === 'en' ? 'Role' : (t.role || 'الدور')}</th>
+              <th className="py-3 px-2 font-mono font-bold whitespace-nowrap w-[8%]">{lang === 'en' ? 'Rating' : 'التقييم'}</th>
+              <th className="py-3 px-2 font-mono font-bold w-[11%]">{lang === 'en' ? 'Mohalla' : 'المحلة'}</th>
+              <th className="py-3 px-2 font-mono font-bold w-[16%]">{lang === 'en' ? 'Equipment' : 'المعدات'}</th>
+              <th className="py-3 px-2 font-mono font-bold w-[15%]">{lang === 'en' ? 'Contact' : 'التواصل'}</th>
 
-              {isSafarModeEnabled ? (
-                <>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Granted Raza' : 'الرضا الممنوحة'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">Sharaf Status</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Mohalla' : 'المحلة'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Equipment' : 'المعدات'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Mobile' : 'الهاتف'}</th>
-                </>
-              ) : (
-                <>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Camera' : 'الكاميرا'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Lenses' : 'العدسات'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Mohalla' : 'المحلة'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Email' : 'البريد'}</th>
-                  <th className="py-3 px-2 font-mono font-bold">{lang === 'en' ? 'Mobile Number' : 'رقم الجوال'}</th>
-                </>
+              {isSafarModeEnabled && (
+                <th className="py-3 px-2 font-mono font-bold whitespace-nowrap w-[10%]">{lang === 'en' ? 'Safar' : 'السفر'}</th>
               )}
 
-              <th className="py-3 pl-2 font-mono font-bold text-right rtl:text-left">{lang === 'en' ? 'Action' : 'الإجراء'}</th>
+              <th className="py-3 pl-2 font-mono font-bold text-right rtl:text-left whitespace-nowrap">{lang === 'en' ? 'Action' : 'الإجراء'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#5C130F]/15">
             {filteredOverviewPVs.length === 0 ? (
               <tr>
-                <td colSpan={isSafarModeEnabled ? 9 : 9} className="py-8 text-center text-[#3A1A14]/70 font-serif italic">
+                <td colSpan={isSafarModeEnabled ? 9 : 8} className="py-8 text-center text-[#3A1A14]/70 font-serif italic">
                   {t.noMembersFound}
                 </td>
               </tr>
@@ -110,63 +114,99 @@ export default function DispatchedLensesRosterTable({
                 const lensText = pv.lenses && pv.lenses.length > 0
                   ? pv.lenses.map(l => l.split(' (')[0]).join(', ')
                   : '—';
-                const equipmentSummary = [cameraText !== '—' ? `Cam: ${cameraText}` : null, lensText !== '—' ? `Lens: ${lensText}` : null]
-                  .filter(Boolean)
-                  .join(' | ') || '—';
+                const equipmentFullTooltip = `Camera: ${cameraText} | Lens: ${lensText}`;
+
+                const rating = ratingsByUser[pv.itsNumber] || { averageGold: 0, totalRedStars: 0, reportsCount: 0, redStarBreakdown: [] };
+                const ratingTooltip = rating.reportsCount > 0
+                  ? `Average Gold: ${rating.averageGold} | Red Stars: ${rating.totalRedStars} | Reports: ${rating.reportsCount}`
+                  : (lang === 'en' ? 'No reports submitted yet' : 'لم يتم تقديم أي تقارير بعد');
+
+                const contactTooltip = `Mobile: ${pv.mobile || '—'} | Email: ${pv.email || '—'}`;
 
                 return (
                   <tr key={pv.itsNumber} className="hover:bg-[#BA8332]/8 transition-colors">
-                    <td className="py-3.5 flex items-center gap-3 pr-2 min-w-[180px]">
-                      <AvatarPlaceholder src={pv.avatarUrl} alt={pv.fullName} sizeClassName="w-9 h-9" iconSizeClassName="w-4 h-4" />
-                      <div>
-                        <p className="font-serif font-bold text-[#3A1A14] text-sm leading-tight">{pv.fullName}</p>
+                    {/* 1. Member */}
+                    <td className="py-3 flex items-center gap-2.5 pr-2 min-w-[150px]">
+                      <AvatarPlaceholder src={pv.avatarUrl} alt={pv.fullName} sizeClassName="w-8 h-8" iconSizeClassName="w-3.5 h-3.5" />
+                      <div className="truncate max-w-[160px]">
+                        <p className="font-serif font-bold text-[#3A1A14] text-xs sm:text-sm leading-tight truncate" title={pv.fullName}>{pv.fullName}</p>
                       </div>
                     </td>
-                    <td className="py-3.5 px-2 font-mono text-[#3A1A14] font-bold">{pv.itsNumber}</td>
-                    <td className="py-3.5 px-2 whitespace-nowrap min-w-[150px]">
-                      <span className="px-2.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-[#5C130F]/10 text-[#5C130F] border border-[#5C130F]/20 whitespace-nowrap inline-block">
+
+                    {/* 2. ITS */}
+                    <td className="py-3 px-2 font-mono text-[#3A1A14] font-bold whitespace-nowrap">{pv.itsNumber}</td>
+
+                    {/* 3. Role */}
+                    <td className="py-3 px-2 whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-[#5C130F]/10 text-[#5C130F] border border-[#5C130F]/20 whitespace-nowrap inline-block">
                         {formatRoleBadgeLabel(pv)}
                       </span>
                     </td>
 
-                    {isSafarModeEnabled ? (
-                      <>
-                        <td className="py-3.5 px-2 font-mono text-xs font-bold text-[#5C130F]">{pv.cityRaza || '—'}</td>
-                        <td className="py-3.5 px-2">
-                          <span className={`px-2.5 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase ${
-                            pv.sharafStatus === 'granted' ? 'bg-[#5C130F] !text-white' : 'bg-white/50 border border-[#5C130F]/20 text-[#5C130F]/60'
-                          }`}>
-                            {pv.sharafStatus === 'granted' ? (pv.sharafZone || 'Granted') : 'Pending'}
+                    {/* 4. Rating */}
+                    <td className="py-3 px-2 font-mono text-xs whitespace-nowrap" title={ratingTooltip}>
+                      {rating.reportsCount === 0 ? (
+                        <span className="text-[#3A1A14]/40 font-bold">—</span>
+                      ) : (
+                        <div className="inline-flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 font-bold text-[#BA8332]">
+                            <Star className="w-3.5 h-3.5 fill-[#BA8332] text-[#BA8332]" />
+                            <span>{rating.averageGold.toFixed(1).replace(/\.0$/, '')}</span>
                           </span>
-                        </td>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#3A1A14]/80">{pv.mohalla || pv.cityDomicile || '—'}</td>
-                        <td className="py-3.5 px-2 font-mono text-[11px] text-[#3A1A14]/75 truncate max-w-[160px]" title={equipmentSummary}>
-                          {equipmentSummary}
-                        </td>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#3A1A14]/80">{pv.mobile || '—'}</td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#5C130F] max-w-[140px] truncate" title={cameraText}>
-                          {cameraText}
-                        </td>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#3A1A14]/85 max-w-[140px] truncate" title={lensText}>
-                          {lensText}
-                        </td>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#3A1A14]/80">{pv.mohalla || pv.cityDomicile || '—'}</td>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#3A1A14]/80 max-w-[150px] truncate" title={pv.email}>
-                          {pv.email || '—'}
-                        </td>
-                        <td className="py-3.5 px-2 font-mono text-xs text-[#3A1A14]/80 whitespace-nowrap">{pv.mobile || '—'}</td>
-                      </>
+                          <span className="inline-flex items-center gap-1 font-bold text-red-600">
+                            <Star className="w-3.5 h-3.5 fill-red-600 text-red-600" />
+                            <span>{rating.totalRedStars}</span>
+                          </span>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* 5. Mohalla */}
+                    <td className="py-3 px-2 font-mono text-xs text-[#3A1A14]/80 max-w-[120px] truncate" title={pv.mohalla || pv.cityDomicile || '—'}>
+                      {pv.mohalla || pv.cityDomicile || '—'}
+                    </td>
+
+                    {/* 6. Equipment */}
+                    <td className="py-3 px-2 font-mono text-xs max-w-[160px]" title={equipmentFullTooltip}>
+                      <div className="text-[#5C130F] font-medium truncate">{cameraText}</div>
+                      <div className="text-[#3A1A14]/75 text-[11px] truncate">{lensText}</div>
+                    </td>
+
+                    {/* 7. Contact */}
+                    <td className="py-3 px-2 font-mono text-xs max-w-[150px]" title={contactTooltip}>
+                      <div className="text-[#3A1A14] font-medium truncate">{pv.mobile || '—'}</div>
+                      <div className="text-[#3A1A14]/65 text-[11px] truncate" title={pv.email}>{pv.email || '—'}</div>
+                    </td>
+
+                    {/* 8. Safar (Only when Safar Mode is ON) */}
+                    {isSafarModeEnabled && (
+                      <td className="py-3 px-2 font-mono text-xs max-w-[130px]">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1 truncate" title={`Raza City: ${pv.cityRaza || '—'}`}>
+                            <span className="text-[9px] uppercase text-[#3A1A14]/60 font-bold">RAZA:</span>
+                            <span className="font-bold text-[#5C130F] text-[11px] truncate">{pv.cityRaza || '—'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] uppercase text-[#3A1A14]/60 font-bold">SHARAF:</span>
+                            <span className={`px-1.5 py-0.2 rounded-xs text-[9px] font-bold uppercase ${
+                              pv.sharafStatus === 'granted'
+                                ? 'bg-[#5C130F] !text-white'
+                                : 'bg-white/50 border border-[#5C130F]/20 text-[#5C130F]/70'
+                            }`}>
+                              {pv.sharafStatus === 'granted' ? 'Granted' : 'Pending'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
                     )}
 
-                    <td className="py-3.5 pl-2 text-right rtl:text-left">
+                    {/* 9. Action */}
+                    <td className="py-3 pl-2 text-right rtl:text-left whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         {canEditRoster && onEditRolesPermissions && (
                           <button
                             onClick={() => onEditRolesPermissions(pv)}
-                            className="px-2.5 py-1.5 bg-[#5C130F]/10 hover:bg-[#5C130F] active:bg-[#5C130F] rounded-md transition-colors border border-[#5C130F]/20 flex items-center gap-1 cursor-pointer whitespace-nowrap group"
+                            className="px-2 py-1 bg-[#5C130F]/10 hover:bg-[#5C130F] active:bg-[#5C130F] rounded-md transition-colors border border-[#5C130F]/20 flex items-center gap-1 cursor-pointer whitespace-nowrap group"
                             title="Manage user roles & HR access permissions"
                           >
                             <Shield className="w-3 h-3 text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] transition-colors" />
@@ -176,7 +216,7 @@ export default function DispatchedLensesRosterTable({
                         {onQuickAssignUser && (
                           <button
                             onClick={() => onQuickAssignUser(pv.itsNumber)}
-                            className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white text-[10px] font-mono font-bold rounded-md transition-colors shadow-xs whitespace-nowrap cursor-pointer"
+                            className="px-2.5 py-1 bg-[#BA8332] hover:bg-[#a06e28] text-white text-[10px] font-mono font-bold rounded-md transition-colors shadow-xs whitespace-nowrap cursor-pointer"
                           >
                             + {t.assignTaskBtn}
                           </button>

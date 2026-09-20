@@ -270,6 +270,20 @@ export default function OnboardingApprovalsView({
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage zones, topics & Safar mode</span>
                         </div>
                       </label>
+
+                      {/* 10. Data Dump */}
+                      <label className="flex items-start gap-2.5 p-2.5 bg-white/80 border border-[#5C130F]/15 rounded-lg cursor-pointer hover:bg-white transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={getPendingHRPermissions(user.itsNumber).manageDataDump ?? false}
+                          onChange={(e) => setPendingHRPermission(user.itsNumber, 'manageDataDump', e.target.checked)}
+                          className="mt-0.5 accent-[#BA8332] w-4 h-4"
+                        />
+                        <div>
+                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Data Dump Operations</span>
+                          <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage card receipt and copy status after events</span>
+                        </div>
+                      </label>
                     </div>
 
                     <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#5C130F]/15">
