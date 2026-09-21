@@ -39,8 +39,6 @@ export const translations = {
     loginBtn: 'Authorize Secure Connection',
     noAccount: 'Are you an active photographer or videographer?',
     registerLink: 'Onboard & Register Here',
-    adminLoginHint: 'Admin login: Email "ibrahim.lokhandwala@almusawareen.org" or ITS "40486680" with any password.',
-    userLoginHint: 'Photographer login: Email "taher.kotwala@gmail.com" or ITS "50412345".',
 
     // Onboarding / Register
     onboardTitle: 'Onboarding & Registration',
@@ -188,8 +186,6 @@ export const translations = {
     loginBtn: 'ترخيص الاتصال الآمن',
     noAccount: 'هل أنت مصور أو مصور فيديو نشط؟',
     registerLink: 'انضم وسجل بياناتك هنا',
-    adminLoginHint: 'دخول المدير: البريد "ibrahim.lokhandwala@almusawareen.org" أو رقم ITS "40486680" مع أي كلمة مرور.',
-    userLoginHint: 'دخول المصور: البريد "taher.kotwala@gmail.com" أو رقم ITS "50412345".',
 
     // Onboarding / Register
     onboardTitle: 'الانضمام والتسجيل الرسمي',

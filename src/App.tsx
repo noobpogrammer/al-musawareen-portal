@@ -24,10 +24,14 @@ import Navbar from './components/Navbar';
 import PublicPortal from './components/PublicPortal';
 import LoginPortal from './components/LoginPortal';
 import RegistrationPortal from './components/RegistrationPortal';
+import ForgotPasswordPortal from './components/ForgotPasswordPortal';
+import ResetPasswordPortal from './components/ResetPasswordPortal';
+import OAuthOnboardingPortal from './components/OAuthOnboardingPortal';
 import AdminDashboard from './components/AdminDashboard';
 import SubmissionPortal from './components/SubmissionPortal';
 import SharafPortal from './components/SharafPortal';
 import { supabase } from './utils/supabaseClient';
+import { cleanAuthUrlParams, detectAuthActionFromUrl } from './utils/authHelpers';
 
 // Helper to ensure admin profile attributes match current mock data even if restored from stale localStorage
 const sanitizeUserProfile = (u: UserProfile): UserProfile => {
@@ -118,7 +122,17 @@ export default function App() {
   // Supabase-backed Miqaat Requests (authoritative DB source)
   const [miqaatRequests, setMiqaatRequests] = useState<MiqaatRequest[]>([]);
 
+  const [oauthUser, setOauthUser] = useState<{
+    id: string;
+    email: string;
+    fullName?: string;
+    avatarUrl?: string;
+  } | null>(null);
+
   const [activeView, setActiveView] = useState<string>(() => {
+    const authAction = detectAuthActionFromUrl();
+    if (authAction === 'recovery') return 'resetPassword';
+
     const savedUser = localStorage.getItem('al_musawareen_session');
     if (savedUser) {
       try {
@@ -150,19 +164,44 @@ export default function App() {
 
   // Load and listen to Supabase Auth State
   useEffect(() => {
+    const authAction = detectAuthActionFromUrl();
+
+    if (authAction === 'recovery') {
+      setActiveView('resetPassword');
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (authAction === 'recovery') {
+        setActiveView('resetPassword');
+        return;
+      }
       if (session?.user) {
         loadUserProfile(session.user.id);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setActiveView('resetPassword');
+        return;
+      }
+
       if (event === 'SIGNED_IN' && session?.user) {
-        loadUserProfile(session.user.id);
+        setActiveView(current => {
+          if (current === 'resetPassword') return 'resetPassword';
+          loadUserProfile(session.user.id);
+          return current;
+        });
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
+        setOauthUser(null);
         localStorage.removeItem('al_musawareen_session');
-        setActiveView(prev => (prev === 'pendingApproval' || prev === 'accountRejected' || prev === 'login') ? prev : 'public');
+        setActiveView(prev => {
+          const persistentViews = ['pendingApproval', 'accountRejected', 'login', 'register', 'forgotPassword', 'resetPassword'];
+          return persistentViews.includes(prev) ? prev : 'public';
+        });
+      } else if (event === 'USER_UPDATED' && session?.user) {
+        loadUserProfile(session.user.id);
       }
     });
 
@@ -413,6 +452,8 @@ export default function App() {
         .single();
       
       if (member) {
+        cleanAuthUrlParams();
+
         // Enforce strict Admin Approval gate: non-admin users MUST have status === 'approved'
         if (member.role !== 'admin' && member.status !== 'approved') {
           console.warn(`[Access Guard] Unapproved user ${member.its_id} (status: ${member.status}) attempted session restore. Revoking auth session.`);
@@ -448,11 +489,29 @@ export default function App() {
         setCurrentUser(profile);
         localStorage.setItem('al_musawareen_session', JSON.stringify(profile));
         setActiveView(prev => {
-          if (prev === 'public' || prev === 'login' || prev === 'register') {
+          if (prev === 'public' || prev === 'login' || prev === 'register' || prev === 'oauthOnboarding' || prev === 'forgotPassword' || prev === 'resetPassword') {
             return profile.role === 'admin' ? 'admin' : 'submit';
           }
           return prev;
         });
+      } else {
+        // User is authenticated in Supabase Auth (e.g. Google OAuth) but has no public.members profile record
+        const { data: authUserData } = await supabase.auth.getUser();
+        const authUser = authUserData?.user;
+        if (authUser && authUser.id === userId) {
+          const meta = authUser.user_metadata || {};
+          const email = authUser.email || '';
+          const fullName = meta.full_name || meta.name || '';
+          const avatarUrl = meta.avatar_url || meta.picture || '';
+
+          setOauthUser({
+            id: userId,
+            email,
+            fullName,
+            avatarUrl
+          });
+          setActiveView('oauthOnboarding');
+        }
       }
     } catch (err) {
       console.error('Failed to load user profile:', err);
@@ -1311,6 +1370,50 @@ export default function App() {
             lang={lang}
             onLoginSuccess={handleLoginSuccess}
             onNavigateRegister={() => setActiveView('register')}
+            onNavigateForgotPassword={() => setActiveView('forgotPassword')}
+          />
+        )}
+
+        {activeView === 'forgotPassword' && (
+          <ForgotPasswordPortal
+            lang={lang}
+            onNavigateLogin={() => setActiveView('login')}
+            onNavigateHome={() => setActiveView('public')}
+          />
+        )}
+
+        {activeView === 'resetPassword' && (
+          <ResetPasswordPortal
+            lang={lang}
+            onResetSuccess={() => {
+              cleanAuthUrlParams();
+              setActiveView('login');
+            }}
+            onNavigateLogin={() => {
+              cleanAuthUrlParams();
+              setActiveView('login');
+            }}
+          />
+        )}
+
+        {activeView === 'oauthOnboarding' && (
+          <OAuthOnboardingPortal
+            lang={lang}
+            authUserId={oauthUser?.id || ''}
+            authEmail={oauthUser?.email || ''}
+            authFullName={oauthUser?.fullName}
+            authAvatarUrl={oauthUser?.avatarUrl}
+            onComplete={() => {
+              setOauthUser(null);
+              cleanAuthUrlParams();
+              setActiveView('pendingApproval');
+            }}
+            onCancel={() => {
+              setOauthUser(null);
+              cleanAuthUrlParams();
+              supabase.auth.signOut();
+              setActiveView('login');
+            }}
           />
         )}
 

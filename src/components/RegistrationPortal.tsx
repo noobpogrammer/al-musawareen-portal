@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import Logo from './Logo';
 import { translations, LanguageType } from '../utils/translations';
 import { UserProfile, UserRole } from '../types';
-import { Camera, Video, Shield, User, Info, CheckCircle2, Lock, Eye, EyeOff, MapPin, Phone, Mail, HelpCircle } from 'lucide-react';
+import { Camera, Video, Shield, User, Info, CheckCircle2, Lock, Eye, EyeOff, MapPin, Phone, Mail, HelpCircle, MailCheck } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
+import { getAppBaseUrl } from '../utils/authHelpers';
 
 interface RegistrationPortalProps {
   lang: LanguageType;
@@ -173,11 +174,12 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
         return specific ? `${lens} (${specific})` : lens;
       });
 
-      // 1. Sign up user via Supabase Auth with metadata for the database trigger
+      // 1. Sign up user via Supabase Auth with metadata for the database trigger and SPA redirect URL
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: cleanEmail,
         password: password,
         options: {
+          emailRedirectTo: `${getAppBaseUrl()}/?auth=verified`,
           data: {
             its_id: cleanIts,
             full_name: fullName.trim(),
@@ -230,17 +232,20 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
         }
       }
 
-      // 3. Fallback client-side member record insert / update (if DB trigger isn't active or dpUrl was added)
+      // 3. Fallback client-side member record insert / update (status explicitly set to 'pending')
       const { error: dbError } = await supabase.from('members').upsert({
         id: userId,
         its_id: cleanIts,
         full_name: fullName.trim(),
         dp_url: dpUrl || null,
         role: role,
+        roles: [role],
         mobile: mobile.trim(),
         email: cleanEmail,
         city_raza: cityRaza,
         mohalla: mohalla,
+        status: 'pending',
+        sharaf_status: 'none',
         cameras: (role === 'photographer' || role === 'videographer') ? formattedCameras : [],
         lenses: (role === 'photographer' || role === 'videographer') ? formattedLenses : [],
         other_equipment: (role === 'photographer' || role === 'videographer') ? otherEquipment.trim() : '',
@@ -255,6 +260,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
         itsNumber: cleanIts,
         fullName: fullName.trim(),
         role,
+        roles: [role],
         mobile: mobile.trim(),
         email: cleanEmail,
         avatarUrl: dpUrl,
@@ -271,10 +277,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
       await supabase.auth.signOut();
 
       setRegisteredSuccess(true);
-      setTimeout(() => {
-        onRegisterSuccess(newUser);
-      }, 2500);
-
+      onRegisterSuccess(newUser);
     } catch (err: any) {
       setErrors({ submit: err.message || 'Registration failed. Please check your credentials.' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -286,22 +289,33 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
   if (registeredSuccess) {
     return (
       <div className="min-h-screen bg-editorial-bg flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-md editorial-card p-8 text-center flex flex-col items-center gap-6">
-          <div className="p-4 bg-editorial-bg rounded-none border border-editorial-border text-editorial-accent">
-            <CheckCircle2 className="w-12 h-12" />
+        <div className="w-full max-w-lg editorial-card p-8 sm:p-10 text-center flex flex-col items-center gap-6 animate-fadeIn">
+          <div className="p-4 bg-[#BA8332]/10 rounded-full border-2 border-[#BA8332] text-[#BA8332]">
+            <MailCheck className="w-10 h-10" />
           </div>
-          <h2 className="font-serif text-3xl font-bold text-editorial-ink">
-            Application Submitted
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#5C130F]">
+            Registration Submitted
           </h2>
-          <p className="font-serif italic text-sm text-editorial-ink/75 leading-relaxed">
-            Your registration with ITS Number {itsNumber} has been dispatched to Sheikh Ibrahim Bhai Lokhandwala for official onboarding and Sharaf authorization. You can now use your credentials to log in.
-          </p>
-          <div className="w-full h-1.5 bg-editorial-ink/10 rounded-none overflow-hidden mt-4">
-            <div className="h-full bg-editorial-accent w-full animate-[pulse_1.5s_infinite]" />
+          <div className="bg-[#FDFAF3] border border-[#5C130F]/20 p-5 rounded-none space-y-3 text-left rtl:text-right font-sans text-xs text-[#3A1A14]/85 leading-relaxed">
+            <p className="font-semibold text-[#5C130F] text-center text-sm">
+              Please check your email to verify your address.
+            </p>
+            <p className="text-center text-xs">
+              A verification link was dispatched to <strong className="font-mono text-[#5C130F]">{email}</strong>. Please click the link to confirm your email.
+            </p>
+            <div className="border-t border-[#5C130F]/15 pt-2 text-[11px] text-[#3A1A14]/75 text-center italic">
+              Note: Email verification confirms your address. Once verified, your application remains under administrative review by <strong>Sheikh Ibrahim Bhai Lokhandwala</strong> before portal access is activated.
+            </div>
           </div>
-          <p className="text-[10px] font-mono text-editorial-accent font-bold tracking-widest uppercase">
-            {t.loading}
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full pt-2">
+            <button
+              type="button"
+              onClick={onNavigateLogin}
+              className="w-full sm:w-auto px-6 py-3 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              Return to Login
+            </button>
+          </div>
         </div>
       </div>
     );
