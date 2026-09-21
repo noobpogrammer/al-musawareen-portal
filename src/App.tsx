@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Assignment, ShotReport, SharafEventDef, SharafAllocation, MiqaatDef, Zone, Topic, AssignmentNotification, HRPermissions, UserRole, DataDumpRecord, getUserRoles, DEFAULT_HR_PERMISSIONS, MiqaatRequest } from './types';
-import { 
-  INITIAL_SUBMISSIONS, 
-  INITIAL_ZONES, 
-  INITIAL_TOPICS,
-  DEFAULT_SHARAF_EVENTS,
-  INITIAL_SHARAF_ALLOCATIONS,
-  INITIAL_MIQAATS
-} from './utils/mockData';
+import { INITIAL_SUBMISSIONS } from './utils/mockData';
 import { LanguageType } from './utils/translations';
 import { 
   mapAssignmentFromDb, 
@@ -16,6 +9,14 @@ import {
   mapMiqaatRequestFromDb, 
   mapMiqaatRequestToDb 
 } from './utils/assignmentHelpers';
+import {
+  mapSharafAllocationFromDb,
+  mapSharafAllocationToDb,
+  mapSharafEventFromDb,
+  mapMiqaatFromDb,
+  mapZoneFromDb,
+  mapTopicFromDb
+} from './utils/operationalHelpers';
 
 import { Clock, ShieldAlert } from 'lucide-react';
 import Logo from './components/Logo';
@@ -41,20 +42,6 @@ const sanitizeUserProfile = (u: UserProfile): UserProfile => {
   }
   return u;
 };
-
-// Helper to normalize Sharaf allocations from legacy or DB schema if needed
-const normalizeSharafAllocation = (raw: any): SharafAllocation => ({
-  id: raw.id || `alloc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-  itsNumber: raw.itsNumber || raw.its_number,
-  eventType: raw.eventType || raw.event_type,
-  date: raw.date || undefined,
-  location: raw.location || '',
-  zone: raw.zone || raw.waazZone || undefined,
-  fromTime: raw.fromTime || raw.from_time,
-  toTime: raw.toTime || raw.to_time,
-  dataCopyingDeadlineDate: raw.dataCopyingDeadlineDate || raw.data_copying_deadline_date || undefined,
-  dataCopyingDeadlineTime: raw.dataCopyingDeadlineTime || raw.data_copying_deadline_time || undefined
-});
 
 export default function App() {
   // 1. Core State Hooks
@@ -110,75 +97,23 @@ export default function App() {
     return (saved as LanguageType) || 'en';
   });
 
-  // Moula's Tus Safar Mode Global State (defaults to true)
-  const [isSafarModeEnabled, setIsSafarModeEnabled] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_safar_mode');
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch {
-      return true;
-    }
-  });
+  // Supabase-backed global Safar Mode (authoritative DB source)
+  const [isSafarModeEnabled, setIsSafarModeEnabled] = useState<boolean>(true);
 
-  // Sharaf Event Types List
-  const [sharafEvents, setSharafEvents] = useState<SharafEventDef[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_sharaf_events');
-      if (!saved) return DEFAULT_SHARAF_EVENTS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : DEFAULT_SHARAF_EVENTS;
-    } catch {
-      return DEFAULT_SHARAF_EVENTS;
-    }
-  });
+  // Supabase-backed Sharaf Event Types List
+  const [sharafEvents, setSharafEvents] = useState<SharafEventDef[]>([]);
 
-  // Sharaf Allocations List
-  const [sharafAllocations, setSharafAllocations] = useState<SharafAllocation[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_sharaf_allocations');
-      if (!saved) return INITIAL_SHARAF_ALLOCATIONS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed.map(normalizeSharafAllocation) : INITIAL_SHARAF_ALLOCATIONS;
-    } catch {
-      return INITIAL_SHARAF_ALLOCATIONS;
-    }
-  });
+  // Supabase-backed Sharaf Allocations List
+  const [sharafAllocations, setSharafAllocations] = useState<SharafAllocation[]>([]);
 
-  // Predefined Miqaats List
-  const [miqaats, setMiqaats] = useState<MiqaatDef[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_miqaats');
-      if (!saved) return INITIAL_MIQAATS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_MIQAATS;
-    } catch {
-      return INITIAL_MIQAATS;
-    }
-  });
+  // Supabase-backed Predefined Miqaats List
+  const [miqaats, setMiqaats] = useState<MiqaatDef[]>([]);
 
-  // Coverage Zones List
-  const [zones, setZones] = useState<Zone[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_zones');
-      if (!saved) return INITIAL_ZONES;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_ZONES;
-    } catch {
-      return INITIAL_ZONES;
-    }
-  });
+  // Supabase-backed Coverage Zones List
+  const [zones, setZones] = useState<Zone[]>([]);
 
-  // Touch Points (Topics) List
-  const [topics, setTopics] = useState<Topic[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_topics');
-      if (!saved) return INITIAL_TOPICS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_TOPICS;
-    } catch {
-      return INITIAL_TOPICS;
-    }
-  });
+  // Supabase-backed Touch Points (Topics) List
+  const [topics, setTopics] = useState<Topic[]>([]);
 
   // Supabase-backed Miqaat Requests (authoritative DB source)
   const [miqaatRequests, setMiqaatRequests] = useState<MiqaatRequest[]>([]);
@@ -196,7 +131,7 @@ export default function App() {
     return 'public';
   });
 
-  // 2. Persistence Hooks (Phase 1A: Only non-migrated entities in localStorage)
+  // 2. Persistence Hooks (Phase 1B: Removed localStorage for all DB-backed entities)
   useEffect(() => {
     localStorage.setItem('al_musawareen_users', JSON.stringify(users));
   }, [users]);
@@ -212,30 +147,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('al_musawareen_lang', lang);
   }, [lang]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_safar_mode', JSON.stringify(isSafarModeEnabled));
-  }, [isSafarModeEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_sharaf_events', JSON.stringify(sharafEvents));
-  }, [sharafEvents]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_sharaf_allocations', JSON.stringify(sharafAllocations));
-  }, [sharafAllocations]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_miqaats', JSON.stringify(miqaats));
-  }, [miqaats]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_zones', JSON.stringify(zones));
-  }, [zones]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_topics', JSON.stringify(topics));
-  }, [topics]);
 
   // Load and listen to Supabase Auth State
   useEffect(() => {
@@ -416,6 +327,74 @@ export default function App() {
           setMiqaatRequests(dbMiqaatReqs.map(mapMiqaatRequestFromDb));
         } else if (miqaatReqsErr) {
           console.warn('Failed to load miqaat requests from Supabase:', miqaatReqsErr);
+        }
+
+        // Fetch Sharaf Allocations from Supabase
+        const { data: dbAllocations, error: allocErr } = await supabase
+          .from('sharaf_allocations')
+          .select('*')
+          .order('date', { ascending: false });
+        if (!allocErr && dbAllocations) {
+          setSharafAllocations(dbAllocations.map(mapSharafAllocationFromDb));
+        } else if (allocErr) {
+          console.warn('Failed to load sharaf allocations from Supabase:', allocErr);
+        }
+
+        // Fetch Sharaf Events from Supabase
+        const { data: dbEvents, error: eventsErr } = await supabase
+          .from('sharaf_events')
+          .select('*')
+          .order('name', { ascending: true });
+        if (!eventsErr && dbEvents) {
+          setSharafEvents(dbEvents.map(mapSharafEventFromDb));
+        } else if (eventsErr) {
+          console.warn('Failed to load sharaf events from Supabase:', eventsErr);
+        }
+
+        // Fetch Miqaats from Supabase
+        const { data: dbMiqaats, error: miqaatsErr } = await supabase
+          .from('miqaats')
+          .select('*')
+          .order('name', { ascending: true });
+        if (!miqaatsErr && dbMiqaats) {
+          setMiqaats(dbMiqaats.map(mapMiqaatFromDb));
+        } else if (miqaatsErr) {
+          console.warn('Failed to load miqaats from Supabase:', miqaatsErr);
+        }
+
+        // Fetch Zones from Supabase
+        const { data: dbZones, error: zonesErr } = await supabase
+          .from('zones')
+          .select('*')
+          .order('name', { ascending: true });
+        if (!zonesErr && dbZones) {
+          setZones(dbZones.map(mapZoneFromDb));
+        } else if (zonesErr) {
+          console.warn('Failed to load zones from Supabase:', zonesErr);
+        }
+
+        // Fetch Topics from Supabase
+        const { data: dbTopics, error: topicsErr } = await supabase
+          .from('topics')
+          .select('*')
+          .order('name', { ascending: true });
+        if (!topicsErr && dbTopics) {
+          setTopics(dbTopics.map(mapTopicFromDb));
+        } else if (topicsErr) {
+          console.warn('Failed to load topics from Supabase:', topicsErr);
+        }
+
+        // Fetch Global Safar Mode from Supabase App Settings
+        const { data: dbSafarSetting, error: safarErr } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'safar_mode')
+          .maybeSingle();
+        if (!safarErr && dbSafarSetting && dbSafarSetting.value !== undefined) {
+          const val = dbSafarSetting.value;
+          setIsSafarModeEnabled(typeof val === 'boolean' ? val : Boolean(val?.enabled ?? val));
+        } else if (safarErr) {
+          console.warn('Failed to load safar_mode setting from Supabase:', safarErr);
         }
       } catch (err) {
         console.warn('Could not fetch data from Supabase:', err);
@@ -604,9 +583,10 @@ export default function App() {
     });
 
     try {
+      const conflictTarget = record.sharafAllocationId ? 'sharaf_allocation_id,its_number' : 'assignment_id,its_number';
       const { error } = await supabase.from('data_dumps').upsert({
         assignment_id: record.assignmentId || null,
-        sharaf_allocation_id: record.sharafAllocationId && !record.sharafAllocationId.startsWith('alloc_') ? record.sharafAllocationId : null,
+        sharaf_allocation_id: record.sharafAllocationId || null,
         its_number: record.itsNumber,
         event_name: record.eventName,
         date: record.date,
@@ -624,7 +604,7 @@ export default function App() {
         completed_touch_points: record.completedTouchPoints || null,
         updated_at: new Date().toISOString()
       }, {
-        onConflict: 'assignment_id,its_number'
+        onConflict: conflictTarget
       });
       if (error) {
         console.warn('Supabase data_dumps upsert error:', error);
@@ -825,59 +805,152 @@ export default function App() {
   };
 
   // Add Miqaat Handler
-  const handleAddMiqaat = (name: string) => {
+  const handleAddMiqaat = async (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     if (miqaats.some(m => m.name.toLowerCase() === trimmed.toLowerCase())) return;
-    const newMiqaat: MiqaatDef = {
-      id: `m_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-      name: trimmed
-    };
-    setMiqaats(prev => [...prev, newMiqaat]);
+    const newId = `m_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    try {
+      const { data, error } = await supabase
+        .from('miqaats')
+        .insert({ id: newId, name: trimmed })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to add Miqaat in Supabase:', error);
+        alert(lang === 'en' ? `Failed to add Miqaat: ${error.message}` : `فشل إضافة الميقات: ${error.message}`);
+        return;
+      }
+
+      const created = mapMiqaatFromDb(data);
+      setMiqaats(prev => [...prev, created]);
+    } catch (err: any) {
+      console.error('Error in handleAddMiqaat:', err);
+      alert(lang === 'en' ? `Failed to add Miqaat: ${err.message}` : `فشل إضافة الميقات: ${err.message}`);
+    }
   };
 
   // Add Zone Handlers
-  const handleAddZone = (name: string) => {
+  const handleAddZone = async (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     if (zones.some(z => z.name.toLowerCase() === trimmed.toLowerCase())) return;
-    const newZone: Zone = {
-      id: `z_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-      name: trimmed,
-      description: 'Custom added coverage zone'
-    };
-    setZones(prev => [...prev, newZone]);
+    const newId = `z_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    try {
+      const { data, error } = await supabase
+        .from('zones')
+        .insert({ id: newId, name: trimmed, description: 'Custom added coverage zone' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to add Zone in Supabase:', error);
+        alert(lang === 'en' ? `Failed to add Zone: ${error.message}` : `فشل إضافة المنطقة: ${error.message}`);
+        return;
+      }
+
+      const created = mapZoneFromDb(data);
+      setZones(prev => [...prev, created]);
+    } catch (err: any) {
+      console.error('Error in handleAddZone:', err);
+      alert(lang === 'en' ? `Failed to add Zone: ${err.message}` : `فشل إضافة المنطقة: ${err.message}`);
+    }
   };
 
-  const handleBulkAddZones = (newNames: string[]) => {
-    const formatted: Zone[] = newNames.map((n, i) => ({
-      id: `z_bulk_${Date.now()}_${i}`,
-      name: n.trim(),
+  const handleBulkAddZones = async (newNames: string[]) => {
+    const trimmedNames = Array.from(new Set(newNames.map(n => n.trim()).filter(Boolean)));
+    const existingSet = new Set(zones.map(z => z.name.toLowerCase().trim()));
+    const validNew = trimmedNames.filter(n => !existingSet.has(n.toLowerCase()));
+    if (validNew.length === 0) return;
+
+    const rowsToInsert = validNew.map((name, i) => ({
+      id: `z_bulk_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`,
+      name,
       description: 'Bulk added coverage zone'
     }));
-    setZones(prev => [...prev, ...formatted]);
+
+    try {
+      const { data, error } = await supabase
+        .from('zones')
+        .insert(rowsToInsert)
+        .select();
+
+      if (error) {
+        console.error('Failed to bulk add Zones in Supabase:', error);
+        alert(lang === 'en' ? `Failed to bulk add Zones: ${error.message}` : `فشل إضافة المناطق: ${error.message}`);
+        return;
+      }
+
+      if (data) {
+        const createdList = data.map(mapZoneFromDb);
+        setZones(prev => [...prev, ...createdList]);
+      }
+    } catch (err: any) {
+      console.error('Error in handleBulkAddZones:', err);
+      alert(lang === 'en' ? `Failed to bulk add Zones: ${err.message}` : `فشل إضافة المناطق: ${err.message}`);
+    }
   };
 
   // Add Touch Point (Topic) Handlers
-  const handleAddTopic = (name: string) => {
+  const handleAddTopic = async (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     if (topics.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
-    const newTopic: Topic = {
-      id: `t_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-      name: trimmed,
-      category: 'Touch Point'
-    };
-    setTopics(prev => [...prev, newTopic]);
+    const newId = `t_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .insert({ id: newId, name: trimmed, category: 'Touch Point' })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to add Topic in Supabase:', error);
+        alert(lang === 'en' ? `Failed to add Topic: ${error.message}` : `فشل إضافة نقطة التغطية: ${error.message}`);
+        return;
+      }
+
+      const created = mapTopicFromDb(data);
+      setTopics(prev => [...prev, created]);
+    } catch (err: any) {
+      console.error('Error in handleAddTopic:', err);
+      alert(lang === 'en' ? `Failed to add Topic: ${err.message}` : `فشل إضافة نقطة التغطية: ${err.message}`);
+    }
   };
 
-  const handleBulkAddTopics = (newNames: string[]) => {
-    const formatted: Topic[] = newNames.map((n, i) => ({
-      id: `t_bulk_${Date.now()}_${i}`,
-      name: n.trim(),
+  const handleBulkAddTopics = async (newNames: string[]) => {
+    const trimmedNames = Array.from(new Set(newNames.map(n => n.trim()).filter(Boolean)));
+    const existingSet = new Set(topics.map(t => t.name.toLowerCase().trim()));
+    const validNew = trimmedNames.filter(n => !existingSet.has(n.toLowerCase()));
+    if (validNew.length === 0) return;
+
+    const rowsToInsert = validNew.map((name, i) => ({
+      id: `t_bulk_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 6)}`,
+      name,
       category: 'Touch Point'
     }));
-    setTopics(prev => [...prev, ...formatted]);
+
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .insert(rowsToInsert)
+        .select();
+
+      if (error) {
+        console.error('Failed to bulk add Topics in Supabase:', error);
+        alert(lang === 'en' ? `Failed to bulk add Topics: ${error.message}` : `فشل إضافة نقاط التغطية: ${error.message}`);
+        return;
+      }
+
+      if (data) {
+        const createdList = data.map(mapTopicFromDb);
+        setTopics(prev => [...prev, ...createdList]);
+      }
+    } catch (err: any) {
+      console.error('Error in handleBulkAddTopics:', err);
+      alert(lang === 'en' ? `Failed to bulk add Topics: ${err.message}` : `فشل إضافة نقاط التغطية: ${err.message}`);
+    }
   };
 
   // E. Audits and grades a shot report
@@ -974,55 +1047,145 @@ export default function App() {
   };
 
   // Sharaf Event Allocation Handlers
-  const handleToggleSafarMode = (enabled: boolean) => {
-    setIsSafarModeEnabled(enabled);
-    if (!enabled && activeView === 'sharaf') {
-      setActiveView(currentUser?.role === 'admin' ? 'admin' : 'submit');
+  const handleToggleSafarMode = async (enabled: boolean) => {
+    try {
+      const userRes = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'safar_mode',
+          value: enabled,
+          updated_at: new Date().toISOString(),
+          updated_by: userRes.data.user?.id || null
+        });
+
+      if (error) {
+        console.error('Failed to toggle Safar Mode in Supabase:', error);
+        alert(lang === 'en' ? `Failed to update Safar Mode: ${error.message}` : `فشل تحديث وضع السفر: ${error.message}`);
+        return;
+      }
+
+      setIsSafarModeEnabled(enabled);
+      if (!enabled && activeView === 'sharaf') {
+        setActiveView(currentUser?.role === 'admin' ? 'admin' : 'submit');
+      }
+    } catch (err: any) {
+      console.error('Error in handleToggleSafarMode:', err);
+      alert(lang === 'en' ? `Failed to update Safar Mode: ${err.message}` : `فشل تحديث وضع السفر: ${err.message}`);
     }
   };
 
-  const handleAddSharafAllocation = (newAlloc: Omit<SharafAllocation, 'id'>) => {
-    const freshAlloc: SharafAllocation = {
-      ...newAlloc,
-      id: `alloc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
-    };
-    setSharafAllocations(prev => [freshAlloc, ...prev]);
+  const handleAddSharafAllocation = async (newAlloc: Omit<SharafAllocation, 'id'>) => {
+    try {
+      const dbPayload = mapSharafAllocationToDb(newAlloc);
+      const { data, error } = await supabase
+        .from('sharaf_allocations')
+        .insert(dbPayload)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create Sharaf allocation in Supabase:', error);
+        alert(lang === 'en' ? `Failed to allocate Sharaf: ${error.message}` : `فشل تخصيص الشرف: ${error.message}`);
+        return;
+      }
+
+      const created = mapSharafAllocationFromDb(data);
+      setSharafAllocations(prev => [created, ...prev]);
+    } catch (err: any) {
+      console.error('Error in handleAddSharafAllocation:', err);
+      alert(lang === 'en' ? `Failed to allocate Sharaf: ${err.message}` : `فشل تخصيص الشرف: ${err.message}`);
+    }
   };
 
-  const handleRemoveSharafAllocation = (allocId: string) => {
-    setSharafAllocations(prev => prev.filter(a => a.id !== allocId));
+  const handleRemoveSharafAllocation = async (allocId: string) => {
+    try {
+      const { error } = await supabase
+        .from('sharaf_allocations')
+        .delete()
+        .eq('id', allocId);
+
+      if (error) {
+        console.error('Failed to remove Sharaf allocation in Supabase:', error);
+        alert(lang === 'en' ? `Failed to remove allocation: ${error.message}` : `فشل حذف التخصيص: ${error.message}`);
+        return;
+      }
+
+      setSharafAllocations(prev => prev.filter(a => a.id !== allocId));
+    } catch (err: any) {
+      console.error('Error in handleRemoveSharafAllocation:', err);
+      alert(lang === 'en' ? `Failed to remove allocation: ${err.message}` : `فشل حذف التخصيص: ${err.message}`);
+    }
   };
 
-  const handleBulkAssignSharaf = (newAllocations: Omit<SharafAllocation, 'id'>[]) => {
-    const formatted = newAllocations.map((a, index) => ({
-      ...a,
-      id: `alloc_bulk_${Date.now()}_${index}`
-    }));
-    setSharafAllocations(prev => [...formatted, ...prev]);
+  const handleBulkAssignSharaf = async (newAllocations: Omit<SharafAllocation, 'id'>[]) => {
+    if (newAllocations.length === 0) return;
+    try {
+      const dbPayloads = newAllocations.map(mapSharafAllocationToDb);
+      const { data, error } = await supabase
+        .from('sharaf_allocations')
+        .insert(dbPayloads)
+        .select();
+
+      if (error) {
+        console.error('Failed to bulk assign Sharaf in Supabase:', error);
+        alert(lang === 'en' ? `Failed to bulk assign Sharaf: ${error.message}` : `فشل التخصيص الجماعي للشرف: ${error.message}`);
+        return;
+      }
+
+      if (data) {
+        const createdList = data.map(mapSharafAllocationFromDb);
+        setSharafAllocations(prev => [...createdList, ...prev]);
+      }
+    } catch (err: any) {
+      console.error('Error in handleBulkAssignSharaf:', err);
+      alert(lang === 'en' ? `Failed to bulk assign Sharaf: ${err.message}` : `فشل التخصيص الجماعي للشرف: ${err.message}`);
+    }
   };
 
-  const handleCreateCustomEvent = (name: string) => {
-    const newId = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    if (sharafEvents.some(e => e.id === newId || e.name.toLowerCase() === name.toLowerCase())) {
+  const handleCreateCustomEvent = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const newId = trimmed.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (sharafEvents.some(e => e.id === newId || e.name.toLowerCase() === trimmed.toLowerCase())) {
       alert(lang === 'en' ? 'An event with this name already exists.' : 'توجد مناسبة بهذا الاسم بالفعل.');
       return;
     }
-    const newEvent: SharafEventDef = {
-      id: newId,
-      name,
-      isDefault: false
-    };
-    setSharafEvents(prev => [...prev, newEvent]);
+
+    try {
+      const { data, error } = await supabase
+        .from('sharaf_events')
+        .insert({
+          id: newId,
+          name: trimmed,
+          is_default: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create custom Sharaf event in Supabase:', error);
+        alert(lang === 'en' ? `Failed to create event: ${error.message}` : `فشل إنشاء المناسبة: ${error.message}`);
+        return;
+      }
+
+      const created = mapSharafEventFromDb(data);
+      setSharafEvents(prev => [...prev, created]);
+    } catch (err: any) {
+      console.error('Error in handleCreateCustomEvent:', err);
+      alert(lang === 'en' ? `Failed to create event: ${err.message}` : `فشل إنشاء المناسبة: ${err.message}`);
+    }
   };
 
-  const handleDeleteCustomEvent = (eventId: string) => {
+  const handleDeleteCustomEvent = async (eventId: string) => {
     const eventToDelete = sharafEvents.find(e => e.id === eventId);
-    if (eventToDelete?.isDefault) {
+    if (!eventToDelete) return;
+    if (eventToDelete.isDefault) {
       alert(lang === 'en' ? 'Default event types cannot be deleted.' : 'لا يمكن حذف المناسبات الافتراضية.');
       return;
     }
 
-    const countAllocated = sharafAllocations.filter(a => a.eventType.toLowerCase() === eventToDelete?.name.toLowerCase()).length;
+    const countAllocated = sharafAllocations.filter(a => a.eventType.toLowerCase() === eventToDelete.name.toLowerCase()).length;
     if (countAllocated > 0) {
       const confirmDelete = window.confirm(
         lang === 'en'
@@ -1032,9 +1195,22 @@ export default function App() {
       if (!confirmDelete) return;
     }
 
-    setSharafEvents(prev => prev.filter(e => e.id !== eventId));
-    if (eventToDelete) {
-      setSharafAllocations(prev => prev.filter(a => a.eventType.toLowerCase() !== eventToDelete.name.toLowerCase()));
+    try {
+      const { error } = await supabase
+        .from('sharaf_events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) {
+        console.error('Failed to delete custom event in Supabase:', error);
+        alert(lang === 'en' ? `Failed to delete event: ${error.message}` : `فشل حذف المناسبة: ${error.message}`);
+        return;
+      }
+
+      setSharafEvents(prev => prev.filter(e => e.id !== eventId));
+    } catch (err: any) {
+      console.error('Error in handleDeleteCustomEvent:', err);
+      alert(lang === 'en' ? `Failed to delete event: ${err.message}` : `فشل حذف المناسبة: ${err.message}`);
     }
   };
 

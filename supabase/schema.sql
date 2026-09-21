@@ -122,8 +122,17 @@ CREATE TABLE IF NOT EXISTS public.messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- App Settings Table (Global Portal Configuration like Safar Mode)
+CREATE TABLE IF NOT EXISTS public.app_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
 -- Enable Row Level Security (RLS) on all tables
 ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.miqaats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sharaf_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.zones ENABLE ROW LEVEL SECURITY;
@@ -143,26 +152,183 @@ CREATE POLICY "Allow individual update" ON public.members FOR UPDATE TO authenti
 CREATE POLICY "Allow admin/coordinator updates" ON public.members FOR UPDATE TO authenticated 
     USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role IN ('admin', 'coordinator')));
 
--- Miqaats, Zones, Topics, Sharaf Events (Read all, write admin/coordinator)
-CREATE POLICY "Allow read for authenticated" ON public.miqaats FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow admin write" ON public.miqaats FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role = 'admin'));
+-- App Settings Policies
+CREATE POLICY "Allow authenticated read app_settings"
+ON public.app_settings FOR SELECT TO authenticated
+USING (true);
 
-CREATE POLICY "Allow read for authenticated" ON public.zones FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow admin write" ON public.zones FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Allow admin and authorized hr write app_settings"
+ON public.app_settings FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+);
 
-CREATE POLICY "Allow read for authenticated" ON public.topics FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow admin write" ON public.topics FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role = 'admin'));
+-- Miqaats Policies
+CREATE POLICY "Allow authenticated read miqaats"
+ON public.miqaats FOR SELECT TO authenticated
+USING (true);
 
-CREATE POLICY "Allow read for authenticated" ON public.sharaf_events FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow admin write" ON public.sharaf_events FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Allow admin and authorized hr manage miqaats"
+ON public.miqaats FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+);
+
+-- Zones Policies
+CREATE POLICY "Allow authenticated read zones"
+ON public.zones FOR SELECT TO authenticated
+USING (true);
+
+CREATE POLICY "Allow admin and authorized hr manage zones"
+ON public.zones FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+);
+
+-- Topics Policies
+CREATE POLICY "Allow authenticated read topics"
+ON public.topics FOR SELECT TO authenticated
+USING (true);
+
+CREATE POLICY "Allow admin and authorized hr manage topics"
+ON public.topics FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'systemSettings')::boolean = true)
+        )
+    )
+);
+
+-- Sharaf Events Policies
+CREATE POLICY "Allow authenticated read sharaf_events"
+ON public.sharaf_events FOR SELECT TO authenticated
+USING (true);
+
+CREATE POLICY "Allow admin and authorized hr manage sharaf_events"
+ON public.sharaf_events FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'manageSharaf')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'manageSharaf')::boolean = true)
+        )
+    )
+);
 
 -- Sharaf Allocations Policies
-CREATE POLICY "Allow read for authenticated" ON public.sharaf_allocations FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow individual insert/update" ON public.sharaf_allocations FOR ALL TO authenticated 
-    USING (its_number = (SELECT its_id FROM public.members WHERE id = auth.uid()))
-    WITH CHECK (its_number = (SELECT its_id FROM public.members WHERE id = auth.uid()));
-CREATE POLICY "Allow admin write allocations" ON public.sharaf_allocations FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.members WHERE id = auth.uid() AND role IN ('admin', 'coordinator')));
+CREATE POLICY "Allow select sharaf_allocations for authorized users"
+ON public.sharaf_allocations FOR SELECT TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'manageSharaf')::boolean = true)
+            OR (m.its_id = public.sharaf_allocations.its_number)
+        )
+    )
+);
+
+CREATE POLICY "Allow admin and authorized hr write sharaf_allocations"
+ON public.sharaf_allocations FOR ALL TO authenticated
+USING (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'manageSharaf')::boolean = true)
+        )
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.members m
+        WHERE m.id = auth.uid()
+        AND (
+            m.role = 'admin'
+            OR (m.hr_permissions IS NOT NULL AND (m.hr_permissions->>'manageSharaf')::boolean = true)
+        )
+    )
+);
 
 -- Assignments Policies
 CREATE POLICY "Allow select assignments for authorized users"
@@ -660,6 +826,39 @@ GRANT EXECUTE ON FUNCTION public.respond_to_miqaat_request(UUID, TEXT, TEXT) TO 
 REVOKE ALL ON FUNCTION public.respond_to_assignment(UUID, TEXT, TEXT) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.respond_to_assignment(UUID, TEXT, TEXT) FROM anon;
 GRANT EXECUTE ON FUNCTION public.respond_to_assignment(UUID, TEXT, TEXT) TO authenticated;
+
+-- Phase 1B: Indexes, Constraints & Default Event Delete Protection Trigger
+ALTER TABLE public.data_dumps
+    DROP CONSTRAINT IF EXISTS unique_sharaf_allocation_its_number;
+
+ALTER TABLE public.data_dumps
+    ADD CONSTRAINT unique_sharaf_allocation_its_number
+    UNIQUE (sharaf_allocation_id, its_number);
+
+CREATE INDEX IF NOT EXISTS idx_sharaf_allocations_its_number ON public.sharaf_allocations (its_number);
+CREATE INDEX IF NOT EXISTS idx_data_dumps_sharaf_allocation_id ON public.data_dumps (sharaf_allocation_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_miqaats_name_lower ON public.miqaats (LOWER(TRIM(name)));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_zones_name_lower ON public.zones (LOWER(TRIM(name)));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_topics_name_lower ON public.topics (LOWER(TRIM(name)), LOWER(TRIM(category)));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_sharaf_events_name_lower ON public.sharaf_events (LOWER(TRIM(name)));
+
+CREATE OR REPLACE FUNCTION public.prevent_delete_default_sharaf_event()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.is_default = true THEN
+        RAISE EXCEPTION 'Cannot delete default Sharaf event type: %', OLD.name;
+    END IF;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_prevent_delete_default_sharaf_event ON public.sharaf_events;
+CREATE TRIGGER trg_prevent_delete_default_sharaf_event
+BEFORE DELETE ON public.sharaf_events
+FOR EACH ROW
+EXECUTE FUNCTION public.prevent_delete_default_sharaf_event();
+
 
 
 
