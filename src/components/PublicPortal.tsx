@@ -177,6 +177,28 @@ export default function PublicPortal({ lang, onJoinClick, onLoginClick }: Public
         </div>
       </section>
 
+      {/* 2. ABOUT AL MUSAWAREEN SECTION */}
+      <section id="about" className="py-14 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full scroll-mt-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="lg:col-span-5 flex flex-col gap-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-[#BA8332] font-sans">
+              {t.aboutEyebrow}
+            </span>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-[40px] font-semibold text-[#5C130F] leading-tight">
+              {t.aboutTitle}
+            </h2>
+            <div className="w-14 h-[2px] bg-[#BA8332] my-1" />
+          </div>
+
+          <div className={`lg:col-span-7 p-6 sm:p-8 rounded-2xl bg-[#F6EDDA]/70 border border-[#5C130F]/12 relative shadow-2xs ${isRtl ? 'pr-8' : 'pl-8'}`}>
+            <div className={`absolute top-0 ${isRtl ? 'right-0 rounded-r-2xl' : 'left-0 rounded-l-2xl'} w-1.5 h-full bg-[#BA8332]`} />
+            <p className="font-sans text-sm sm:text-base text-[#3A1A14]/90 leading-relaxed">
+              {t.aboutDesc}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* EDITORIAL DOUBLE-LINE SEPARATOR */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full my-3">
         <div className="flex flex-col gap-[3px] w-full">
@@ -185,7 +207,7 @@ export default function PublicPortal({ lang, onJoinClick, onLoginClick }: Public
         </div>
       </div>
 
-      {/* 2. FEATURE / WHAT WE DO SECTION */}
+      {/* 3. FEATURE / WHAT WE DO SECTION */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="text-center max-w-2xl mx-auto mb-12 flex flex-col items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-widest text-[#BA8332] font-sans">

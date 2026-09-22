@@ -81,6 +81,20 @@ export default function Navbar({
     setIsMobileMenuOpen(false);
   };
 
+  const handleAboutClick = () => {
+    setIsMobileMenuOpen(false);
+    if (activeView !== 'public') {
+      setActiveView('public');
+      setTimeout(() => {
+        const el = document.getElementById('about');
+        el?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      const el = document.getElementById('about');
+      el?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleOurWorkClick = () => {
     setIsMobileMenuOpen(false);
     if (activeView !== 'public') {
@@ -139,7 +153,7 @@ export default function Navbar({
           </button>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-7 md:gap-8 font-sans text-sm">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 font-sans text-sm">
             <button
               type="button"
               onClick={() => handleNavigate('public')}
@@ -150,6 +164,15 @@ export default function Navbar({
               }`}
             >
               {t.home || 'Home'}
+            </button>
+
+            {/* About Link */}
+            <button
+              type="button"
+              onClick={handleAboutClick}
+              className="font-medium text-[#FAF4E8]/85 hover:text-[#BA8332] transition-colors cursor-pointer py-1"
+            >
+              {t.aboutNav || 'About'}
             </button>
 
             {/* Public Section Links */}
@@ -414,6 +437,14 @@ export default function Navbar({
                 }`}
               >
                 {t.home || 'Home'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAboutClick}
+                className="w-full py-2.5 px-3 text-left font-sans text-sm font-semibold text-[#FAF4E8]/85 hover:bg-white/10 rounded-md transition-colors"
+              >
+                {t.aboutNav || 'About'}
               </button>
 
               <button

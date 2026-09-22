@@ -7,7 +7,7 @@ import {
   Check, X, Plus, Sparkles, MapPin, Link as LinkIcon, 
   Award, RefreshCw, Layers, UserPlus, Search,
   Settings, Upload, Clock, Trash2, AlertTriangle, CheckCircle2, ToggleLeft, ToggleRight,
-  Star, Edit3, Shield, Key, UserCheck, ShieldAlert, Camera, HardDrive
+  Star, Edit3, Shield, Key, UserCheck, ShieldAlert, Camera, HardDrive, Mail
 } from 'lucide-react';
 import AvatarPlaceholder from './AvatarPlaceholder';
 import BulkAddModal from './BulkAddModal';
@@ -21,6 +21,7 @@ import ShotReportSubmissionsView from './ShotReportSubmissionsView';
 import CoverageAssignmentsView from './CoverageAssignmentsView';
 import OnboardingApprovalsView from './OnboardingApprovalsView';
 import DataDumpView from './DataDumpView';
+import CoverageRequestsAdminView from './CoverageRequestsAdminView';
 
 interface AdminDashboardProps {
   lang: LanguageType;
@@ -108,7 +109,7 @@ export default function AdminDashboard({
   const t = translations[lang];
   const isRtl = lang === 'ar';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'assignments' | 'submissions' | 'sharaf' | 'data_dump'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'approvals' | 'assignments' | 'submissions' | 'coverage_requests' | 'sharaf' | 'data_dump'>('overview');
 
   // Star Rating Override Modal State
   const [overrideModalReport, setOverrideModalReport] = useState<ShotReport | null>(null);
@@ -724,7 +725,7 @@ export default function AdminDashboard({
         </div>
 
         {/* ADMIN NAV GRID CARDS OR SUB-TABS (DYNAMIC DENSITY) */}
-        <div className={`grid grid-cols-2 ${isSafarModeEnabled ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3`}>
+        <div className={`grid grid-cols-2 sm:grid-cols-3 ${isSafarModeEnabled ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-3`}>
           <button
             onClick={() => setActiveTab('overview')}
             className={`py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
@@ -772,6 +773,18 @@ export default function AdminDashboard({
             }`}
           >
             {t.submissionTitle}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('coverage_requests')}
+            className={`flex items-center justify-center gap-1.5 py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+              activeTab === 'coverage_requests'
+                ? 'option-card-selected'
+                : 'option-card-unselected'
+            }`}
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>{t.coverageRequestsTab || 'Requests'}</span>
           </button>
 
           <button
@@ -1573,6 +1586,14 @@ export default function AdminDashboard({
             )}
 
           </div>
+        )}
+
+        {/* VIEW: COVERAGE REQUESTS MANAGEMENT */}
+        {activeTab === 'coverage_requests' && (
+          <CoverageRequestsAdminView
+            lang={lang}
+            currentUser={currentUser}
+          />
         )}
 
         {/* VIEW: DATA DUMP OPERATIONS */}
