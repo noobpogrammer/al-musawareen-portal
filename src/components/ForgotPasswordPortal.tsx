@@ -63,10 +63,10 @@ export default function ForgotPasswordPortal({ lang, onNavigateLogin, onNavigate
         {/* Form Body */}
         <div className="p-8">
           <div className="text-center mb-6">
-            <h2 className="font-serif text-2xl font-bold text-[#5c130f]">
+            <h2 className="font-serif text-2xl font-semibold text-[#5c130f]">
               {lang === 'en' ? 'Reset Password' : 'استعادة كلمة المرور'}
             </h2>
-            <p className="font-serif text-xs text-[#3A1A14]/70 italic mt-1">
+            <p className="font-sans text-xs text-[#3A1A14]/75 italic mt-1">
               {lang === 'en'
                 ? 'Enter your registered email address to receive recovery instructions.'
                 : 'أدخل بريدك الإلكتروني المسجل لتلقي تعليمات استعادة كلمة المرور.'}
@@ -77,9 +77,9 @@ export default function ForgotPasswordPortal({ lang, onNavigateLogin, onNavigate
             <div className="space-y-6 text-center animate-fadeIn">
               <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-none flex items-start gap-3 text-left rtl:text-right">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-xs leading-relaxed font-serif">
-                  <p className="font-bold text-emerald-900 font-sans uppercase tracking-wider text-[11px]">
-                    {lang === 'en' ? 'Recovery Email Dispatched' : 'تم إرسال رابط الاستعادة'}
+                <div className="space-y-1 text-xs leading-relaxed font-sans">
+                  <p className="font-bold text-emerald-900 font-sans text-xs">
+                    {lang === 'en' ? 'Recovery Email Sent' : 'تم إرسال رابط الاستعادة'}
                   </p>
                   <p>
                     {lang === 'en'
@@ -92,7 +92,7 @@ export default function ForgotPasswordPortal({ lang, onNavigateLogin, onNavigate
               <button
                 type="button"
                 onClick={onNavigateLogin}
-                className="w-full bg-[#BA8332] hover:bg-[#a06e28] !text-white font-mono text-xs font-bold py-3 rounded-none uppercase tracking-wider shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans text-xs font-semibold py-3 rounded-none shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <ArrowLeft className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
                 <span>{lang === 'en' ? 'Back to Sign In' : 'العودة لتسجيل الدخول'}</span>
@@ -108,7 +108,7 @@ export default function ForgotPasswordPortal({ lang, onNavigateLogin, onNavigate
               )}
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+                <label className="text-xs font-sans font-semibold text-[#5C130F]">
                   {lang === 'en' ? 'Registered Email Address' : 'البريد الإلكتروني المسجل'}
                 </label>
                 <div className="relative">
@@ -131,7 +131,7 @@ export default function ForgotPasswordPortal({ lang, onNavigateLogin, onNavigate
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#BA8332] hover:bg-[#a06e28] disabled:bg-gray-400 !text-white font-mono text-xs font-bold py-3 rounded-none uppercase tracking-wider shadow-sm transition-colors mt-6 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-[#BA8332] hover:bg-[#a06e28] disabled:bg-gray-400 !text-white font-sans text-xs font-semibold py-3 rounded-none shadow-xs transition-colors mt-6 cursor-pointer flex items-center justify-center gap-2"
               >
                 {loading && (
                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -146,7 +146,7 @@ export default function ForgotPasswordPortal({ lang, onNavigateLogin, onNavigate
                 <button
                   type="button"
                   onClick={onNavigateLogin}
-                  className="font-bold text-[#5C130F] hover:underline transition-colors focus:outline-none font-mono text-[11px] uppercase tracking-wider cursor-pointer inline-flex items-center gap-1.5"
+                  className="font-semibold text-[#5C130F] hover:underline transition-colors focus:outline-none font-sans text-xs cursor-pointer inline-flex items-center gap-1.5"
                 >
                   <ArrowLeft className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
                   <span>{lang === 'en' ? 'Back to Sign In' : 'العودة لتسجيل الدخول'}</span>

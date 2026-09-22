@@ -26,7 +26,6 @@ import LoginPortal from './components/LoginPortal';
 import RegistrationPortal from './components/RegistrationPortal';
 import ForgotPasswordPortal from './components/ForgotPasswordPortal';
 import ResetPasswordPortal from './components/ResetPasswordPortal';
-import OAuthOnboardingPortal from './components/OAuthOnboardingPortal';
 import AdminDashboard from './components/AdminDashboard';
 import SubmissionPortal from './components/SubmissionPortal';
 import SharafPortal from './components/SharafPortal';
@@ -122,13 +121,6 @@ export default function App() {
   // Supabase-backed Miqaat Requests (authoritative DB source)
   const [miqaatRequests, setMiqaatRequests] = useState<MiqaatRequest[]>([]);
 
-  const [oauthUser, setOauthUser] = useState<{
-    id: string;
-    email: string;
-    fullName?: string;
-    avatarUrl?: string;
-  } | null>(null);
-
   const [activeView, setActiveView] = useState<string>(() => {
     const authAction = detectAuthActionFromUrl();
     if (authAction === 'recovery') return 'resetPassword';
@@ -194,7 +186,6 @@ export default function App() {
         });
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
-        setOauthUser(null);
         localStorage.removeItem('al_musawareen_session');
         setActiveView(prev => {
           const persistentViews = ['pendingApproval', 'accountRejected', 'login', 'register', 'forgotPassword', 'resetPassword'];
@@ -489,29 +480,19 @@ export default function App() {
         setCurrentUser(profile);
         localStorage.setItem('al_musawareen_session', JSON.stringify(profile));
         setActiveView(prev => {
-          if (prev === 'public' || prev === 'login' || prev === 'register' || prev === 'oauthOnboarding' || prev === 'forgotPassword' || prev === 'resetPassword') {
+          if (prev === 'public' || prev === 'login' || prev === 'register' || prev === 'forgotPassword' || prev === 'resetPassword') {
             return profile.role === 'admin' ? 'admin' : 'submit';
           }
           return prev;
         });
       } else {
-        // User is authenticated in Supabase Auth (e.g. Google OAuth) but has no public.members profile record
-        const { data: authUserData } = await supabase.auth.getUser();
-        const authUser = authUserData?.user;
-        if (authUser && authUser.id === userId) {
-          const meta = authUser.user_metadata || {};
-          const email = authUser.email || '';
-          const fullName = meta.full_name || meta.name || '';
-          const avatarUrl = meta.avatar_url || meta.picture || '';
-
-          setOauthUser({
-            id: userId,
-            email,
-            fullName,
-            avatarUrl
-          });
-          setActiveView('oauthOnboarding');
-        }
+        // Authenticated user has no public.members record -> enforce ITS registration
+        console.warn(`[Access Guard] Authenticated user ${userId} has no registered member profile. Revoking session.`);
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        localStorage.removeItem('al_musawareen_session');
+        cleanAuthUrlParams();
+        setActiveView('login');
       }
     } catch (err) {
       console.error('Failed to load user profile:', err);
@@ -1396,27 +1377,6 @@ export default function App() {
           />
         )}
 
-        {activeView === 'oauthOnboarding' && (
-          <OAuthOnboardingPortal
-            lang={lang}
-            authUserId={oauthUser?.id || ''}
-            authEmail={oauthUser?.email || ''}
-            authFullName={oauthUser?.fullName}
-            authAvatarUrl={oauthUser?.avatarUrl}
-            onComplete={() => {
-              setOauthUser(null);
-              cleanAuthUrlParams();
-              setActiveView('pendingApproval');
-            }}
-            onCancel={() => {
-              setOauthUser(null);
-              cleanAuthUrlParams();
-              supabase.auth.signOut();
-              setActiveView('login');
-            }}
-          />
-        )}
-
         {activeView === 'register' && (
           <RegistrationPortal
             lang={lang}
@@ -1433,20 +1393,20 @@ export default function App() {
                 <div className="w-16 h-16 rounded-full bg-[#BA8332]/15 border-2 border-[#BA8332] flex items-center justify-center text-[#BA8332] my-2">
                   <Clock className="w-8 h-8 animate-pulse" />
                 </div>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#5C130F] mt-3">
-                  Application Pending Official Approval
+                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#5C130F] mt-3">
+                  Registration Awaiting Approval
                 </h2>
-                <p className="font-mono text-xs text-[#BA8332] uppercase tracking-wider font-bold mt-1">
-                  Al Musawareen Onboarding Status
+                <p className="font-sans text-xs text-[#BA8332] font-semibold mt-1">
+                  Registration Status
                 </p>
               </div>
 
               <div className="bg-[#FDFAF3] border border-[#5C130F]/20 p-5 rounded-none space-y-3 text-left rtl:text-right font-sans text-xs text-[#3A1A14]/85 leading-relaxed">
-                <p className="font-serif italic text-sm text-[#5C130F] font-bold text-center">
-                  "Your registration has been dispatched to Sheikh Ibrahim Bhai Lokhandwala for official onboarding."
+                <p className="font-serif italic text-sm text-[#5C130F] font-semibold text-center">
+                  "Your registration is currently under review."
                 </p>
                 <p className="text-center text-xs">
-                  Once your ITS registration and credentials are verified by Administration, your account will be activated and you will be granted access to the Delegate Portal.
+                  You will be able to sign in once your registration has been approved by Al Musawareen.
                 </p>
               </div>
 
@@ -1454,14 +1414,14 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveView('login')}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold transition-colors cursor-pointer"
                 >
-                  Return to Login
+                  Return to Sign In
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveView('public')}
-                  className="w-full sm:w-auto px-6 py-3 bg-white/40 hover:bg-[#5C130F]/10 text-[#5C130F] font-mono text-xs font-bold uppercase tracking-wider transition-colors border border-[#5C130F]/30 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3 bg-white/40 hover:bg-[#5C130F]/10 text-[#5C130F] font-sans text-xs font-semibold transition-colors border border-[#5C130F]/30 cursor-pointer"
                 >
                   Back to Home
                 </button>
@@ -1478,20 +1438,20 @@ export default function App() {
                 <div className="w-16 h-16 rounded-full bg-red-100 border-2 border-red-700 flex items-center justify-center text-red-700 my-2">
                   <ShieldAlert className="w-8 h-8" />
                 </div>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-red-900 mt-3">
-                  Application Declined
+                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-red-900 mt-3">
+                  Registration Not Approved
                 </h2>
-                <p className="font-mono text-xs text-red-700 uppercase tracking-wider font-bold mt-1">
-                  Registration Request Status
+                <p className="font-sans text-xs text-red-700 font-semibold mt-1">
+                  Registration Status
                 </p>
               </div>
 
               <div className="bg-[#FDFAF3] border border-red-200 p-5 rounded-none space-y-3 text-center font-sans text-xs text-[#3A1A14]/85 leading-relaxed">
-                <p className="font-serif italic text-sm text-red-900 font-bold">
-                  "Your registration request was declined by Administration."
+                <p className="font-serif italic text-sm text-red-900 font-semibold">
+                  "Your registration was not approved."
                 </p>
                 <p className="text-xs">
-                  If you believe this is an error or require assistance regarding your ITS authorization, please contact Al Musawareen Administration.
+                  Please contact Al Musawareen if you need assistance.
                 </p>
               </div>
 
@@ -1499,9 +1459,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActiveView('public')}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#5C130F] hover:bg-[#3A1A14] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#5C130F] hover:bg-[#3A1A14] text-white font-sans text-xs font-semibold transition-colors cursor-pointer"
                 >
-                  Return to Home
+                  Back to Home
                 </button>
               </div>
             </div>

@@ -61,28 +61,28 @@ export default function OnboardingApprovalsView({
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-serif text-base font-bold text-[#5C130F]">{user.fullName}</h4>
-                        <span className="text-[10px] font-mono font-bold bg-[#5C130F]/10 text-[#5C130F] px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] font-sans font-semibold bg-[#5C130F]/10 text-[#5C130F] px-2 py-0.5 rounded-md">
                           {formatRoleBadgeLabel(user)}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-2 text-[10px] font-bold text-[#3A1A14]/80 mt-1 font-mono">
-                        <span>ITS: {user.itsNumber}</span>
+                      <div className="flex flex-wrap gap-2 text-[10px] font-medium text-[#3A1A14]/80 mt-1 font-sans">
+                        <span>ITS: <span className="font-mono font-bold">{user.itsNumber}</span></span>
                         <span>•</span>
-                        <span>Mobile: {user.mobile}</span>
+                        <span>Mobile: <span className="font-mono font-bold">{user.mobile}</span></span>
                         <span>•</span>
-                        <span>Email: {user.email}</span>
+                        <span>Email: <span className="font-mono font-bold">{user.email}</span></span>
                       </div>
-                      <div className="flex gap-4 text-[10px] font-bold text-[#5C130F] mt-2 font-mono">
-                        <span>Raza Granted: <strong>{user.cityRaza}</strong></span>
-                        <span>Mohalla: <strong>{user.mohalla || user.cityDomicile}</strong></span>
+                      <div className="flex gap-4 text-[10px] font-medium text-[#5C130F] mt-2 font-sans">
+                        <span>Raza Granted: <strong className="font-semibold">{user.cityRaza}</strong></span>
+                        <span>Mohalla: <strong className="font-semibold">{user.mohalla || user.cityDomicile}</strong></span>
                         {user.dateArrival && (
-                          <span>Arrival: <strong>{user.dateArrival}</strong></span>
+                          <span>Arrival: <strong className="font-mono font-bold">{user.dateArrival}</strong></span>
                         )}
                       </div>
 
                       {((user.cameras && user.cameras.length > 0) || (user.lenses && user.lenses.length > 0) || user.otherEquipment) && (
                         <div className="mt-2.5 p-2 bg-white/80 border border-[#5C130F]/20 text-[10px] space-y-1 font-sans rounded-md">
-                          <span className="font-mono font-bold text-[9px] text-[#5C130F] uppercase tracking-wider block">Equipment Specs:</span>
+                          <span className="font-sans font-bold text-[9px] text-[#5C130F] uppercase tracking-wider block">Equipment Specs:</span>
                           {user.cameras && user.cameras.length > 0 && (
                             <p className="text-[#3A1A14]"><span className="font-bold">Cameras:</span> {user.cameras.join(', ')}</p>
                           )}
@@ -102,7 +102,7 @@ export default function OnboardingApprovalsView({
                     <div className="flex items-center gap-2 self-end md:self-center">
                       <button
                         onClick={() => onApproveUser(user.itsNumber)}
-                        className="px-4 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white text-xs font-mono font-bold rounded-md flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                        className="px-4 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white text-xs font-sans font-semibold rounded-md flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                       >
                         <Check className="w-4 h-4" />
                         <span>{t.approveBtn}</span>
@@ -112,7 +112,7 @@ export default function OnboardingApprovalsView({
                         className="px-4 py-1.5 bg-white/40 hover:bg-[#5C130F] active:bg-[#5C130F] rounded-md flex items-center gap-1.5 transition-colors border border-[#5C130F]/30 cursor-pointer group"
                       >
                         <X className="w-4 h-4 text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] transition-colors" />
-                        <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-xs font-mono font-bold transition-colors">{t.rejectBtn}</span>
+                        <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-xs font-sans font-semibold transition-colors">{t.rejectBtn}</span>
                       </button>
                     </div>
                   )}
@@ -126,15 +126,15 @@ export default function OnboardingApprovalsView({
                         <Shield className="w-5 h-5 text-[#5C130F]" />
                         <div>
                           <h5 className="font-serif font-bold text-sm text-[#5C130F]">
-                            HR Coordinator Onboarding Access Level Setup
+                            HR Coordinator Permissions Setup
                           </h5>
                           <p className="text-[10px] text-[#3A1A14]/75 font-sans">
-                            Assign specific access levels for this HR applicant before confirming onboarding approval.
+                            Assign specific access levels for this HR applicant before confirming approval.
                           </p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-mono font-bold bg-[#BA8332]/20 text-[#5C130F] px-2.5 py-0.5 rounded-md border border-[#BA8332]/40">
-                        HR Track Approval
+                      <span className="text-[10px] font-sans font-semibold bg-[#BA8332]/20 text-[#5C130F] px-2.5 py-0.5 rounded-md border border-[#BA8332]/40">
+                        HR Permissions
                       </span>
                     </div>
 
@@ -148,7 +148,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Coverage Assignments</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">Coverage Assignments</span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Assign team to schedules & zones</span>
                         </div>
                       </label>
@@ -162,7 +162,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Assignment Status</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">Assignment Status</span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Follow up on coverage rosters</span>
                         </div>
                       </label>
@@ -176,7 +176,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Shot Report Auditing</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">Review Submissions</span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Review shot reports (View-only)</span>
                         </div>
                       </label>
@@ -190,7 +190,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Star Rating Override</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">Star Rating Override</span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Override gold/red star ratings</span>
                         </div>
                       </label>
@@ -204,8 +204,8 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">View Team Roster</span>
-                          <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">View Active Dispatched Lenses (Read-Only)</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">View Team Roster</span>
+                          <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">View team members and roster (Read-Only)</span>
                         </div>
                       </label>
 
@@ -218,7 +218,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Edit Team Roster</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">Edit Team Roster</span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Edit member details and permissions</span>
                         </div>
                       </label>
@@ -232,8 +232,8 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] flex items-center gap-1">
-                            Approve Onboarding <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] flex items-center gap-1">
+                            Approve Registrations <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                           </span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Approve / reject new registrations</span>
                         </div>
@@ -248,7 +248,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] flex items-center gap-1">
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] flex items-center gap-1">
                             Manage Sharaf <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                           </span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Allocate Sharaf seating passes</span>
@@ -264,7 +264,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] flex items-center gap-1">
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] flex items-center gap-1">
                             System Settings <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                           </span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage zones, topics & Safar mode</span>
@@ -280,7 +280,7 @@ export default function OnboardingApprovalsView({
                           className="mt-0.5 accent-[#BA8332] w-4 h-4"
                         />
                         <div>
-                          <span className="text-xs font-mono font-bold text-[#5C130F] block">Data Dump Operations</span>
+                          <span className="text-xs font-sans font-semibold text-[#5C130F] block">Data Dump Management</span>
                           <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage card receipt and copy status after events</span>
                         </div>
                       </label>
@@ -291,11 +291,11 @@ export default function OnboardingApprovalsView({
                         onClick={() => onRejectUser(user.itsNumber)}
                         className="px-4 py-1.5 bg-white hover:bg-[#5C130F] active:bg-[#5C130F] rounded-md transition-colors border border-[#5C130F]/30 cursor-pointer group"
                       >
-                        <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-xs font-mono font-bold transition-colors">Reject Application</span>
+                        <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-xs font-sans font-semibold transition-colors">Reject Application</span>
                       </button>
                       <button
                         onClick={() => onApproveUser(user.itsNumber, getPendingHRPermissions(user.itsNumber))}
-                        className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white text-xs font-mono font-bold rounded-md flex items-center gap-2 transition-colors shadow-md cursor-pointer"
+                        className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white text-xs font-sans font-semibold rounded-md flex items-center gap-2 transition-colors shadow-md cursor-pointer"
                       >
                         <ShieldCheck className="w-4 h-4" />
                         <span>Approve HR & Grant Selected Permissions</span>

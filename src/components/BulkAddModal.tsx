@@ -76,7 +76,7 @@ export default function BulkAddModal({
         
         {/* Header Ribbon */}
         <div className="flex justify-between items-center border-b border-[#5C130F]/20 pb-3">
-          <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] flex items-center gap-2 uppercase tracking-wider">
+          <h3 className="font-serif text-xl sm:text-2xl font-semibold text-[#5C130F] flex items-center gap-2">
             <Layers className="w-6 h-6 text-[#BA8332]" />
             <span>{title}</span>
           </h3>
@@ -85,21 +85,21 @@ export default function BulkAddModal({
               setTextInput('');
               onClose();
             }}
-            className="text-[#5C130F] hover:font-bold font-mono text-base p-1 cursor-pointer"
+            className="text-[#5C130F] hover:text-[#3A1A14] font-sans text-base p-1 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {subtitle && (
-          <p className="text-xs text-[#3A1A14]/80 font-serif">
+          <p className="text-xs text-[#3A1A14]/80 font-sans">
             {subtitle}
           </p>
         )}
 
         {/* Textarea Input */}
         <div className="space-y-2">
-          <label className="text-xs font-mono font-bold uppercase text-[#5C130F] block">
+          <label className="text-xs font-sans font-semibold uppercase text-[#5C130F] block">
             {lang === 'en' ? 'Comma-Separated Text Entry:' : 'إدخال أسماء متعددة تفصل بينها فاصلة:'}
           </label>
           <textarea
@@ -107,27 +107,27 @@ export default function BulkAddModal({
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-3.5 py-2.5 border border-[#5C130F]/35 bg-white font-serif text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+            className="w-full px-3.5 py-2.5 border border-[#5C130F]/35 bg-white font-sans text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
           />
         </div>
 
         {/* Real-time Validation Summary & Previews */}
         {textInput.trim() && (
           <div className="space-y-3 font-sans border-t border-[#5C130F]/15 pt-3">
-            <div className="flex flex-wrap items-center gap-4 text-xs font-mono font-bold">
+            <div className="flex flex-wrap items-center gap-4 text-xs font-sans font-semibold">
               <span className="text-[#5C130F] bg-[#5C130F]/10 px-2 py-0.5 border border-[#5C130F]/20">
-                {parseResult.allItems.length} {lang === 'en' ? 'Detected' : 'مكتشف'}
+                <span className="font-mono">{parseResult.allItems.length}</span> {lang === 'en' ? 'Detected' : 'مكتشف'}
               </span>
 
               <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                {parseResult.validNew.length} {lang === 'en' ? 'New Items to Add' : 'عناصر جديدة للإضافة'}
+                <span className="font-mono">{parseResult.validNew.length}</span> {lang === 'en' ? 'New Items to Add' : 'عناصر جديدة للإضافة'}
               </span>
 
               {parseResult.duplicates.length > 0 && (
                 <span className="text-amber-800 bg-amber-50 px-2 py-0.5 border border-amber-300 flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" />
-                  {parseResult.duplicates.length} {lang === 'en' ? 'Duplicates Skipped' : 'تخطي المكرر'}
+                  <span className="font-mono">{parseResult.duplicates.length}</span> {lang === 'en' ? 'Duplicates Skipped' : 'تخطي المكرر'}
                 </span>
               )}
             </div>
@@ -135,12 +135,12 @@ export default function BulkAddModal({
             {/* Valid New Items Badge List */}
             {parseResult.validNew.length > 0 && (
               <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold uppercase text-emerald-800 block">
+                <span className="text-[10px] font-sans font-semibold uppercase text-emerald-800 block">
                   {lang === 'en' ? 'Valid New Items Ready to Import:' : 'العناصر الجديدة المعتمدة:'}
                 </span>
                 <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-emerald-50/50 border border-emerald-200">
                   {parseResult.validNew.map((item, idx) => (
-                    <span key={idx} className="bg-emerald-700 text-white text-[10px] font-serif font-bold px-2 py-0.5 rounded-none">
+                    <span key={idx} className="bg-emerald-700 text-white text-[11px] font-sans font-medium px-2 py-0.5 rounded-none">
                       + {item}
                     </span>
                   ))}
@@ -151,12 +151,12 @@ export default function BulkAddModal({
             {/* Duplicates Warning List */}
             {parseResult.duplicates.length > 0 && (
               <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold uppercase text-amber-800 block">
+                <span className="text-[10px] font-sans font-semibold uppercase text-amber-800 block">
                   {lang === 'en' ? 'Existing Duplicates (Will be Skipped):' : 'العناصر الموجودة سابقاً (سيتم تجاهلها):'}
                 </span>
                 <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto p-2 bg-amber-50/50 border border-amber-200">
                   {parseResult.duplicates.map((item, idx) => (
-                    <span key={idx} className="bg-amber-800/20 text-amber-900 text-[10px] font-serif px-2 py-0.5 rounded-none border border-amber-300 line-through">
+                    <span key={idx} className="bg-amber-800/20 text-amber-900 text-[11px] font-sans px-2 py-0.5 rounded-none border border-amber-300 line-through">
                       {item}
                     </span>
                   ))}
@@ -174,7 +174,7 @@ export default function BulkAddModal({
               setTextInput('');
               onClose();
             }}
-            className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded-none uppercase cursor-pointer"
+            className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-sans text-xs font-semibold rounded-none uppercase cursor-pointer"
           >
             {lang === 'en' ? 'Cancel' : 'إلغاء'}
           </button>
@@ -183,7 +183,7 @@ export default function BulkAddModal({
             type="button"
             disabled={parseResult.validNew.length === 0}
             onClick={handleApply}
-            className={`px-5 py-2 font-mono text-xs font-bold rounded-none uppercase shadow-sm transition-all cursor-pointer ${
+            className={`px-5 py-2 font-sans text-xs font-semibold rounded-none uppercase shadow-sm transition-all cursor-pointer ${
               parseResult.validNew.length > 0
                 ? 'bg-[#BA8332] hover:bg-[#a06e28] text-white'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'

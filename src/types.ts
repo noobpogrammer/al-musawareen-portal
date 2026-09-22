@@ -255,3 +255,23 @@ export interface MiqaatRequest {
   updatedAt?: string;
 }
 
+export type CoverageType = 'photography' | 'videography' | 'both';
+export type CoverageRequestStatus = 'new' | 'contacted' | 'accepted' | 'declined' | 'completed';
+
+export interface CoverageRequest {
+  id: string;
+  organizationName: string;
+  contactPerson: string;
+  email: string;
+  phone?: string;
+  eventName: string;
+  eventDate?: string;
+  location?: string;
+  coverageType: CoverageType;
+  message?: string;
+  status: CoverageRequestStatus;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+

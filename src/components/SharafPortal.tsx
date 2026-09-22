@@ -27,10 +27,10 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
               <Award className="w-8 h-8 text-[#BA8332]" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#5c130f] uppercase tracking-wider">
+              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-[#5c130f]">
                 {t.sharafBanner}
               </h1>
-              <p className="text-xs text-[#3A1A14]/80 mt-1 font-serif">
+              <p className="text-xs text-[#3A1A14]/80 mt-1 font-sans">
                 {t.sharafDesc}
               </p>
             </div>
@@ -44,7 +44,7 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
         {/* DETAILS SECTION ROWS */}
         <div className="editorial-card p-6 sm:p-8 flex flex-col justify-between space-y-6">
           <div className="space-y-4">
-            <h3 className="font-serif text-xl font-bold text-[#5C130F] border-b border-[#5C130F]/20 pb-2 flex items-center gap-2 uppercase tracking-wider">
+            <h3 className="font-serif text-xl font-semibold text-[#5C130F] border-b border-[#5C130F]/20 pb-2 flex items-center gap-2">
               <Bookmark className="w-5 h-5 text-[#BA8332]" />
               <span>{t.sharafStatusLabel}</span>
             </h3>
@@ -54,12 +54,12 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
                 <div className="p-4 bg-[#5C130F] !text-white border border-[#BA8332] rounded-none flex items-start gap-3">
                   <Award className="w-6 h-6 text-[#BA8332] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-mono font-bold uppercase tracking-wider !text-white">
-                      {lang === 'en' ? 'Sharaf Access Granted' : 'تم منح الشرف والمقعد الميداني'}
+                    <p className="text-xs font-sans font-semibold uppercase tracking-wider !text-white">
+                      {lang === 'en' ? 'Sharaf Allocated' : 'تم منح الشرف والمقعد الميداني'}
                     </p>
-                    <p className="text-xs !text-white/90 mt-0.5 leading-relaxed font-serif">
+                    <p className="text-xs !text-white/90 mt-0.5 leading-relaxed font-sans">
                       {lang === 'en'
-                        ? 'Your photographic proximity clearance is approved for the events listed below. Ensure you check in with your supervisor for your official field duties.'
+                        ? 'Your Sharaf has been allocated for the events listed below. Please ensure you check in with your coordinator before your duties.'
                         : 'تم اعتماد تصاريح القرب الميداني الخاصة بك للمناسبات التالية. يرجى مراجعة المشرف المباشر قبل بدء التغطية.'}
                     </p>
                   </div>
@@ -67,7 +67,7 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
 
                 {/* Allocated Events List */}
                 <div className="space-y-3 pt-2">
-                  <span className="text-xs font-mono font-bold uppercase text-[#5C130F] tracking-wider block">
+                  <span className="text-xs font-sans font-semibold uppercase text-[#5C130F] tracking-wider block">
                     {t.sharafLabelCard}:
                   </span>
                   {myAllocations.map(alloc => (
@@ -76,20 +76,20 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
                       className="p-4 border border-[#5C130F]/20 rounded-none bg-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="space-y-1.5">
-                        <span className="bg-[#5C130F] !text-white text-xs font-mono font-bold px-2.5 py-0.5 rounded-none uppercase inline-block">
+                        <span className="bg-[#5C130F] !text-white text-xs font-sans font-semibold px-2.5 py-0.5 rounded-none uppercase inline-block">
                           {alloc.eventType}
                         </span>
                         
-                        <div className="text-xs font-serif space-y-1 pt-1">
+                        <div className="text-xs font-sans space-y-1 pt-1">
                           <p>
-                            <span className="text-[#3A1A14]/70 font-mono font-bold text-[10px] uppercase">LOCATION: </span>
-                            <strong className="text-[#5C130F] font-bold">
-                              {alloc.location || <span className="text-amber-800 italic font-mono text-[11px]">Location not set</span>}
+                            <span className="text-[#3A1A14]/70 font-sans font-semibold text-[10px] uppercase">LOCATION: </span>
+                            <strong className="text-[#5C130F] font-semibold">
+                              {alloc.location || <span className="text-amber-800 italic text-[11px]">Location not set</span>}
                             </strong>
                           </p>
                           {alloc.zone && (
                             <p>
-                              <span className="text-[#3A1A14]/70 font-mono font-bold text-[10px] uppercase">ZONE: </span>
+                              <span className="text-[#3A1A14]/70 font-sans font-semibold text-[10px] uppercase">ZONE: </span>
                               <span className="text-[#3A1A14] font-medium">{alloc.zone}</span>
                             </p>
                           )}
@@ -102,8 +102,8 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-mono font-bold bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 px-2 py-1 uppercase self-start sm:self-center shrink-0">
-                        Clearance Active
+                      <span className="text-[10px] font-sans font-semibold bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 px-2 py-1 uppercase self-start sm:self-center shrink-0">
+                        Allocated
                       </span>
                     </div>
                   ))}
@@ -114,12 +114,12 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
                 <div className="p-5 bg-white/40 border border-[#5C130F]/20 rounded-none flex items-start gap-3 text-[#3A1A14]">
                   <Award className="w-6 h-6 text-[#BA8332] shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+                    <p className="text-xs font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
                       {lang === 'en' ? 'Not Yet Allocated' : 'لم يتم التخصيص بعد'}
                     </p>
-                    <p className="text-xs text-[#3A1A14]/80 mt-1 leading-relaxed font-serif">
+                    <p className="text-xs text-[#3A1A14]/80 mt-1 leading-relaxed font-sans">
                       {t.notAllocated} {lang === 'en' 
-                        ? 'Sheikh Ibrahim Bhai Lokhandwala allocates proximity clearances based on attendance cycles and submitted shot report grades.'
+                        ? 'Sharaf allocations are assigned based on attendance and assignment reviews.'
                         : 'يتم توزيع المقاعد من قبل الشيخ إبراهيم بهائي لوكهند والا بناءً على التزام الحضور ومستوى تقييم تسليمات اللقطات الميدانية.'}
                     </p>
                   </div>
@@ -129,11 +129,11 @@ export default function SharafPortal({ lang, currentUser, sharafAllocations = []
           </div>
 
           {/* Respectful closing text */}
-          <div className="bg-white/40 p-4 rounded-none border border-[#5C130F]/20 flex items-start gap-2.5 text-[11px] text-[#3A1A14]/85 leading-relaxed font-serif">
+          <div className="bg-white/40 p-4 rounded-none border border-[#5C130F]/20 flex items-start gap-2.5 text-[11px] text-[#3A1A14]/85 leading-relaxed font-sans">
             <span className="w-1.5 h-1.5 rounded-none bg-[#BA8332] mt-1.5 shrink-0" />
             <span>
               {lang === 'en'
-                ? 'All Al Musawareen operations operate under the spiritual guidelines of Al-Dawat-ush-Sharifah, emphasizing humility, respect, and high professional standards.'
+                ? 'All Al Musawareen Khidmat operates under the guidance of Al-Dawat-ush-Sharifah, with humility, respect and dedication.'
                 : 'تخضع كافة عمليات المصورين للضوابط الإدارية والروحانية المعتمدة لدى الدعوة الشريفة، مع الالتزام بأقصى درجات الأدب والاحترافية والوقار.'}
             </span>
           </div>

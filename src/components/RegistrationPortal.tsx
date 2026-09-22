@@ -293,27 +293,27 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
           <div className="p-4 bg-[#BA8332]/10 rounded-full border-2 border-[#BA8332] text-[#BA8332]">
             <MailCheck className="w-10 h-10" />
           </div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#5C130F]">
-            Registration Submitted
+          <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#5C130F]">
+            Registration Received
           </h2>
           <div className="bg-[#FDFAF3] border border-[#5C130F]/20 p-5 rounded-none space-y-3 text-left rtl:text-right font-sans text-xs text-[#3A1A14]/85 leading-relaxed">
             <p className="font-semibold text-[#5C130F] text-center text-sm">
-              Please check your email to verify your address.
+              Please check your email and verify your email address.
             </p>
             <p className="text-center text-xs">
-              A verification link was dispatched to <strong className="font-mono text-[#5C130F]">{email}</strong>. Please click the link to confirm your email.
+              A verification link was sent to <strong className="font-mono text-[#5C130F]">{email}</strong>. Please click the link to confirm your email.
             </p>
             <div className="border-t border-[#5C130F]/15 pt-2 text-[11px] text-[#3A1A14]/75 text-center italic">
-              Note: Email verification confirms your address. Once verified, your application remains under administrative review by <strong>Sheikh Ibrahim Bhai Lokhandwala</strong> before portal access is activated.
+              After verification, your registration will be reviewed for approval. You'll be able to sign in once your registration has been approved.
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full pt-2">
             <button
               type="button"
               onClick={onNavigateLogin}
-              className="w-full sm:w-auto px-6 py-3 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
-              Return to Login
+              Return to Sign In
             </button>
           </div>
         </div>
@@ -333,11 +333,11 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
         {/* REGISTRATION FORM BODY */}
         <form onSubmit={handleRegisterSubmit} className="p-8 sm:p-10 space-y-6">
           <div className="text-center">
-            <h2 className="font-serif text-3xl font-bold text-[#5c130f]">
-              Onboarding & Registration
+            <h2 className="font-serif text-3xl font-semibold text-[#5c130f]">
+              {t.onboardTitle}
             </h2>
-            <p className="font-serif text-xs text-[#F3E6D0]/70 italic mt-1">
-              Become a certified Al Musawareen photographer, videographer, or HR coordinator
+            <p className="font-sans text-xs text-[#3A1A14]/70 italic mt-1">
+              {t.onboardSubtitle}
             </p>
           </div>
 
@@ -350,13 +350,13 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
           {/* 1. IDENTITY SECTION */}
           <div className="card-section-box space-y-4">
-            <h3 className="font-serif text-lg font-bold text-[#F3E6D0] border-b border-white/15 pb-2">
-              1. ITS & Identity Verification
+            <h3 className="font-serif text-lg font-semibold text-[#5C130F] border-b border-[#5C130F]/15 pb-2">
+              1. ITS & Identity
             </h3>
 
             {/* ITS Number */}
             <div className={`flex flex-col gap-1.5 ${shakingField === 'itsNumber' ? 'animate-shake' : ''}`}>
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-editorial-ink/80">
+              <label className="text-xs font-sans font-semibold text-editorial-ink/80">
                 {t.itsLabel}
               </label>
               <input
@@ -368,7 +368,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 className="w-full px-4 py-2.5 bg-editorial-bg border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent font-mono text-editorial-ink"
               />
               {errors.itsNumber && (
-                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-mono">
+                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-sans">
                   <Info className="w-3 h-3" /> {errors.itsNumber}
                 </p>
               )}
@@ -376,8 +376,8 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
             {/* Full Name */}
             <div className={`flex flex-col gap-1.5 ${shakingField === 'fullName' ? 'animate-shake' : ''}`}>
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-editorial-ink/80">
-                Full Name (English)
+              <label className="text-xs font-sans font-semibold text-editorial-ink/80">
+                {t.fullNameLabel}
               </label>
               <input
                 type="text"
@@ -387,7 +387,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 className="w-full px-4 py-2.5 bg-editorial-bg border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent font-sans text-editorial-ink"
               />
               {errors.fullName && (
-                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-mono">
+                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-sans">
                   <Info className="w-3 h-3" /> {errors.fullName}
                 </p>
               )}
@@ -395,8 +395,8 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
             {/* DP Upload */}
             <div className={`flex flex-col gap-1.5 ${shakingField === 'dp' ? 'animate-shake' : ''}`}>
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-editorial-ink/80">
-                Profile Picture (DP) Upload
+              <label className="text-xs font-sans font-semibold text-editorial-ink/80">
+                Profile Picture Upload
               </label>
               <div className="flex items-center gap-4">
                 <input
@@ -409,7 +409,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                       setDpPreview(URL.createObjectURL(file));
                     }
                   }}
-                  className="w-full px-4 py-2 bg-editorial-bg border border-editorial-border rounded-none text-sm focus:outline-none text-editorial-ink file:mr-4 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-mono file:font-bold file:bg-[#BA8332] file:text-white hover:file:bg-[#a06e28] file:cursor-pointer"
+                  className="w-full px-4 py-2 bg-editorial-bg border border-editorial-border rounded-none text-sm focus:outline-none text-editorial-ink file:mr-4 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-sans file:font-semibold file:bg-[#BA8332] file:text-white hover:file:bg-[#a06e28] file:cursor-pointer"
                 />
                 {dpPreview && (
                   <img
@@ -420,7 +420,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 )}
               </div>
               {errors.dp && (
-                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-mono">
+                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-sans">
                   <Info className="w-3 h-3" /> {errors.dp}
                 </p>
               )}
@@ -428,8 +428,8 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
             {/* Interactive Radio Cards: Role Track selection */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F] mb-1">
-                Choose Your Assignment Track
+              <label className="text-xs font-sans font-semibold text-[#5C130F] mb-1">
+                {t.roleSelectionTitle}
               </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Photographer */}
@@ -443,11 +443,11 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 >
                   <Camera className="w-5 h-5 text-[#5C130F]" />
                   <div>
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wide text-[#5C130F]">
+                    <h4 className="text-xs font-sans font-bold text-[#5C130F]">
                       Photographer
                     </h4>
                     <p className="text-[9px] mt-0.5 leading-tight text-[#3A1A14]/75">
-                      Still images capture & preservation
+                      {t.rolePhotoDesc}
                     </p>
                   </div>
                 </div>
@@ -463,11 +463,11 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 >
                   <Video className="w-5 h-5 text-[#5C130F]" />
                   <div>
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wide text-[#5C130F]">
+                    <h4 className="text-xs font-sans font-bold text-[#5C130F]">
                       Videographer
                     </h4>
                     <p className="text-[9px] mt-0.5 leading-tight text-[#3A1A14]/75">
-                      Movement, audio, & cinematic records
+                      {t.roleVideoDesc}
                     </p>
                   </div>
                 </div>
@@ -483,11 +483,11 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 >
                   <Shield className="w-5 h-5 text-[#5C130F]" />
                   <div>
-                    <h4 className="text-xs font-mono font-bold uppercase tracking-wide text-[#5C130F]">
+                    <h4 className="text-xs font-sans font-bold text-[#5C130F]">
                       HR Coordinator
                     </h4>
                     <p className="text-[9px] mt-0.5 leading-tight text-[#3A1A14]/75">
-                      Logistics, monitoring, & dispatching
+                      {t.roleCoordDesc}
                     </p>
                   </div>
                 </div>
@@ -498,17 +498,17 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
           {/* EQUIPMENT SECTION FOR PHOTOGRAPHER/VIDEOGRAPHER ONLY */}
           {(role === 'photographer' || role === 'videographer') && (
             <div className="card-section-box space-y-5">
-              <h3 className="font-serif text-lg font-bold text-[#F3E6D0] border-b border-white/15 pb-2 flex items-center gap-2">
+              <h3 className="font-serif text-lg font-semibold text-[#F3E6D0] border-b border-white/15 pb-2 flex items-center gap-2">
                 <Camera className="w-5 h-5 text-[#ce933e]" />
                 <span>Equipment Specifications</span>
               </h3>
-              <p className="text-xs text-[#F3E6D0]/70 italic font-serif">
+              <p className="text-xs text-[#F3E6D0]/70 italic font-sans">
                 Please specify the cameras and lenses you will use during the Miqaat coverage. You may select multiple options.
               </p>
 
               {/* Cameras Checkboxes */}
               <div className="space-y-2">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-editorial-ink/80 block">
+                <label className="text-xs font-sans font-semibold text-editorial-ink/80 block">
                   What camera do you have? (Select all that apply)
                 </label>
                 <div className="grid grid-cols-1 gap-3.5 mt-2">
@@ -539,7 +539,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                         {/* Inline specific model text field: rendered only when checked */}
                         {isChecked && (
                           <div className="pl-7 pr-1 pb-1 animate-fade-in">
-                            <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F] block mb-1">
+                            <label className="text-[10px] font-sans font-semibold text-[#5C130F] block mb-1">
                               Specify camera model / manufacturer:
                             </label>
                             <input
@@ -559,7 +559,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                   })}
                 </div>
                 {errors.cameras && (
-                  <p className="text-[10px] text-[#5C130F] flex items-center gap-1 font-mono mt-1">
+                  <p className="text-[10px] text-[#5C130F] flex items-center gap-1 font-sans mt-1">
                     <Info className="w-3 h-3" /> {errors.cameras}
                   </p>
                 )}
@@ -567,7 +567,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
               {/* Lenses Checkboxes */}
               <div className="space-y-2">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F] block">
+                <label className="text-xs font-sans font-semibold text-[#5C130F] block">
                   What lenses do you have? (Select all that apply)
                 </label>
                 <div className="grid grid-cols-1 gap-3.5 mt-2">
@@ -598,7 +598,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                         {/* Inline specific lens text field: rendered only when checked */}
                         {isChecked && (
                           <div className="pl-7 pr-1 pb-1 animate-fade-in">
-                            <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-editorial-accent block mb-1">
+                            <label className="text-[10px] font-sans font-semibold text-editorial-accent block mb-1">
                               Specify lens details:
                             </label>
                             <input
@@ -618,7 +618,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                   })}
                 </div>
                 {errors.lenses && (
-                  <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-mono mt-1">
+                  <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-sans mt-1">
                     <Info className="w-3 h-3" /> {errors.lenses}
                   </p>
                 )}
@@ -626,7 +626,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
               {/* Other Equipment textarea */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-editorial-ink/80">
+                <label className="text-xs font-sans font-semibold text-editorial-ink/80">
                   Other Equipment & Accessories (Gimbals, Tripods, Mics, Lights, etc.)
                 </label>
                 <textarea
@@ -642,16 +642,16 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
           {/* 2. CONTACT & LOCATION SECTION */}
           <div className="card-section-box space-y-4">
-            <h3 className="font-serif text-lg font-bold text-[#F3E6D0] border-b border-white/15 pb-2">
-              2. Contact & Residential Records
+            <h3 className="font-serif text-lg font-semibold text-[#5C130F] border-b border-[#5C130F]/15 pb-2">
+              2. {t.contactSection}
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Email Address */}
               <div className={`flex flex-col gap-1.5 ${shakingField === 'email' ? 'animate-shake' : ''}`}>
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#F3E6D0]/80 flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5 text-[#ce933e]" />
-                  <span>Email Address</span>
+                <label className="text-xs font-sans font-semibold text-[#5C130F]/80 flex items-center gap-1">
+                  <Mail className="w-3.5 h-3.5 text-[#BA8332]" />
+                  <span>{t.emailLabel}</span>
                 </label>
                 <input
                   type="email"
@@ -662,7 +662,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                   className="w-full px-4 py-2.5 bg-[#faf4e8] border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent text-editorial-ink font-sans"
                 />
                 {errors.email && (
-                  <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-mono">
+                  <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-sans">
                     <Info className="w-3 h-3" /> {errors.email}
                   </p>
                 )}
@@ -670,8 +670,8 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
               {/* Mobile Number */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#F3E6D0]/80 flex items-center gap-1">
-                  <Phone className="w-3.5 h-3.5 text-[#ce933e]" />
+                <label className="text-xs font-sans font-semibold text-[#5C130F]/80 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5 text-[#BA8332]" />
                   <span>{t.mobileLabel}</span>
                 </label>
                 <input
@@ -679,21 +679,21 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
                   placeholder="e.g., +92 300 1234567"
-                  className="w-full px-4 py-2.5 bg-[#faf4e8] border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent text-editorial-ink font-mono"
+                  className="w-full px-4 py-2.5 bg-[#faf4e8] border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent text-editorial-ink font-sans"
                 />
               </div>
             </div>
 
             {/* Mohalla Zone Dropdown */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#F3E6D0]/80 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#ce933e]" />
+              <label className="text-xs font-sans font-semibold text-[#5C130F]/80 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-[#BA8332]" />
                 <span>Mohalla (Zone of Residence)</span>
               </label>
               <select
                 value={mohalla}
                 onChange={(e) => setMohalla(e.target.value)}
-                className="w-full px-4 py-2.5 bg-[#faf4e8] border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent text-editorial-ink font-mono"
+                className="w-full px-4 py-2.5 bg-[#faf4e8] border border-editorial-border rounded-none text-sm focus:outline-none focus:ring-1 focus:ring-editorial-accent focus:border-editorial-accent text-editorial-ink font-sans"
               >
                 {mohallaOptions.map((opt) => (
                   <option key={opt} value={opt}>
@@ -706,12 +706,12 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
 
           {/* 3. PORTAL ACCESS PASSWORD & INTEGRITY */}
           <div className="card-section-box space-y-4">
-            <h3 className="font-serif text-lg font-bold text-[#F3E6D0] border-b border-white/15 pb-2">
-              3. Portal Access & Security
+            <h3 className="font-serif text-lg font-semibold text-[#5C130F] border-b border-[#5C130F]/15 pb-2">
+              3. Security & Password
             </h3>
 
             <div className={`flex flex-col gap-1.5 ${shakingField === 'password' ? 'animate-shake' : ''}`}>
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-editorial-ink/80">
+              <label className="text-xs font-sans font-semibold text-editorial-ink/80">
                 {t.passwordLabel}
               </label>
               <div className="relative">
@@ -732,7 +732,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
               </div>
 
               {errors.password && (
-                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-mono">
+                <p className="text-[10px] text-editorial-accent flex items-center gap-1 font-sans">
                   <Info className="w-3 h-3" /> {errors.password}
                 </p>
               )}
@@ -740,9 +740,9 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
               {/* Password Strength Meter */}
               {password && (
                 <div className="space-y-1.5 mt-2">
-                  <div className="flex justify-between items-center text-[10px] font-mono font-bold text-editorial-ink/60">
+                  <div className="flex justify-between items-center text-[10px] font-sans font-semibold text-editorial-ink/60">
                     <span>{t.strengthLabel}:</span>
-                    <span className="font-bold text-editorial-accent">{pwdStrength.text}</span>
+                    <span className="font-semibold text-editorial-accent">{pwdStrength.text}</span>
                   </div>
                   <div className="h-1.5 w-full bg-editorial-ink/10 rounded-none overflow-hidden flex gap-0.5">
                     {[...Array(5)].map((_, i) => (
@@ -763,7 +763,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-[#BA8332] hover:bg-[#a06e28] disabled:bg-gray-400 !text-white font-mono text-xs font-bold uppercase tracking-widest shadow-sm transition-colors border border-[#BA8332] rounded-none cursor-pointer flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#BA8332] hover:bg-[#a06e28] disabled:bg-gray-400 !text-white font-sans text-xs font-semibold shadow-xs transition-colors border border-[#BA8332] rounded-none cursor-pointer flex items-center justify-center gap-2"
           >
             {loading && (
               <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -771,7 +771,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             )}
-            <span>{loading ? 'Submitting Application...' : t.submitOnboard}</span>
+            <span>{loading ? 'Submitting...' : t.submitOnboard}</span>
           </button>
 
           {/* Navigate back to Login */}
@@ -780,7 +780,7 @@ export default function RegistrationPortal({ lang, onRegisterSuccess, onNavigate
             <button
               type="button"
               onClick={onNavigateLogin}
-              className="font-bold text-[#5C130F] hover:underline transition-colors font-mono text-[11px] uppercase tracking-wider cursor-pointer"
+              className="font-semibold text-[#5C130F] hover:underline transition-colors font-sans text-xs cursor-pointer"
             >
               {t.loginHere}
             </button>

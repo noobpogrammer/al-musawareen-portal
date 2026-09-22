@@ -29,18 +29,18 @@ export default function ShotReportSubmissionsView({
   return (
     <div className="editorial-card-dense p-6 sm:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#5C130F]/20 pb-3">
-        <h2 className="font-serif text-2xl font-bold text-[#5C130F] uppercase tracking-wider">
+        <h2 className="font-serif text-2xl font-semibold text-[#5C130F]">
           {t.recentSubmissions}
         </h2>
-        <span className="bg-[#BA8332] text-white text-xs font-mono font-bold px-3 py-1 rounded-md self-start sm:self-auto">
-          {submissions.length} Total Submissions
+        <span className="bg-[#BA8332] text-white text-xs font-sans font-semibold px-3 py-1 rounded-md self-start sm:self-auto">
+          <span className="font-mono">{submissions.length}</span> Total Submissions
         </span>
       </div>
 
       {submissions.length === 0 ? (
         <div className="py-12 text-center text-[#3A1A14]/60">
           <FileText className="w-12 h-12 text-[#BA8332] mx-auto mb-3" />
-          <p className="text-sm font-serif font-bold">
+          <p className="text-sm font-sans font-medium">
             {lang === 'en' ? 'No media submissions cataloged yet.' : 'لا توجد تسليمات مسجلة بعد.'}
           </p>
         </div>
@@ -60,16 +60,16 @@ export default function ShotReportSubmissionsView({
                     </span>
                   </div>
 
-                  <h4 className="font-serif text-lg font-bold text-[#5C130F] mt-2">
+                  <h4 className="font-serif text-lg font-semibold text-[#5C130F] mt-2">
                     {sub.assignmentTitle}
                   </h4>
 
-                  <p className="text-xs text-[#3A1A14]/80 font-serif">
-                    {lang === 'en' ? 'Submitted by' : 'مرسل من قبل'}: <strong className="text-[#5C130F]">{subUser?.fullName || sub.userName}</strong> (ITS: {sub.itsNumber})
+                  <p className="text-xs text-[#3A1A14]/80 font-sans">
+                    {lang === 'en' ? 'Submitted by' : 'مرسل من قبل'}: <strong className="text-[#5C130F]">{subUser?.fullName || sub.userName}</strong> (ITS: <span className="font-mono">{sub.itsNumber}</span>)
                   </p>
 
                   {sub.notes && (
-                    <p className="text-xs text-[#3A1A14]/85 bg-white/60 p-2.5 rounded-md border border-[#5C130F]/20 inline-block mt-2 font-serif">
+                    <p className="text-xs text-[#3A1A14]/85 bg-white/60 p-2.5 rounded-md border border-[#5C130F]/20 inline-block mt-2 font-sans">
                       {sub.notes}
                     </p>
                   )}
@@ -77,11 +77,11 @@ export default function ShotReportSubmissionsView({
                   <div className="pt-2">
                     {sub.submissionMethod === 'physical_card' ? (
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#BA8332]/15 text-[#5C130F] text-xs font-mono font-bold rounded-md border border-[#BA8332]/30">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#BA8332]/15 text-[#5C130F] text-xs font-sans font-semibold rounded-md border border-[#BA8332]/30">
                           <HardDrive className="w-3.5 h-3.5 text-[#BA8332]" />
                           <span>{lang === 'en' ? 'Submission Method: Physical Card' : 'طريقة التسليم: كارت فعلي'}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-800 text-xs font-mono font-bold rounded-md border border-emerald-300">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-800 text-xs font-sans font-semibold rounded-md border border-emerald-300">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                           <span>{lang === 'en' ? 'Status: Card Copied' : 'الحالة: تم نسخ الكارت'}</span>
                         </span>
@@ -92,7 +92,7 @@ export default function ShotReportSubmissionsView({
                           href={sub.driveLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-[#5C130F] font-mono font-bold hover:underline"
+                          className="inline-flex items-center gap-1.5 text-xs text-[#5C130F] font-sans font-semibold hover:underline"
                         >
                           <LinkIcon className="w-3.5 h-3.5" />
                           <span>{lang === 'en' ? 'Open Google Drive Folder' : 'فتح مجلد Google Drive'}</span>
@@ -110,7 +110,7 @@ export default function ShotReportSubmissionsView({
                     <button
                       type="button"
                       onClick={() => setOverrideModalReport(sub)}
-                      className="w-full mt-1 px-3.5 py-2 bg-[#5C130F] hover:bg-[#3A1A14] active:bg-[#3A1A14] !text-[#F3E6D0] text-xs font-mono font-bold rounded-md transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer group"
+                      className="w-full mt-1 px-3.5 py-2 bg-[#5C130F] hover:bg-[#3A1A14] active:bg-[#3A1A14] !text-[#F3E6D0] text-xs font-sans font-semibold rounded-md transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer group"
                       title="Override Star Rating"
                     >
                       <Edit3 className="w-3.5 h-3.5 !text-[#F3E6D0]" />

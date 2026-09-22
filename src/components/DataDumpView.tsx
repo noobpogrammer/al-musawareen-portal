@@ -477,11 +477,11 @@ export default function DataDumpView({
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#5C130F]/20 pb-4">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-2.5">
+          <h2 className="font-serif text-2xl font-semibold text-[#5C130F] flex items-center gap-2.5">
             <HardDrive className="w-7 h-7 text-[#BA8332]" />
             <span>{lang === 'en' ? 'Data Dump Operations' : 'عمليات تفريغ الذاكرة (Data Dump)'}</span>
           </h2>
-          <p className="font-serif text-xs text-[#5C130F]/80 italic mt-1">
+          <p className="font-sans text-xs text-[#5C130F]/80 italic mt-1">
             {lang === 'en'
               ? 'Post-event media delivery tracking, physical card copying, and touch-point grading.'
               : 'متابعة تسليم المواد الإعلامية بعد الفعاليات، نسخ كروت الذاكرة، وتقييم نقاط التغطية.'}
@@ -490,23 +490,23 @@ export default function DataDumpView({
 
         {/* Global Active Count Badge */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold px-3 py-1.5 bg-[#5C130F] text-white !text-white rounded-md uppercase tracking-wider shadow-xs">
-            {eligibleWorkItems.length} {lang === 'en' ? 'Active Coverage Pending' : 'تغطيات قيد الانتظار'}
+          <span className="text-xs font-sans font-semibold px-3 py-1.5 bg-[#5C130F] text-white !text-white rounded-md uppercase tracking-wider shadow-xs">
+            <span className="font-mono">{eligibleWorkItems.length}</span> {lang === 'en' ? 'Active Coverage Pending' : 'تغطيات قيد الانتظار'}
           </span>
         </div>
       </div>
 
       {/* Completion Alert Banner */}
       {justCompletedNotice && (
-        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-mono font-bold rounded-lg flex items-center justify-between gap-2 shadow-xs animate-fadeIn">
+        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-sans font-semibold rounded-lg flex items-center justify-between gap-2 shadow-xs animate-fadeIn">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0" />
-            <span className="text-sm font-serif">{justCompletedNotice}</span>
+            <span className="text-sm font-sans">{justCompletedNotice}</span>
           </div>
           <button 
             type="button" 
             onClick={() => setJustCompletedNotice(null)} 
-            className="text-emerald-700 hover:text-emerald-900 cursor-pointer font-bold px-2 py-0.5 text-sm"
+            className="text-emerald-700 hover:text-emerald-900 cursor-pointer font-semibold px-2 py-0.5 text-sm"
           >
             ✕
           </button>
@@ -515,7 +515,7 @@ export default function DataDumpView({
 
       {/* Error Alert Banner */}
       {errorMessage && (
-        <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-xs font-mono font-bold rounded-lg flex items-center justify-between gap-2 animate-fadeIn">
+        <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-xs font-sans font-semibold rounded-lg flex items-center justify-between gap-2 animate-fadeIn">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-700 shrink-0" />
             <span>{errorMessage}</span>
@@ -523,7 +523,7 @@ export default function DataDumpView({
           <button 
             type="button" 
             onClick={() => setErrorMessage(null)} 
-            className="text-red-700 hover:text-red-900 cursor-pointer font-bold px-2 py-0.5"
+            className="text-red-700 hover:text-red-900 cursor-pointer font-semibold px-2 py-0.5"
           >
             ✕
           </button>
@@ -532,7 +532,7 @@ export default function DataDumpView({
 
       {/* Primary Selector: Single Assignment / Sharaf Dropdown */}
       <div className="p-5 bg-white/80 border border-[#5C130F]/20 rounded-xl space-y-2 shadow-xs">
-        <label className="block text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F] flex items-center gap-1.5">
+        <label className="block text-xs font-sans font-semibold uppercase tracking-wider text-[#5C130F] flex items-center gap-1.5">
           <Layers className="w-4 h-4 text-[#BA8332]" />
           <span>{lang === 'en' ? 'Select Event / Coverage' : 'اختر الفعالية / التكليف'}</span>
         </label>
@@ -541,10 +541,10 @@ export default function DataDumpView({
           <div className="p-4 bg-[#FDFAF3] border border-emerald-300/80 rounded-lg flex items-center gap-3 text-emerald-900">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             <div>
-              <p className="font-serif font-bold text-sm">
+              <p className="font-serif font-semibold text-sm">
                 {lang === 'en' ? 'All data dumps are complete.' : 'جميع تفريغات الذاكرة مكتملة.'}
               </p>
-              <p className="font-serif text-xs text-emerald-800/80 italic mt-0.5">
+              <p className="font-sans text-xs text-emerald-800/80 italic mt-0.5">
                 {lang === 'en'
                   ? 'No concluded coverage assignments currently require media ingestion.'
                   : 'لا توجد تكليفات منتهية بانتظار استلام أو نسخ المواد حالياً.'}
@@ -560,7 +560,7 @@ export default function DataDumpView({
                 setJustCompletedNotice(null);
                 setFilterStatus('all');
               }}
-              className="w-full px-4 py-3 bg-[#FDFAF3] border border-[#5C130F]/30 text-xs sm:text-sm font-mono font-bold text-[#5C130F] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BA8332] shadow-2xs appearance-none cursor-pointer pr-10"
+              className="w-full px-4 py-3 bg-[#FDFAF3] border border-[#5C130F]/30 text-xs sm:text-sm font-sans font-semibold text-[#5C130F] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#BA8332] shadow-2xs appearance-none cursor-pointer pr-10"
             >
               <option value="">
                 {lang === 'en' ? '[ Select an event or coverage assignment ▼ ]' : '[ اختر الفعالية أو التكليف ▼ ]'}
@@ -586,10 +586,10 @@ export default function DataDumpView({
       {!selectedItem && eligibleWorkItems.length > 0 && (
         <div className="p-12 text-center bg-white/60 border border-[#5C130F]/15 rounded-xl space-y-3">
           <HardDrive className="w-12 h-12 text-[#BA8332]/60 mx-auto" />
-          <h3 className="font-serif font-bold text-lg text-[#5C130F]">
+          <h3 className="font-serif font-semibold text-lg text-[#5C130F]">
             {lang === 'en' ? 'Select an event or coverage assignment to begin.' : 'اختر فعالية أو تكليفاً للبدء.'}
           </h3>
-          <p className="font-serif text-xs text-[#3A1A14]/70 max-w-md mx-auto italic">
+          <p className="font-sans text-xs text-[#3A1A14]/70 max-w-md mx-auto italic">
             {lang === 'en'
               ? 'Choose a concluded coverage from the dropdown above to view assigned members, log physical cards, record touch points, and copy media.'
               : 'اختر تكليفاً من القائمة أعلاه لعرض أعضاء الفريق ومتابعة تسليم كروت الذاكرة أو روابط السحابة.'}
@@ -613,7 +613,7 @@ export default function DataDumpView({
                       Event Time: {selectedItem.fromTime || '—'} – {selectedItem.toTime || '—'}
                     </span>
                   )}
-                  <span className="px-2 py-0.5 bg-[#BA8332]/15 text-[#5C130F] text-[11px] font-mono font-bold rounded border border-[#BA8332]/30 flex items-center gap-1">
+                  <span className="px-2 py-0.5 bg-[#BA8332]/15 text-[#5C130F] text-[11px] font-sans font-semibold rounded border border-[#BA8332]/30 flex items-center gap-1">
                     <MapPin className="w-3 h-3 text-[#BA8332]" />
                     {selectedItem.zone}
                   </span>
@@ -625,19 +625,19 @@ export default function DataDumpView({
                   )}
                 </div>
 
-                <h3 className="font-serif text-xl font-bold text-[#5C130F] mt-1">
+                <h3 className="font-serif text-xl font-semibold text-[#5C130F] mt-1">
                   {selectedItem.title}
                 </h3>
-                <p className="font-serif text-xs text-[#3A1A14]/80 font-medium">
+                <p className="font-sans text-xs text-[#3A1A14]/80 font-medium">
                   {selectedItem.touchPoints.join(' • ')}
                 </p>
               </div>
 
               {/* Progress Box */}
               <div className="w-full lg:w-64 p-3 bg-[#FDFAF3] border border-[#5C130F]/15 rounded-lg space-y-1.5 shrink-0">
-                <div className="flex justify-between items-center text-xs font-mono font-bold">
+                <div className="flex justify-between items-center text-xs font-sans font-semibold">
                   <span className="text-[#5C130F] uppercase">{lang === 'en' ? 'Ingestion Status' : 'حالة التسليم'}</span>
-                  <span className="text-emerald-800">{completedInSelected} / {totalInSelected} ({totalInSelected > 0 ? Math.round((completedInSelected / totalInSelected) * 100) : 0}%)</span>
+                  <span className="text-emerald-800 font-mono">{completedInSelected} / {totalInSelected} ({totalInSelected > 0 ? Math.round((completedInSelected / totalInSelected) * 100) : 0}%)</span>
                 </div>
                 <div className="h-2 w-full bg-[#5C130F]/10 rounded-full overflow-hidden">
                   <div 
@@ -651,19 +651,19 @@ export default function DataDumpView({
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
               <div className="p-3 bg-[#FDFAF3] border border-[#5C130F]/10 rounded-lg">
-                <p className="text-[10px] text-[#5C130F] font-mono font-bold uppercase">{lang === 'en' ? 'Assigned Team' : 'فريق التغطية'}</p>
+                <p className="text-[10px] text-[#5C130F] font-sans font-semibold uppercase">{lang === 'en' ? 'Assigned Team' : 'فريق التغطية'}</p>
                 <p className="text-lg font-mono font-bold text-[#5C130F]">{totalInSelected}</p>
               </div>
               <div className="p-3 bg-[#FDFAF3] border border-[#5C130F]/10 rounded-lg">
-                <p className="text-[10px] text-emerald-800 font-mono font-bold uppercase">{lang === 'en' ? 'Completed' : 'المكتمل'}</p>
+                <p className="text-[10px] text-emerald-800 font-sans font-semibold uppercase">{lang === 'en' ? 'Completed' : 'المكتمل'}</p>
                 <p className="text-lg font-mono font-bold text-emerald-800">{completedInSelected}</p>
               </div>
               <div className="p-3 bg-[#FDFAF3] border border-[#5C130F]/10 rounded-lg">
-                <p className="text-[10px] text-[#BA8332] font-mono font-bold uppercase">{lang === 'en' ? 'Cards In Hand' : 'الكروت المستلمة'}</p>
+                <p className="text-[10px] text-[#BA8332] font-sans font-semibold uppercase">{lang === 'en' ? 'Cards In Hand' : 'الكروت المستلمة'}</p>
                 <p className="text-lg font-mono font-bold text-[#BA8332]">{cardsCopiedInSelected} <span className="text-xs text-[#3A1A14]/60 font-normal">/ {cardsReceivedInSelected}</span></p>
               </div>
               <div className="p-3 bg-[#FDFAF3] border border-[#5C130F]/10 rounded-lg">
-                <p className="text-[10px] text-indigo-900 font-mono font-bold uppercase">{lang === 'en' ? 'Drive Links' : 'روابط السحابة'}</p>
+                <p className="text-[10px] text-indigo-900 font-sans font-semibold uppercase">{lang === 'en' ? 'Drive Links' : 'روابط السحابة'}</p>
                 <p className="text-lg font-mono font-bold text-indigo-900">{driveLinksInSelected}</p>
               </div>
             </div>
@@ -671,52 +671,52 @@ export default function DataDumpView({
 
           {/* Status Filter Chips */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-mono font-bold text-[#5C130F] uppercase mr-1">
+            <span className="text-xs font-sans font-semibold text-[#5C130F] uppercase mr-1">
               {lang === 'en' ? 'Filter Team:' : 'تصفية الفريق:'}
             </span>
             <button
               type="button"
               onClick={() => setFilterStatus('all')}
-              className={`px-3 py-1 text-xs font-mono font-bold rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-sans font-semibold rounded-md transition-colors cursor-pointer ${
                 filterStatus === 'all'
                   ? 'bg-[#5C130F] text-white !text-white'
                   : 'bg-white/70 text-[#5C130F] border border-[#5C130F]/20 hover:bg-[#5C130F]/10'
               }`}
             >
-              {lang === 'en' ? 'All Records' : 'الكل'} ({selectedItemMembers.length})
+              {lang === 'en' ? 'All Records' : 'الكل'} (<span className="font-mono">{selectedItemMembers.length}</span>)
             </button>
             <button
               type="button"
               onClick={() => setFilterStatus('pending')}
-              className={`px-3 py-1 text-xs font-mono font-bold rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-sans font-semibold rounded-md transition-colors cursor-pointer ${
                 filterStatus === 'pending'
                   ? 'bg-red-700 text-white !text-white'
                   : 'bg-white/70 text-red-800 border border-red-300/60 hover:bg-red-50'
               }`}
             >
-              {lang === 'en' ? 'Pending Delivery' : 'في انتظار التسليم'} ({selectedItemMembers.filter(i => i.deliveryType === 'card' && !i.cardReceived).length})
+              {lang === 'en' ? 'Pending Delivery' : 'في انتظار التسليم'} (<span className="font-mono">{selectedItemMembers.filter(i => i.deliveryType === 'card' && !i.cardReceived).length}</span>)
             </button>
             <button
               type="button"
               onClick={() => setFilterStatus('received_awaiting_copy')}
-              className={`px-3 py-1 text-xs font-mono font-bold rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-sans font-semibold rounded-md transition-colors cursor-pointer ${
                 filterStatus === 'received_awaiting_copy'
                   ? 'bg-[#BA8332] text-white !text-white'
                   : 'bg-white/70 text-[#BA8332] border border-[#BA8332]/30 hover:bg-[#BA8332]/10'
               }`}
             >
-              {lang === 'en' ? 'Card Received (Awaiting Copy)' : 'مستلم (بانتظار النسخ)'} ({selectedItemMembers.filter(i => i.deliveryType === 'card' && i.cardReceived && !i.cardCopied).length})
+              {lang === 'en' ? 'Card Received (Awaiting Copy)' : 'مستلم (بانتظار النسخ)'} (<span className="font-mono">{selectedItemMembers.filter(i => i.deliveryType === 'card' && i.cardReceived && !i.cardCopied).length}</span>)
             </button>
             <button
               type="button"
               onClick={() => setFilterStatus('completed')}
-              className={`px-3 py-1 text-xs font-mono font-bold rounded-md transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-sans font-semibold rounded-md transition-colors cursor-pointer ${
                 filterStatus === 'completed'
                   ? 'bg-emerald-700 text-white !text-white'
                   : 'bg-white/70 text-emerald-800 border border-emerald-300/60 hover:bg-emerald-50'
               }`}
             >
-              {lang === 'en' ? 'Completed' : 'مكتمل'} ({completedInSelected})
+              {lang === 'en' ? 'Completed' : 'مكتمل'} (<span className="font-mono">{completedInSelected}</span>)
             </button>
           </div>
 
@@ -725,20 +725,20 @@ export default function DataDumpView({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#5C130F] text-[#F3E6D0] font-mono text-[11px] uppercase tracking-wider">
-                    <th className="py-3.5 px-4 font-bold">{lang === 'en' ? 'Photographer' : 'المصور'}</th>
-                    <th className="py-3.5 px-3 font-bold">{lang === 'en' ? 'ITS' : 'رقم ITS'}</th>
-                    <th className="py-3.5 px-3 font-bold">{lang === 'en' ? 'Delivery' : 'طريقة التسليم'}</th>
-                    <th className="py-3.5 px-3 font-bold text-center">{lang === 'en' ? 'Status / Receipt' : 'الحالة / الاستلام'}</th>
-                    <th className="py-3.5 px-3 font-bold">{lang === 'en' ? 'Touch Point Coverage' : 'تغطية النقاط'}</th>
-                    <th className="py-3.5 px-3 font-bold text-center">{lang === 'en' ? 'Copy Media' : 'نسخ البيانات'}</th>
-                    <th className="py-3.5 px-4 font-bold">{lang === 'en' ? 'Notes / Slot' : 'الملاحظات'}</th>
+                  <tr className="bg-[#5C130F] text-[#F3E6D0] font-sans text-[11px] uppercase tracking-wider">
+                    <th className="py-3.5 px-4 font-semibold">{lang === 'en' ? 'Photographer' : 'المصور'}</th>
+                    <th className="py-3.5 px-3 font-semibold">{lang === 'en' ? 'ITS' : 'رقم ITS'}</th>
+                    <th className="py-3.5 px-3 font-semibold">{lang === 'en' ? 'Delivery' : 'طريقة التسليم'}</th>
+                    <th className="py-3.5 px-3 font-semibold text-center">{lang === 'en' ? 'Status / Receipt' : 'الحالة / الاستلام'}</th>
+                    <th className="py-3.5 px-3 font-semibold">{lang === 'en' ? 'Touch Point Coverage' : 'تغطية النقاط'}</th>
+                    <th className="py-3.5 px-3 font-semibold text-center">{lang === 'en' ? 'Copy Media' : 'نسخ البيانات'}</th>
+                    <th className="py-3.5 px-4 font-semibold">{lang === 'en' ? 'Notes / Slot' : 'الملاحظات'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#5C130F]/10 font-sans">
                   {filteredMembers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-10 text-[#3A1A14]/60 font-serif italic">
+                      <td colSpan={7} className="text-center py-10 text-[#3A1A14]/60 font-sans italic">
                         {lang === 'en' ? 'No photographers matched the selected status filter.' : 'لا يوجد مصورون مطابقون لحالة التصفية المحددة.'}
                       </td>
                     </tr>

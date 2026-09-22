@@ -53,7 +53,7 @@ export default function IDCard({ user, className = '' }: IDCardProps) {
         {/* White / Gold Reversed Logo */}
         <Logo variant="reversed" className="h-11 z-10" />
         
-        <p className="font-serif text-[10px] text-[#c59b27] tracking-[0.2em] font-bold uppercase mt-2.5 z-10">
+        <p className="font-serif text-[10px] text-[#c59b27] tracking-widest font-semibold uppercase mt-2.5 z-10">
           Ashara Mubarakah
         </p>
       </div>
@@ -79,12 +79,12 @@ export default function IDCard({ user, className = '' }: IDCardProps) {
       <div className="mt-[100px] flex-1 flex flex-col items-center justify-between px-4 pb-5 text-center z-10">
         {/* English Name section */}
         <div className="w-full flex flex-col items-center gap-1">
-          {/* English Name using elegant Cinzel Roman Serif font */}
-          <h2 className="font-serif text-base font-extrabold text-editorial-ink uppercase tracking-wide leading-tight max-w-[260px] truncate">
+          {/* English Name using Cormorant Garamond Serif */}
+          <h2 className="font-serif text-base font-semibold text-editorial-ink uppercase tracking-wide leading-tight max-w-[260px] truncate">
             {user.fullName || 'Participant Name'}
           </h2>
           {/* Identity Subtitle */}
-          <p className="font-sans text-[9px] font-bold text-[#c59b27] uppercase tracking-widest mt-1">
+          <p className="font-sans text-[9px] font-semibold text-[#c59b27] uppercase tracking-wider mt-1">
             Al Musawareen Delegate
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function IDCard({ user, className = '' }: IDCardProps) {
           </div>
 
           {user.sharafAllocations && user.sharafAllocations.length > 0 && (
-            <div className="bg-[#5C130F] !text-white border border-[#c59b27] px-3 py-0.5 rounded-none text-[10px] font-mono font-bold uppercase tracking-wider mt-1">
+            <div className="bg-[#5C130F] !text-white border border-[#c59b27] px-3 py-0.5 rounded-none text-[10px] font-sans font-semibold uppercase tracking-wider mt-1">
               Sharaf: {Array.from(new Set(user.sharafAllocations.map(a => a.eventType))).join(', ')}
             </div>
           )}
@@ -115,7 +115,7 @@ export default function IDCard({ user, className = '' }: IDCardProps) {
 
           {/* Golden Role Label Bottom Panel with deep maroon text */}
           <div className="relative bg-[#c59b27] py-2 px-4 shadow-sm border border-[#a57c1e] text-white">
-            <span className="font-serif text-xs font-bold uppercase tracking-widest">
+            <span className="font-serif text-xs font-semibold uppercase tracking-wider">
               {roleEnglish}
             </span>
           </div>

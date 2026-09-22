@@ -525,7 +525,7 @@ export default function AdminDashboard({
     setIsNewAssignmentModalOpen(false);
     alert(
       lang === 'en' 
-        ? `Operational assignment dispatched to ${targetPVs.length} team member(s) successfully!` 
+        ? `Assignment created for ${targetPVs.length} team member(s) successfully!` 
         : `تم إرسال التكليف إلى ${targetPVs.length} من الأعضاء بنجاح!`
     );
   };
@@ -538,7 +538,7 @@ export default function AdminDashboard({
     }
     onAllocateSharaf(sharafUserIts, legacySharafZone, legacySharafSeat);
     setSharafUserIts('');
-    alert(lang === 'en' ? 'Sharaf coordinate seating allocated!' : 'تم تخصيص إحداثيات الشرف بنجاح!');
+    alert(lang === 'en' ? 'Sharaf allocated successfully!' : 'تم تخصيص إحداثيات الشرف بنجاح!');
   };
 
   // Generate dynamic batch coverage schedule template
@@ -558,14 +558,14 @@ export default function AdminDashboard({
           zone: randomZone,
           topic: randomTopic,
           assignedUsers: [randomPV.itsNumber],
-          notes: 'Auto-generated via Al Musawareen Batch Matrix Scheduler.',
+          notes: 'Auto-generated assignment schedule.',
           status: 'active'
         });
         count++;
       }
     });
 
-    alert(lang === 'en' ? `Generated ${count} coverage matrices successfully!` : `تم إنشاء ${count} من مصفوفات التغطية التلقائية بنجاح!`);
+    alert(lang === 'en' ? `Created ${count} assignments successfully!` : `تم إنشاء ${count} من مصفوفات التغطية التلقائية بنجاح!`);
   };
 
   return (
@@ -593,7 +593,7 @@ export default function AdminDashboard({
               <h1 className="font-serif text-lg sm:text-xl font-bold text-[#5C130F]">
                 {t.adminTitle}
               </h1>
-              <p className="font-serif text-xs text-[#5C130F]/80 italic mt-0.5">
+              <p className="font-sans text-xs text-[#5C130F]/80 italic mt-0.5">
                 {t.adminSubtitle}
               </p>
             </div>
@@ -611,7 +611,7 @@ export default function AdminDashboard({
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
                 {t.safarModeToggleLabel}
               </span>
               <button
@@ -632,12 +632,12 @@ export default function AdminDashboard({
 
             <div>
               {isSafarModeEnabled ? (
-                <span className="text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 bg-[#BA8332] text-white rounded-md uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs">
+                <span className="text-[9px] sm:text-[10px] font-sans font-semibold px-2.5 py-1 bg-[#BA8332] text-white rounded-md uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   {t.safarModeStatusOn}
                 </span>
               ) : (
-                <span className="text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 bg-[rgba(186,131,50,0.15)] text-[#5C130F] rounded-md uppercase tracking-wider inline-flex items-center gap-1.5">
+                <span className="text-[9px] sm:text-[10px] font-sans font-semibold px-2.5 py-1 bg-[rgba(186,131,50,0.15)] text-[#5C130F] rounded-md uppercase tracking-wider inline-flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#5C130F]" />
                   Inactive — Moula's TUS
                 </span>
@@ -660,10 +660,10 @@ export default function AdminDashboard({
               <p className="font-serif text-sm sm:text-base font-bold text-[#5C130F] leading-tight break-words">
                 {currentUser.fullName}
               </p>
-              <p className="font-mono text-[10px] text-[#3A1A14]/80 font-bold mt-1">
-                ITS: {currentUser.itsNumber}
+              <p className="text-[10px] text-[#3A1A14]/80 font-medium font-sans mt-1">
+                ITS: <span className="font-mono font-bold">{currentUser.itsNumber}</span>
               </p>
-              <span className="text-[9px] bg-[#BA8332] text-white font-mono font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block mt-1 text-center">
+              <span className="text-[9px] bg-[#BA8332] text-white font-sans font-semibold px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block mt-1 text-center">
                 {lang === 'en' ? 'Administrator' : 'الشيخ المدير'}
               </span>
             </div>
@@ -694,7 +694,7 @@ export default function AdminDashboard({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="editorial-card p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-mono font-bold">{lang === 'en' ? 'Active Photographers' : 'المصورين النشطين'}</p>
+              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-sans font-semibold">{lang === 'en' ? 'Active Photographers' : 'المصورين النشطين'}</p>
               <p className="text-2xl font-mono font-bold text-[#5C130F] mt-1">{approvedPVs.length}</p>
             </div>
             <div className="p-3 bg-white/40 border border-[#BA8332]/30 text-[#BA8332]">
@@ -704,7 +704,7 @@ export default function AdminDashboard({
 
           <div className="editorial-card p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-mono font-bold">{lang === 'en' ? 'Coverage Schedule' : 'التكليفات المجدولة'}</p>
+              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-sans font-semibold">{lang === 'en' ? 'Coverage Schedule' : 'التكليفات المجدولة'}</p>
               <p className="text-2xl font-mono font-bold text-[#5C130F] mt-1">{assignments.length}</p>
             </div>
             <div className="p-3 bg-white/40 border border-[#BA8332]/30 text-[#BA8332]">
@@ -714,7 +714,7 @@ export default function AdminDashboard({
 
           <div className="editorial-card p-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-mono font-bold">{lang === 'en' ? 'Submissions Received' : 'تقارير التسليمات'}</p>
+              <p className="text-[10px] text-[#5C130F] uppercase tracking-wider font-sans font-semibold">{lang === 'en' ? 'Submissions Received' : 'تقارير التسليمات'}</p>
               <p className="text-2xl font-mono font-bold text-[#5C130F] mt-1">{submissions.length}</p>
             </div>
             <div className="p-3 bg-white/40 border border-[#BA8332]/30 text-[#BA8332]">
@@ -727,7 +727,7 @@ export default function AdminDashboard({
         <div className={`grid grid-cols-2 ${isSafarModeEnabled ? 'md:grid-cols-6' : 'md:grid-cols-5'} gap-3`}>
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+            className={`py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'overview'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -738,7 +738,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('approvals')}
-            className={`relative py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+            className={`relative py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'approvals'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -746,7 +746,7 @@ export default function AdminDashboard({
           >
             <span>{lang === 'en' ? 'Approvals' : 'الموافقات'}</span>
             {pendingUsers.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#5C130F] !text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-[#BA8332]">
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#5C130F] !text-white text-[10px] font-mono font-bold rounded-full flex items-center justify-center border border-[#BA8332]">
                 {pendingUsers.length}
               </span>
             )}
@@ -754,7 +754,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('assignments')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+            className={`py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'assignments'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -765,7 +765,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('submissions')}
-            className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+            className={`py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'submissions'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -776,7 +776,7 @@ export default function AdminDashboard({
 
           <button
             onClick={() => setActiveTab('data_dump')}
-            className={`flex items-center justify-center gap-1.5 py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
               activeTab === 'data_dump'
                 ? 'option-card-selected'
                 : 'option-card-unselected'
@@ -789,7 +789,7 @@ export default function AdminDashboard({
           {isSafarModeEnabled && (
             <button
               onClick={() => setActiveTab('sharaf')}
-              className={`py-3 px-4 rounded-md font-mono font-bold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
+              className={`py-3 px-4 rounded-md font-sans font-semibold text-xs tracking-wider uppercase transition-all focus:outline-none focus:ring-2 focus:ring-[#5C130F] cursor-pointer ${
                 activeTab === 'sharaf'
                   ? 'option-card-selected'
                   : 'option-card-unselected'
@@ -877,7 +877,7 @@ export default function AdminDashboard({
                   <Award className="w-7 h-7 text-[#BA8332]" />
                   <span>{t.sharafEventsTitle}</span>
                 </h2>
-                <p className="text-xs text-[#3A1A14]/80 font-serif mt-1">
+                <p className="text-xs text-[#3A1A14]/80 font-sans mt-1">
                   {lang === 'en'
                     ? "Moula's Tus Safar Mode — Allocate event-based Sharaf clearances across Waaz, Qadambosi, Nikah, Misaq, Ziyafat, and custom miqaats."
                     : 'نمط سفر المولى (ط.ع) — توزيع تصاريح الشرف الميدانية لمجالس الوعظ، القدمبوسي، النكاح، الميثاق، والضيافة.'}
@@ -889,7 +889,7 @@ export default function AdminDashboard({
                 <button
                   type="button"
                   onClick={() => setIsCsvModalOpen(true)}
-                  className="px-3.5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold rounded-none flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  className="px-3.5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold rounded-none flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 >
                   <Upload className="w-4 h-4" />
                   <span>{t.bulkAssignCsvBtn}</span>
@@ -910,12 +910,12 @@ export default function AdminDashboard({
                   {/* Select Photographer/Videographer with Live Search */}
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {lang === 'en' ? 'Select Member' : 'اختر المصور المعتمد'}
                       </label>
                       {sharafMemberIts && (
-                        <span className="text-[10px] font-mono font-bold text-[#BA8332] bg-[#BA8332]/10 px-2 py-0.5 border border-[#BA8332]/30">
-                          ITS: {sharafMemberIts}
+                        <span className="text-[10px] font-sans font-semibold text-[#BA8332] bg-[#BA8332]/10 px-2 py-0.5 border border-[#BA8332]/30">
+                          ITS: <span className="font-mono font-bold">{sharafMemberIts}</span>
                         </span>
                       )}
                     </div>
@@ -928,7 +928,7 @@ export default function AdminDashboard({
                         value={sharafMemberSearchQuery}
                         onChange={(e) => setSharafMemberSearchQuery(e.target.value)}
                         placeholder={t.searchPeoplePlaceholder}
-                        className="w-full pl-8 pr-7 rtl:pl-7 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                        className="w-full pl-8 pr-7 rtl:pl-7 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                       />
                       {sharafMemberSearchQuery && (
                         <button
@@ -945,7 +945,7 @@ export default function AdminDashboard({
                     <select
                       value={sharafMemberIts}
                       onChange={(e) => setSharafMemberIts(e.target.value)}
-                      className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif text-xs"
+                      className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-sans text-xs"
                     >
                       <option value="">-- {lang === 'en' ? 'Choose Member' : 'اختر العضو'} --</option>
                       {approvedPVs
@@ -964,7 +964,7 @@ export default function AdminDashboard({
 
                   {/* Sharaf Event Type Radio Selector with Inline "+ Add new event" */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.eventTypeLabel}</label>
+                    <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">{t.eventTypeLabel}</label>
                     <div className="grid grid-cols-2 gap-2">
                       {sharafEvents.map(ev => {
                         const isSelected = !isAddingInlineEvent && sharafEventType.toLowerCase() === ev.name.toLowerCase();
@@ -976,7 +976,7 @@ export default function AdminDashboard({
                               setIsAddingInlineEvent(false);
                               setSharafEventType(ev.name);
                             }}
-                            className={`py-2 px-2.5 text-center font-mono text-xs font-bold border transition-all cursor-pointer ${
+                            className={`py-2 px-2.5 text-center font-sans text-xs font-semibold border transition-all cursor-pointer ${
                               isSelected
                                 ? 'bg-[#5C130F] !text-white border-[#5C130F]'
                                 : 'bg-white/40 text-[#5C130F] border-[#5C130F]/25 hover:bg-[#5C130F]/10'
@@ -994,7 +994,7 @@ export default function AdminDashboard({
                           setIsAddingInlineEvent(true);
                           setSharafEventType('+ Add new event');
                         }}
-                        className={`py-2 px-2.5 text-center font-mono text-xs font-bold border transition-all cursor-pointer ${
+                        className={`py-2 px-2.5 text-center font-sans text-xs font-semibold border transition-all cursor-pointer ${
                           isAddingInlineEvent || sharafEventType === '+ Add new event'
                             ? 'bg-[#BA8332] !text-white border-[#BA8332]'
                             : 'bg-white/40 text-[#BA8332] border-[#BA8332]/50 hover:bg-[#BA8332]/10'
@@ -1007,7 +1007,7 @@ export default function AdminDashboard({
                     {/* Inline Text Input revealed when "+ Add new event" is selected */}
                     {(isAddingInlineEvent || sharafEventType === '+ Add new event') && (
                       <div className="space-y-2 p-3 bg-white/60 border border-[#BA8332]/40 rounded-none animate-fadeIn mt-2 font-sans">
-                        <label className="text-[11px] font-mono font-bold uppercase text-[#5C130F] block">
+                        <label className="text-[11px] font-sans font-semibold uppercase text-[#5C130F] block">
                           {lang === 'en' ? 'New Event Name' : 'اسم المناسبة الجديدة'}
                         </label>
                         <div className="flex items-center gap-2">
@@ -1016,7 +1016,7 @@ export default function AdminDashboard({
                             value={inlineCustomEventName}
                             onChange={(e) => setInlineCustomEventName(e.target.value)}
                             placeholder="e.g. Majlis, Bethak, Darees..."
-                            className="flex-1 px-3 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                            className="flex-1 px-3 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                           />
                           <button
                             type="button"
@@ -1033,12 +1033,12 @@ export default function AdminDashboard({
                               setIsAddingInlineEvent(false);
                               setInlineCustomEventName('');
                             }}
-                            className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-mono text-xs font-bold uppercase rounded-none shrink-0 cursor-pointer shadow-sm"
+                            className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans text-xs font-semibold uppercase rounded-none shrink-0 cursor-pointer shadow-sm"
                           >
                             Save & Select
                           </button>
                         </div>
-                        <p className="text-[10px] text-[#3A1A14]/70 italic font-serif">
+                        <p className="text-[10px] text-[#3A1A14]/70 italic font-sans">
                           {lang === 'en'
                             ? 'Saved globally and automatically synced with Manage Events panel.'
                             : 'تتم إضافتها عالمياً ومزامنتها تلقائياً مع لوحة إدارة المناسبات.'}
@@ -1049,13 +1049,13 @@ export default function AdminDashboard({
 
                   {/* UNIFIED LOCATION & COVERAGE DETAILS FOR ALL EVENT TYPES */}
                   <div className="space-y-3 p-3 bg-white/40 border border-[#5C130F]/20 rounded-none font-sans">
-                    <span className="text-[10px] font-mono font-bold text-[#5C130F] uppercase tracking-wider block border-b border-[#5C130F]/15 pb-1">
+                    <span className="text-[10px] font-sans font-semibold text-[#5C130F] uppercase tracking-wider block border-b border-[#5C130F]/15 pb-1">
                       {lang === 'en' ? 'Location & Coverage Details' : 'تفاصيل الموقع والتغطية'}
                     </span>
 
                     {/* Event Date Input */}
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {lang === 'en' ? 'Event Date' : 'تاريخ المناسبة'}
                       </label>
                       <input
@@ -1073,7 +1073,7 @@ export default function AdminDashboard({
 
                     {/* Location Input (Required) */}
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {lang === 'en' ? 'Location *' : 'الموقع *'}
                       </label>
                       <input
@@ -1081,17 +1081,17 @@ export default function AdminDashboard({
                         value={sharafLocation}
                         onChange={(e) => setSharafLocation(e.target.value)}
                         placeholder="e.g. Nadir Burhani Hall, Hazrat Aliyah Hall..."
-                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif text-xs sm:text-sm"
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-sans text-xs sm:text-sm"
                         required
                       />
-                      <p className="text-[10px] text-[#3A1A14]/70 italic font-serif">
+                      <p className="text-[10px] text-[#3A1A14]/70 italic font-sans">
                         {lang === 'en' ? 'Venue where the member should report' : 'المكان الذي يجب على العضو التواجد فيه'}
                       </p>
                     </div>
 
                     {/* Zone Input (Optional) */}
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {lang === 'en' ? 'Zone (Optional)' : 'المنطقة / المحطة (اختياري)'}
                       </label>
                       <input
@@ -1100,7 +1100,7 @@ export default function AdminDashboard({
                         value={sharafZone}
                         onChange={(e) => setSharafZone(e.target.value)}
                         placeholder="e.g. Stage, Qibla, Masjid Sehan, Relay Center..."
-                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-serif text-xs sm:text-sm"
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] text-[#3A1A14] focus:outline-none focus:border-[#5C130F] font-sans text-xs sm:text-sm"
                       />
                       <datalist id="sharaf-zone-suggestions">
                         <option value="Masjid Sehan" />
@@ -1111,7 +1111,7 @@ export default function AdminDashboard({
                         <option value="Relay Center" />
                         <option value="Entrance" />
                       </datalist>
-                      <p className="text-[10px] text-[#3A1A14]/70 italic font-serif">
+                      <p className="text-[10px] text-[#3A1A14]/70 italic font-sans">
                         {lang === 'en' ? 'Specific area inside the venue to cover (optional)' : 'الموقع الداخلي المخصص للتغطية (اختياري)'}
                       </p>
                     </div>
@@ -1119,7 +1119,7 @@ export default function AdminDashboard({
                     {/* Time Range Inputs */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex flex-col gap-1">
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.fromTimeLabel}</label>
+                        <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">{t.fromTimeLabel}</label>
                         <input
                           type="text"
                           value={fromTime}
@@ -1129,7 +1129,7 @@ export default function AdminDashboard({
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.toTimeLabel}</label>
+                        <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">{t.toTimeLabel}</label>
                         <input
                           type="text"
                           value={toTime}
@@ -1142,12 +1142,12 @@ export default function AdminDashboard({
 
                     {/* Data Copying Deadline Grid */}
                     <div className="p-2.5 bg-[#5C130F]/5 border border-[#5C130F]/15 space-y-2">
-                      <label className="text-xs font-mono font-bold uppercase text-[#BA8332] block">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#BA8332] block">
                         {lang === 'en' ? 'Data Copying Deadline' : 'الموعد النهائي لتفريغ الذاكرة'}
                       </label>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-mono text-[#5C130F]/70">Deadline Date</span>
+                          <span className="text-[10px] font-sans font-medium text-[#5C130F]/70">Deadline Date</span>
                           <input
                             type="date"
                             value={sharafDeadlineDate}
@@ -1156,7 +1156,7 @@ export default function AdminDashboard({
                           />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-mono text-[#5C130F]/70">Deadline Time</span>
+                          <span className="text-[10px] font-sans font-medium text-[#5C130F]/70">Deadline Time</span>
                           <input
                             type="text"
                             value={sharafDeadlineTime}
@@ -1172,7 +1172,7 @@ export default function AdminDashboard({
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-mono font-bold rounded-none text-xs uppercase tracking-widest shadow-sm transition-colors cursor-pointer"
+                    className="w-full py-2.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans font-semibold rounded-none text-xs uppercase tracking-widest shadow-sm transition-colors cursor-pointer"
                   >
                     {t.allocateSharafBtn}
                   </button>
@@ -1194,7 +1194,7 @@ export default function AdminDashboard({
                       value={sharafSearchQuery}
                       onChange={(e) => setSharafSearchQuery(e.target.value)}
                       placeholder={t.searchPeoplePlaceholder}
-                      className="w-full pl-8 pr-6 rtl:pl-6 rtl:pr-8 py-1.5 border border-[#5C130F]/30 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                      className="w-full pl-8 pr-6 rtl:pl-6 rtl:pr-8 py-1.5 border border-[#5C130F]/30 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                     />
                     {sharafSearchQuery && (
                       <button
@@ -1213,7 +1213,7 @@ export default function AdminDashboard({
                     <div className="py-12 text-center text-[#3A1A14]/60 space-y-2">
                       <Award className="w-10 h-10 text-[#BA8332] mx-auto opacity-50" />
                       <p className="text-sm font-serif font-bold">
-                        {lang === 'en' ? 'No Sharaf allocations dispatched yet.' : 'لم يتم تسجيل أي تخصيصات شرف بعد.'}
+                        {lang === 'en' ? 'No Sharaf allocations assigned yet.' : 'لم يتم تسجيل أي تخصيصات شرف بعد.'}
                       </p>
                     </div>
                   ) : (
@@ -1252,7 +1252,7 @@ export default function AdminDashboard({
 
                             {/* Event Column */}
                             <div className="flex items-center">
-                              <span className="inline-flex items-center gap-1 bg-[#5C130F] !text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-none uppercase">
+                              <span className="inline-flex items-center gap-1 bg-[#5C130F] !text-white text-[10px] font-sans font-semibold px-2 py-0.5 rounded-none uppercase">
                                 <Award className="w-3 h-3 text-[#BA8332]" />
                                 <span className="!text-white">{alloc.eventType}</span>
                               </span>
@@ -1261,14 +1261,14 @@ export default function AdminDashboard({
                             {/* Allocation Details Column */}
                             <div className="space-y-0.5 min-w-0">
                               <div className="flex items-baseline gap-1.5">
-                                <span className="text-[9px] font-mono font-bold uppercase text-[#3A1A14]/60 shrink-0">LOCATION:</span>
+                                <span className="text-[9px] font-sans font-semibold uppercase text-[#3A1A14]/60 shrink-0">LOCATION:</span>
                                 <span className="font-serif font-bold text-[#5C130F] text-xs sm:text-sm truncate" title={alloc.location || 'Location not set'}>
                                   {alloc.location || <span className="text-amber-800 italic font-mono text-[11px]">Location not set</span>}
                                 </span>
                               </div>
                               {alloc.zone && (
                                 <div className="flex items-baseline gap-1.5">
-                                  <span className="text-[9px] font-mono font-bold uppercase text-[#3A1A14]/60 shrink-0">ZONE:</span>
+                                  <span className="text-[9px] font-sans font-semibold uppercase text-[#3A1A14]/60 shrink-0">ZONE:</span>
                                   <span className="font-serif text-xs text-[#3A1A14] font-medium truncate" title={alloc.zone}>{alloc.zone}</span>
                                 </div>
                               )}
@@ -1319,7 +1319,7 @@ export default function AdminDashboard({
                     </h3>
                     <button
                       onClick={() => setIsManageEventsOpen(false)}
-                      className="text-[#5C130F] hover:font-bold font-mono text-base"
+                      className="text-[#5C130F] hover:font-bold font-sans text-base cursor-pointer"
                     >
                       ✕
                     </button>
@@ -1341,11 +1341,11 @@ export default function AdminDashboard({
                       value={newCustomEventName}
                       onChange={(e) => setNewCustomEventName(e.target.value)}
                       placeholder="New Sharaf Event Name (e.g. Majlis)..."
-                      className="flex-1 px-3 py-2 border border-[#5C130F]/35 bg-white text-xs font-serif focus:outline-none focus:border-[#5C130F]"
+                      className="flex-1 px-3 py-2 border border-[#5C130F]/35 bg-white text-xs font-sans focus:outline-none focus:border-[#5C130F]"
                     />
                     <button
                       type="submit"
-                      className="px-3.5 py-2 bg-[#5C130F] !text-white font-mono text-xs font-bold rounded-none uppercase shrink-0"
+                      className="px-3.5 py-2 bg-[#5C130F] !text-white font-sans text-xs font-semibold rounded-none uppercase shrink-0 cursor-pointer"
                     >
                       + Add
                     </button>
@@ -1353,19 +1353,19 @@ export default function AdminDashboard({
 
                   {/* Active Event Types List */}
                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F] block">Active Sharaf Event Types:</span>
+                    <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F] block">Active Sharaf Event Types:</span>
                     {sharafEvents.map(ev => (
                       <div key={ev.id} className="flex justify-between items-center p-2.5 bg-white border border-[#5C130F]/15">
                         <span className="font-serif font-bold text-xs text-[#5C130F]">{ev.name}</span>
                         {ev.isDefault ? (
-                          <span className="text-[9px] font-mono font-bold bg-[#BA8332]/20 text-[#5C130F] px-2 py-0.5 border border-[#BA8332]/40 uppercase">
+                          <span className="text-[9px] font-sans font-semibold bg-[#BA8332]/20 text-[#5C130F] px-2 py-0.5 border border-[#BA8332]/40 uppercase">
                             Default Protected
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => onDeleteCustomEvent && onDeleteCustomEvent(ev.id)}
-                            className="text-xs text-red-700 hover:underline font-mono font-bold flex items-center gap-1"
+                            className="text-xs text-red-700 hover:underline font-sans font-semibold flex items-center gap-1 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Delete</span>
@@ -1378,7 +1378,7 @@ export default function AdminDashboard({
                   <div className="pt-2 text-right">
                     <button
                       onClick={() => setIsManageEventsOpen(false)}
-                      className="px-4 py-1.5 bg-[#5C130F] !text-white font-mono text-xs font-bold rounded-none uppercase"
+                      className="px-4 py-1.5 bg-[#5C130F] !text-white font-sans text-xs font-semibold rounded-none uppercase cursor-pointer"
                     >
                       Close Settings
                     </button>
@@ -1401,7 +1401,7 @@ export default function AdminDashboard({
                         handleResetCsvUpload();
                         setIsCsvModalOpen(false);
                       }}
-                      className="text-[#5C130F] hover:font-bold font-mono text-base cursor-pointer"
+                      className="text-[#5C130F] hover:font-bold font-sans text-base cursor-pointer"
                     >
                       ✕
                     </button>
@@ -1409,11 +1409,11 @@ export default function AdminDashboard({
 
                   {/* CSV Header Guide */}
                   <div className="p-3 bg-white/70 border border-[#5C130F]/20 text-[11px] font-mono space-y-1">
-                    <span className="font-bold text-[#5C130F] block uppercase">Recommended CSV Format Header (9 Columns):</span>
+                    <span className="font-sans font-semibold text-[#5C130F] block uppercase text-[10px]">Recommended CSV Format Header (9 Columns):</span>
                     <code className="text-[10px] text-[#3A1A14] block bg-[#FDFAF3] p-1.5 border border-[#5C130F]/15 overflow-x-auto">
                       ITS_ID, Event_Type, Date, Location, Zone, From_Time, To_Time, Data_Copying_Deadline_Date, Data_Copying_Deadline_Time
                     </code>
-                    <p className="text-[10px] text-[#3A1A14]/70 italic pt-1 leading-relaxed">
+                    <p className="text-[10px] text-[#3A1A14]/70 italic pt-1 leading-relaxed font-sans">
                       Examples:<br />
                       • 50412345, Waaz, 2026-07-22, Nadir Burhani Hall, Masjid Sehan, 09:00 AM, 12:00 PM, 2026-07-22, 02:00 PM<br />
                       • 30498765, Qadambosi, 2026-07-22, Hazrat Aliyah Hall, Stage, 06:00 PM, 07:30 PM, 2026-07-22, 10:00 PM<br />
@@ -1465,7 +1465,7 @@ export default function AdminDashboard({
                         <p className="font-serif font-bold text-[#5C130F] text-sm uppercase tracking-wider">
                           {lang === 'en' ? 'Drag & Drop your .csv file here' : 'سحب وإسقاط ملف .csv هنا'}
                         </p>
-                        <p className="text-xs text-[#3A1A14]/70 font-mono mt-1">
+                        <p className="text-xs text-[#3A1A14]/70 font-sans mt-1">
                           {lang === 'en' ? 'or click to browse from your computer' : 'أو انقر للتصفح من جهازك'}
                         </p>
                       </div>
@@ -1475,14 +1475,14 @@ export default function AdminDashboard({
                           e.stopPropagation();
                           csvFileInputRef.current?.click();
                         }}
-                        className="px-4 py-2 bg-[#5C130F] !text-white font-mono text-xs font-bold rounded-none uppercase tracking-wider shadow-sm cursor-pointer hover:bg-[#3A1A14]"
+                        className="px-4 py-2 bg-[#5C130F] !text-white font-sans text-xs font-semibold rounded-none uppercase tracking-wider shadow-sm cursor-pointer hover:bg-[#3A1A14]"
                       >
                         Browse / Select File
                       </button>
                     </div>
                   ) : (
                     /* Selected File Details Confirmation Card */
-                    <div className="p-4 bg-white border border-[#5C130F]/30 rounded-none flex items-center justify-between gap-4 font-mono text-xs">
+                    <div className="p-4 bg-white border border-[#5C130F]/30 rounded-none flex items-center justify-between gap-4 font-sans text-xs">
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-6 h-6 text-emerald-700 shrink-0" />
                         <div>
@@ -1496,7 +1496,7 @@ export default function AdminDashboard({
                       <button
                         type="button"
                         onClick={handleResetCsvUpload}
-                        className="px-3 py-1.5 border border-[#5C130F]/30 text-[#5C130F] font-bold text-[11px] hover:bg-[#5C130F]/10 rounded-none uppercase"
+                        className="px-3 py-1.5 border border-[#5C130F]/30 text-[#5C130F] font-semibold text-[11px] hover:bg-[#5C130F]/10 rounded-none uppercase"
                       >
                         Choose Different File
                       </button>
@@ -1505,7 +1505,7 @@ export default function AdminDashboard({
 
                   {/* Clear Error Message if Invalid File Type */}
                   {csvFileError && (
-                    <div className="p-3.5 bg-red-50 border border-red-300 text-red-800 text-xs font-mono flex items-center gap-2 rounded-none">
+                    <div className="p-3.5 bg-red-50 border border-red-300 text-red-800 text-xs font-sans flex items-center gap-2 rounded-none">
                       <AlertTriangle className="w-4 h-4 shrink-0" />
                       <span>{csvFileError}</span>
                     </div>
@@ -1514,26 +1514,26 @@ export default function AdminDashboard({
                   {/* Validation Preview Section */}
                   {csvPreview && (
                     <div className="space-y-3 font-sans border-t border-[#5C130F]/15 pt-3">
-                      <div className="flex items-center gap-4 text-xs font-mono font-bold">
+                      <div className="flex items-center gap-4 text-xs font-sans font-semibold">
                         <span className="text-emerald-700 flex items-center gap-1">
                           <CheckCircle2 className="w-4 h-4" />
-                          {csvPreview.valid.length} Valid Row(s)
+                          <span className="font-mono">{csvPreview.valid.length}</span> Valid Row(s)
                         </span>
                         {csvPreview.errors.length > 0 && (
                           <span className="text-red-700 flex items-center gap-1">
                             <AlertTriangle className="w-4 h-4" />
-                            {csvPreview.errors.length} Error Row(s)
+                            <span className="font-mono">{csvPreview.errors.length}</span> Error Row(s)
                           </span>
                         )}
                       </div>
 
                       {/* Error details list if any */}
                       {csvPreview.errors.length > 0 && (
-                        <div className="bg-red-50 border border-red-200 p-3 max-h-36 overflow-y-auto space-y-1.5 text-[11px] font-mono">
-                          <span className="font-bold text-red-800 uppercase block">Validation Errors:</span>
+                        <div className="bg-red-50 border border-red-200 p-3 max-h-36 overflow-y-auto space-y-1.5 text-[11px] font-sans">
+                          <span className="font-semibold text-red-800 uppercase block">Validation Errors:</span>
                           {csvPreview.errors.map((err, i) => (
                             <div key={i} className="text-red-700">
-                              <strong>Row {err.row}:</strong> {err.reason}
+                              <strong>Row <span className="font-mono">{err.row}</span>:</strong> {err.reason}
                             </div>
                           ))}
                         </div>
@@ -1548,7 +1548,7 @@ export default function AdminDashboard({
                         handleResetCsvUpload();
                         setIsCsvModalOpen(false);
                       }}
-                      className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded-none uppercase cursor-pointer"
+                      className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-sans text-xs font-semibold rounded-none uppercase cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -1562,9 +1562,9 @@ export default function AdminDashboard({
                             setIsCsvModalOpen(false);
                           }
                         }}
-                        className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold rounded-none uppercase shadow-sm cursor-pointer"
+                        className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold rounded-none uppercase shadow-sm cursor-pointer"
                       >
-                        {t.confirmBulkAssign} ({csvPreview.valid.length})
+                        {t.confirmBulkAssign} (<span className="font-mono">{csvPreview.valid.length}</span>)
                       </button>
                     )}
                   </div>
@@ -1612,7 +1612,7 @@ export default function AdminDashboard({
                 <button
                   type="button"
                   onClick={() => setIsNewAssignmentModalOpen(false)}
-                  className="text-[#5C130F] hover:font-bold font-mono text-base cursor-pointer"
+                  className="text-[#5C130F] hover:font-bold font-sans text-base cursor-pointer"
                 >
                   ✕
                 </button>
@@ -1626,14 +1626,14 @@ export default function AdminDashboard({
                   {/* Miqaat Name */}
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {t.miqaatName}
                       </label>
                       {!isAddingInlineMiqaat && (
                         <button
                           type="button"
                           onClick={() => setIsAddingInlineMiqaat(true)}
-                          className="text-[10px] font-mono font-bold text-[#BA8332] hover:underline cursor-pointer"
+                          className="text-[10px] font-sans font-semibold text-[#BA8332] hover:underline cursor-pointer"
                         >
                           + Add new
                         </button>
@@ -1647,7 +1647,7 @@ export default function AdminDashboard({
                           value={inlineMiqaatName}
                           onChange={(e) => setInlineMiqaatName(e.target.value)}
                           placeholder="New Miqaat Name..."
-                          className="flex-1 px-2.5 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                          className="flex-1 px-2.5 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                         />
                         <button
                           type="button"
@@ -1660,7 +1660,7 @@ export default function AdminDashboard({
                             setInlineMiqaatName('');
                             setIsAddingInlineMiqaat(false);
                           }}
-                          className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase shrink-0 cursor-pointer shadow-sm"
+                          className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold uppercase shrink-0 cursor-pointer shadow-sm"
                         >
                           Save
                         </button>
@@ -1669,7 +1669,7 @@ export default function AdminDashboard({
                       <select
                         value={assignMiqaatName}
                         onChange={(e) => setAssignMiqaatName(e.target.value)}
-                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-serif text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-sans text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                       >
                         {miqaats.map(m => (
                           <option key={m.id} value={m.name}>{m.name}</option>
@@ -1680,7 +1680,7 @@ export default function AdminDashboard({
 
                   {/* Miqaat Date */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.date}</label>
+                    <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">{t.date}</label>
                     <input
                       type="date"
                       value={assignDate}
@@ -1695,10 +1695,10 @@ export default function AdminDashboard({
                   {/* Coverage Zone Field */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between border-b border-[#5C130F]/15 pb-1.5">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {t.zone}
                       </label>
-                      <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
+                      <div className="flex items-center gap-2 text-[10px] font-sans font-semibold">
                         <button
                           type="button"
                           onClick={() => setIsAddingInlineZone(!isAddingInlineZone)}
@@ -1725,7 +1725,7 @@ export default function AdminDashboard({
                         value={zoneSearchQuery}
                         onChange={(e) => setZoneSearchQuery(e.target.value)}
                         placeholder="Search zones..."
-                        className="w-full pl-8 pr-7 rtl:pl-7 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                        className="w-full pl-8 pr-7 rtl:pl-7 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                       />
                       {zoneSearchQuery && (
                         <button
@@ -1745,7 +1745,7 @@ export default function AdminDashboard({
                           value={inlineZoneName}
                           onChange={(e) => setInlineZoneName(e.target.value)}
                           placeholder="New zone name..."
-                          className="flex-1 px-2.5 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif focus:outline-none focus:border-[#5C130F]"
+                          className="flex-1 px-2.5 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans focus:outline-none focus:border-[#5C130F]"
                         />
                         <button
                           type="button"
@@ -1758,7 +1758,7 @@ export default function AdminDashboard({
                             setInlineZoneName('');
                             setIsAddingInlineZone(false);
                           }}
-                          className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase shrink-0 cursor-pointer shadow-sm"
+                          className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold uppercase shrink-0 cursor-pointer shadow-sm"
                         >
                           Save
                         </button>
@@ -1768,7 +1768,7 @@ export default function AdminDashboard({
                     <select
                       value={assignZone}
                       onChange={(e) => setAssignZone(e.target.value)}
-                      className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-serif text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                      className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-sans text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                     >
                       {zones
                         .filter(z => {
@@ -1785,14 +1785,14 @@ export default function AdminDashboard({
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between border-b border-[#5C130F]/15 pb-1.5">
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                        <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                           {t.touchPoint}
                         </label>
-                        <span className="text-[10px] font-mono font-bold text-[#BA8332] bg-[#BA8332]/10 px-2 py-0.5 border border-[#BA8332]/30">
-                          {assignTopics.length} {lang === 'en' ? 'Selected' : 'محدد'}
+                        <span className="text-[10px] font-sans font-semibold text-[#BA8332] bg-[#BA8332]/10 px-2 py-0.5 border border-[#BA8332]/30">
+                          <span className="font-mono">{assignTopics.length}</span> {lang === 'en' ? 'Selected' : 'محدد'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
+                      <div className="flex items-center gap-2 text-[10px] font-sans font-semibold">
                         <button
                           type="button"
                           onClick={() => setIsAddingInlineTopic(!isAddingInlineTopic)}
@@ -1818,13 +1818,13 @@ export default function AdminDashboard({
                         {assignTopics.map((tpName) => (
                           <span
                             key={tpName}
-                            className="inline-flex items-center gap-1.5 bg-[#BA8332] text-white text-xs font-serif font-bold px-2 py-0.5 rounded-none shadow-xs"
+                            className="inline-flex items-center gap-1.5 bg-[#BA8332] text-white text-xs font-sans font-semibold px-2 py-0.5 rounded-none shadow-xs"
                           >
                             <span>{tpName}</span>
                             <button
                               type="button"
                               onClick={() => setAssignTopics(assignTopics.filter(t => t !== tpName))}
-                              className="hover:text-red-200 font-mono font-bold text-xs cursor-pointer ml-0.5"
+                              className="hover:text-red-200 font-sans font-bold text-xs cursor-pointer ml-0.5"
                               title="Remove touch point"
                             >
                               ×
@@ -1833,7 +1833,7 @@ export default function AdminDashboard({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] font-serif text-[#3A1A14]/60 italic bg-white p-2 border border-[#5C130F]/20">
+                      <p className="text-[11px] font-sans text-[#3A1A14]/60 italic bg-white p-2 border border-[#5C130F]/20">
                         {lang === 'en' ? 'No touch points selected yet. Select from below:' : 'لم يتم تحديد أي نقاط تغطية بعد. اختر من القائمة أدناه:'}
                       </p>
                     )}
@@ -1846,7 +1846,7 @@ export default function AdminDashboard({
                         value={topicSearchQuery}
                         onChange={(e) => setTopicSearchQuery(e.target.value)}
                         placeholder="Search touch points to toggle..."
-                        className="w-full pl-8 pr-7 rtl:pl-7 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                        className="w-full pl-8 pr-7 rtl:pl-7 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                       />
                       {topicSearchQuery && (
                         <button
@@ -1867,7 +1867,7 @@ export default function AdminDashboard({
                           value={inlineTopicName}
                           onChange={(e) => setInlineTopicName(e.target.value)}
                           placeholder="New touch point name..."
-                          className="flex-1 px-2.5 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif focus:outline-none focus:border-[#5C130F]"
+                          className="flex-1 px-2.5 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans focus:outline-none focus:border-[#5C130F]"
                         />
                         <button
                           type="button"
@@ -1880,7 +1880,7 @@ export default function AdminDashboard({
                             setInlineTopicName('');
                             setIsAddingInlineTopic(false);
                           }}
-                          className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold uppercase shrink-0 cursor-pointer shadow-sm"
+                          className="px-3 py-1.5 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold uppercase shrink-0 cursor-pointer shadow-sm"
                         >
                           Save & Select
                         </button>
@@ -1906,7 +1906,7 @@ export default function AdminDashboard({
                                   setAssignTopics([...assignTopics, tp.name]);
                                 }
                               }}
-                              className={`flex items-center justify-between p-2 text-xs font-serif cursor-pointer transition-colors border ${
+                              className={`flex items-center justify-between p-2 text-xs font-sans cursor-pointer transition-colors border ${
                                 isSelected
                                   ? 'bg-[#BA8332]/15 text-[#5C130F] font-bold border-[#BA8332]/40'
                                   : 'bg-transparent text-[#3A1A14] hover:bg-[#5C130F]/5 border-transparent'
@@ -1914,11 +1914,11 @@ export default function AdminDashboard({
                             >
                               <span>{tp.name}</span>
                               {isSelected ? (
-                                <span className="text-[10px] font-mono font-bold text-emerald-700 flex items-center gap-1">
+                                <span className="text-[10px] font-sans font-semibold text-emerald-700 flex items-center gap-1">
                                   ✓ Selected
                                 </span>
                               ) : (
-                                <span className="text-[10px] font-mono text-[#3A1A14]/50">
+                                <span className="text-[10px] font-sans text-[#3A1A14]/50">
                                   + Add
                                 </span>
                               )}
@@ -1931,10 +1931,10 @@ export default function AdminDashboard({
 
                 {/* ROW 3: Assignment Mode Toggle Buttons (Full Width) */}
                 <div className="flex flex-col gap-1.5 p-4 bg-white/40 border border-[#5C130F]/18 rounded-none">
-                  <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                  <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                     {lang === 'en' ? 'Assignment Mode' : 'نمط التخصيص'}
                   </label>
-                  <div className="grid grid-cols-2 border border-[#5C130F]/25 rounded-none overflow-hidden bg-white/40 font-mono text-[11px] font-bold">
+                  <div className="grid grid-cols-2 border border-[#5C130F]/25 rounded-none overflow-hidden bg-white/40 font-sans text-[11px] font-semibold">
                     <button
                       type="button"
                       onClick={() => setAssignMode('individual')}
@@ -1965,10 +1965,10 @@ export default function AdminDashboard({
                   {assignMode === 'individual' ? (
                     <div className="flex flex-col gap-2.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.assignPv}</label>
+                        <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">{t.assignPv}</label>
                         {assignPVs.length > 0 && (
-                          <span className="text-[10px] font-mono font-bold text-[#BA8332] bg-[#BA8332]/10 px-2 py-0.5 border border-[#BA8332]/30">
-                            {assignPVs.length} {lang === 'en' ? 'Selected' : 'محدد'}
+                          <span className="text-[10px] font-sans font-semibold text-[#BA8332] bg-[#BA8332]/10 px-2 py-0.5 border border-[#BA8332]/30">
+                            <span className="font-mono">{assignPVs.length}</span> {lang === 'en' ? 'Selected' : 'محدد'}
                           </span>
                         )}
                       </div>
@@ -1980,7 +1980,7 @@ export default function AdminDashboard({
                           value={pvSearchQuery}
                           onChange={(e) => setPvSearchQuery(e.target.value)}
                           placeholder={t.searchPeoplePlaceholder}
-                          className="w-full pl-8 pr-6 rtl:pl-6 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                          className="w-full pl-8 pr-6 rtl:pl-6 rtl:pr-8 py-1.5 border border-[#5C130F]/35 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                         />
                         {pvSearchQuery && (
                           <button
@@ -1993,9 +1993,9 @@ export default function AdminDashboard({
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between text-[10px] font-mono">
+                      <div className="flex items-center justify-between text-[10px] font-sans">
                         <span className="text-[#3A1A14]/70">
-                          {filteredAssignPVs.length} {lang === 'en' ? 'match(es)' : 'مطابق'}
+                          <span className="font-mono">{filteredAssignPVs.length}</span> {lang === 'en' ? 'match(es)' : 'مطابق'}
                         </span>
                         <div className="flex items-center gap-2">
                           <button
@@ -2004,7 +2004,7 @@ export default function AdminDashboard({
                               const newSelected = Array.from(new Set([...assignPVs, ...filteredAssignPVs.map(p => p.itsNumber)]));
                               setAssignPVs(newSelected);
                             }}
-                            className="text-[#5C130F] font-bold hover:underline"
+                            className="text-[#5C130F] font-semibold hover:underline cursor-pointer"
                           >
                             {t.selectAllFiltered}
                           </button>
@@ -2012,7 +2012,7 @@ export default function AdminDashboard({
                           <button
                             type="button"
                             onClick={() => setAssignPVs([])}
-                            className="text-[#3A1A14]/60 hover:underline"
+                            className="text-[#3A1A14]/60 hover:underline cursor-pointer"
                           >
                             {t.clearSelection}
                           </button>
@@ -2021,7 +2021,7 @@ export default function AdminDashboard({
 
                       <div className="border border-[#5C130F]/20 p-3 max-h-52 overflow-y-auto space-y-2 bg-white">
                         {filteredAssignPVs.length === 0 ? (
-                          <p className="text-center py-4 text-xs font-serif italic text-[#3A1A14]/70">
+                          <p className="text-center py-4 text-xs font-sans italic text-[#3A1A14]/70">
                             {t.noMembersFound}
                           </p>
                         ) : (
@@ -2045,11 +2045,11 @@ export default function AdminDashboard({
                                   <AvatarPlaceholder src={pv.avatarUrl} alt={pv.fullName} sizeClassName="w-6 h-6" iconSizeClassName="w-3 h-3" />
                                   <div>
                                     <span className="font-serif font-bold text-[#5C130F] text-xs block leading-tight">{pv.fullName}</span>
-                                    <span className="text-[10px] text-[#3A1A14]/70 font-mono">ITS: {pv.itsNumber} ({pv.role})</span>
+                                    <span className="text-[10px] text-[#3A1A14]/70 font-sans">ITS: <span className="font-mono font-bold">{pv.itsNumber}</span> ({pv.role})</span>
                                   </div>
                                 </div>
                                 {isSelected && (
-                                  <span className="text-[9px] font-mono font-bold bg-[#5C130F] !text-white px-1.5 py-0.5 uppercase">
+                                  <span className="text-[9px] font-sans font-semibold bg-[#5C130F] !text-white px-1.5 py-0.5 uppercase">
                                     {lang === 'en' ? 'Selected' : 'محدد'}
                                   </span>
                                 )}
@@ -2061,13 +2061,13 @@ export default function AdminDashboard({
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2.5">
-                      <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                      <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                         {lang === 'en' ? 'Select Target Mohalla:' : 'اختر المحلة المستهدفة:'}
                       </label>
                       <select
                         value={selectedMohalla}
                         onChange={(e) => setSelectedMohalla(e.target.value)}
-                        className="w-full px-3 py-2 border border-[#5C130F]/35 bg-[#FDFAF3] font-serif text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                        className="w-full px-3 py-2 border border-[#5C130F]/35 bg-[#FDFAF3] font-sans text-xs text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                       >
                         {MOHALLA_OPTIONS.map(m => (
                           <option key={m} value={m}>{m}</option>
@@ -2075,21 +2075,21 @@ export default function AdminDashboard({
                       </select>
 
                       <div className="space-y-1.5 border border-[#5C130F]/20 p-3 bg-white">
-                        <div className="flex items-center justify-between border-b border-[#5C130F]/15 pb-2 text-[11px] font-mono font-bold">
+                        <div className="flex items-center justify-between border-b border-[#5C130F]/15 pb-2 text-[11px] font-sans font-semibold">
                           <span className="text-[#5C130F]">
                             {lang === 'en' ? `Members in ${selectedMohalla}:` : `الأعضاء في ${selectedMohalla}:`}
                           </span>
                           <span className="text-[#BA8332]">
-                            {selectedMohallaPVs.length} / {mohallaPVs.length} {lang === 'en' ? 'Selected' : 'محدد'}
+                            <span className="font-mono">{selectedMohallaPVs.length}</span> / <span className="font-mono">{mohallaPVs.length}</span> {lang === 'en' ? 'Selected' : 'محدد'}
                           </span>
                         </div>
 
                         {mohallaPVs.length > 0 && (
-                          <div className="flex items-center justify-end gap-2 text-[10px] font-mono pb-1">
+                          <div className="flex items-center justify-end gap-2 text-[10px] font-sans pb-1">
                             <button
                               type="button"
                               onClick={() => setSelectedMohallaPVs(mohallaPVs.map(m => m.itsNumber))}
-                              className="text-[#5C130F] font-bold hover:underline"
+                              className="text-[#5C130F] font-semibold hover:underline cursor-pointer"
                             >
                               {t.selectAllFiltered}
                             </button>
@@ -2097,7 +2097,7 @@ export default function AdminDashboard({
                             <button
                               type="button"
                               onClick={() => setSelectedMohallaPVs([])}
-                              className="text-[#3A1A14]/60 hover:underline"
+                              className="text-[#3A1A14]/60 hover:underline cursor-pointer"
                             >
                               {t.clearSelection}
                             </button>
@@ -2128,14 +2128,14 @@ export default function AdminDashboard({
                                   <AvatarPlaceholder sizeClassName="w-7 h-7" iconSizeClassName="w-3.5 h-3.5" />
                                   <div className="flex-1 min-w-0">
                                     <p className="font-serif font-bold text-[#5C130F] text-xs truncate leading-tight">{pv.fullName}</p>
-                                    <p className="text-[9px] text-[#3A1A14]/70 font-mono truncate">ITS: {pv.itsNumber} • Role: {pv.role}</p>
+                                    <p className="text-[9px] text-[#3A1A14]/70 font-sans truncate">ITS: <span className="font-mono font-bold">{pv.itsNumber}</span> • Role: {pv.role}</p>
                                   </div>
                                   {isSelected ? (
-                                    <span className="text-[9px] font-mono font-bold bg-[#5C130F] !text-white px-1.5 py-0.5 rounded-none uppercase">
+                                    <span className="text-[9px] font-sans font-semibold bg-[#5C130F] !text-white px-1.5 py-0.5 rounded-none uppercase">
                                       {lang === 'en' ? 'Selected' : 'محدد'}
                                     </span>
                                   ) : (
-                                    <span className="text-[9px] font-mono text-[#3A1A14]/50 border border-[#5C130F]/20 px-1.5 py-0.5 rounded-none uppercase">
+                                    <span className="text-[9px] font-sans text-[#3A1A14]/50 border border-[#5C130F]/20 px-1.5 py-0.5 rounded-none uppercase">
                                       {lang === 'en' ? 'Not Selected' : 'غير محدد'}
                                     </span>
                                   )}
@@ -2144,7 +2144,7 @@ export default function AdminDashboard({
                             })}
                           </div>
                         ) : (
-                          <p className="text-[11px] text-[#3A1A14]/70 italic font-serif py-3 text-center bg-[#FDFAF3] border border-[#5C130F]/10">
+                          <p className="text-[11px] text-[#3A1A14]/70 italic font-sans py-3 text-center bg-[#FDFAF3] border border-[#5C130F]/10">
                             {lang === 'en' 
                               ? 'No active photographers/videographers registered under this mohalla.' 
                               : 'لا يوجد مصورون مسجلون في هذه المحلة حالياً.'}
@@ -2157,13 +2157,13 @@ export default function AdminDashboard({
 
                 {/* ROW 5: Operational Directives (Full Width Textarea) */}
                 <div className="flex flex-col gap-1.5 p-4 bg-white/40 border border-[#5C130F]/18 rounded-none">
-                  <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">{t.notes}</label>
+                  <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">{t.notes}</label>
                   <textarea
                     rows={3}
                     value={assignNotes}
                     onChange={(e) => setAssignNotes(e.target.value)}
                     placeholder="Focus directives..."
-                    className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
+                    className="w-full px-3 py-2 border border-[#5C130F]/35 rounded-none bg-[#FDFAF3] font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F]"
                   />
                 </div>
 
@@ -2172,14 +2172,14 @@ export default function AdminDashboard({
                   <button
                     type="button"
                     onClick={() => setIsNewAssignmentModalOpen(false)}
-                    className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded-none uppercase cursor-pointer"
+                    className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-sans text-xs font-semibold rounded-none uppercase cursor-pointer"
                   >
                     {lang === 'en' ? 'Cancel' : 'إلغاء'}
                   </button>
 
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono font-bold rounded-none text-xs uppercase tracking-wider shadow-sm cursor-pointer"
+                    className="px-6 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans font-semibold rounded-none text-xs uppercase tracking-wider shadow-sm cursor-pointer"
                   >
                     {t.createAssignment}
                   </button>
@@ -2250,12 +2250,12 @@ export default function AdminDashboard({
                   <div>
                     <h3 className="font-serif font-bold text-lg text-[#5C130F] flex items-center gap-2">
                       <span>{editingPermissionsUser.fullName}</span>
-                      <span className="text-[10px] font-mono font-bold bg-[#5C130F]/10 text-[#5C130F] px-2.5 py-0.5 rounded-md">
+                      <span className="text-[10px] font-sans font-semibold bg-[#5C130F]/10 text-[#5C130F] px-2.5 py-0.5 rounded-md">
                         {formatRoleBadgeLabel(editingPermissionsUser)}
                       </span>
                     </h3>
-                    <p className="text-xs font-mono text-[#3A1A14]/75">
-                      ITS: {editingPermissionsUser.itsNumber} • Mobile: {editingPermissionsUser.mobile}
+                    <p className="text-xs font-sans text-[#3A1A14]/75">
+                      ITS: <span className="font-mono font-bold">{editingPermissionsUser.itsNumber}</span> • Mobile: <span className="font-mono font-bold">{editingPermissionsUser.mobile}</span>
                     </p>
                   </div>
                 </div>
@@ -2263,7 +2263,7 @@ export default function AdminDashboard({
                 <button
                   type="button"
                   onClick={() => setEditingPermissionsUser(null)}
-                  className="p-1 text-[#5C130F]/60 hover:text-[#5C130F] hover:bg-[#5C130F]/10 rounded-full transition-colors"
+                  className="p-1 text-[#5C130F]/60 hover:text-[#5C130F] hover:bg-[#5C130F]/10 rounded-full transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -2271,11 +2271,11 @@ export default function AdminDashboard({
 
               {/* 1. Multi-Role Configuration */}
               <div className="space-y-3">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F] block flex items-center gap-1.5">
+                <label className="text-xs font-sans font-semibold uppercase tracking-wider text-[#5C130F] block flex items-center gap-1.5">
                   <UserCheck className="w-4 h-4 text-[#BA8332]" />
                   <span>Assign User Tracks / Roles (Multi-Role Supported)</span>
                 </label>
-                <p className="text-xs text-[#3A1A14]/75 font-serif italic">
+                <p className="text-xs text-[#3A1A14]/75 font-sans italic">
                   Users can hold multiple tracks simultaneously (e.g. Photographer + HR Coordinator). Existing equipment specs, assignment history, and star ratings remain intact.
                 </p>
 
@@ -2283,7 +2283,7 @@ export default function AdminDashboard({
                   {/* Photographer Track */}
                   <label className={`p-3 border rounded-xl flex items-center gap-3 cursor-pointer transition-all ${
                     editingUserRoles.includes('photographer')
-                      ? 'bg-[#BA8332]/15 border-[#BA8332] text-[#5C130F] font-bold'
+                      ? 'bg-[#BA8332]/15 border-[#BA8332] text-[#5C130F] font-semibold'
                       : 'bg-white/60 border-[#5C130F]/20 text-[#3A1A14]'
                   }`}>
                     <input
@@ -2299,7 +2299,7 @@ export default function AdminDashboard({
                       className="accent-[#BA8332] w-4 h-4"
                     />
                     <div>
-                      <span className="text-xs font-mono block">Photographer</span>
+                      <span className="text-xs font-sans font-semibold block">Photographer</span>
                       <span className="text-[9px] text-[#3A1A14]/70 block font-normal">Still photos capture track</span>
                     </div>
                   </label>
@@ -2307,7 +2307,7 @@ export default function AdminDashboard({
                   {/* Videographer Track */}
                   <label className={`p-3 border rounded-xl flex items-center gap-3 cursor-pointer transition-all ${
                     editingUserRoles.includes('videographer')
-                      ? 'bg-[#BA8332]/15 border-[#BA8332] text-[#5C130F] font-bold'
+                      ? 'bg-[#BA8332]/15 border-[#BA8332] text-[#5C130F] font-semibold'
                       : 'bg-white/60 border-[#5C130F]/20 text-[#3A1A14]'
                   }`}>
                     <input
@@ -2323,7 +2323,7 @@ export default function AdminDashboard({
                       className="accent-[#BA8332] w-4 h-4"
                     />
                     <div>
-                      <span className="text-xs font-mono block">Videographer</span>
+                      <span className="text-xs font-sans font-semibold block">Videographer</span>
                       <span className="text-[9px] text-[#3A1A14]/70 block font-normal">Video & motion track</span>
                     </div>
                   </label>
@@ -2331,7 +2331,7 @@ export default function AdminDashboard({
                   {/* HR Coordinator Track */}
                   <label className={`p-3 border rounded-xl flex items-center gap-3 cursor-pointer transition-all ${
                     editingUserRoles.includes('coordinator')
-                      ? 'bg-[#5C130F]/15 border-[#5C130F] text-[#5C130F] font-bold'
+                      ? 'bg-[#5C130F]/15 border-[#5C130F] text-[#5C130F] font-semibold'
                       : 'bg-white/60 border-[#5C130F]/20 text-[#3A1A14]'
                   }`}>
                     <input
@@ -2347,7 +2347,7 @@ export default function AdminDashboard({
                       className="accent-[#5C130F] w-4 h-4"
                     />
                     <div>
-                      <span className="text-xs font-mono block">HR Coordinator</span>
+                      <span className="text-xs font-sans font-semibold block">HR Coordinator</span>
                       <span className="text-[9px] text-[#3A1A14]/70 block font-normal">Logistics & HR track</span>
                     </div>
                   </label>
@@ -2362,7 +2362,7 @@ export default function AdminDashboard({
                       <Shield className="w-4 h-4 text-[#BA8332]" />
                       <span>Toggle Specific HR Permissions (Extend or Revoke Anytime)</span>
                     </h4>
-                    <span className="text-[9px] font-mono font-bold bg-[#5C130F]/10 text-[#5C130F] px-2 py-0.5 rounded">
+                    <span className="text-[9px] font-sans font-semibold bg-[#5C130F]/10 text-[#5C130F] px-2 py-0.5 rounded">
                       HR Access Control
                     </span>
                   </div>
@@ -2377,7 +2377,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Coverage Assignments</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">Coverage Assignments</span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Assign team to schedules & zones</span>
                       </div>
                     </label>
@@ -2391,7 +2391,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Assignment Status</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">Assignment Status</span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Follow up on active rosters</span>
                       </div>
                     </label>
@@ -2405,7 +2405,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Shot Report Auditing</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">Shot Report Auditing</span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Review shot report submissions (View-only)</span>
                       </div>
                     </label>
@@ -2419,7 +2419,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Star Rating Override</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">Star Rating Override</span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Override gold/red star ratings</span>
                       </div>
                     </label>
@@ -2433,8 +2433,8 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">View Team Roster</span>
-                        <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">View Active Dispatched Lenses (Read-Only)</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">View Team Roster</span>
+                        <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">View team members and roster (Read-Only)</span>
                       </div>
                     </label>
 
@@ -2447,7 +2447,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Edit Team Roster</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">Edit Team Roster</span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Edit member details and permissions</span>
                       </div>
                     </label>
@@ -2461,8 +2461,8 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] flex items-center gap-1">
-                          Approve Onboarding <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] flex items-center gap-1">
+                          Approve Registrations <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                         </span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Approve / reject new registrations</span>
                       </div>
@@ -2477,7 +2477,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] flex items-center gap-1">
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] flex items-center gap-1">
                           Manage Sharaf <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                         </span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Allocate Sharaf seating passes</span>
@@ -2493,7 +2493,7 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] flex items-center gap-1">
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] flex items-center gap-1">
                           System Settings <ShieldAlert className="w-3 h-3 text-[#BA8332]" />
                         </span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage zones, topics & Safar mode</span>
@@ -2509,14 +2509,14 @@ export default function AdminDashboard({
                         className="mt-0.5 accent-[#BA8332] w-4 h-4"
                       />
                       <div>
-                        <span className="text-xs font-mono font-bold text-[#5C130F] block">Data Dump Operations</span>
+                        <span className="text-xs font-sans font-semibold text-[#5C130F] block">Data Dump Operations</span>
                         <span className="text-[10px] text-[#3A1A14]/70 block leading-tight">Manage card receipt and copy status after events</span>
                       </div>
                     </label>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 bg-[#BA8332]/10 border border-[#BA8332]/30 rounded-xl text-xs font-serif text-[#3A1A14]/80 italic">
+                <div className="p-4 bg-[#BA8332]/10 border border-[#BA8332]/30 rounded-xl text-xs font-sans text-[#3A1A14]/80 italic">
                   This user currently holds standard Photographer / Videographer track rights only. Check "HR Coordinator" above to grant HR permissions.
                 </div>
               )}
@@ -2534,7 +2534,7 @@ export default function AdminDashboard({
                       }
                       setEditingPermissionsUser(null);
                     }}
-                    className="px-3.5 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-xs font-mono font-bold rounded-md transition-colors border border-red-300 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto"
+                    className="px-3.5 py-2 bg-red-100 hover:bg-red-200 text-red-800 text-xs font-sans font-semibold rounded-md transition-colors border border-red-300 flex items-center gap-1.5 cursor-pointer w-full sm:w-auto"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>Remove HR Role Entirely</span>
@@ -2545,7 +2545,7 @@ export default function AdminDashboard({
                   <button
                     type="button"
                     onClick={() => setEditingPermissionsUser(null)}
-                    className="px-4 py-2 bg-white hover:bg-gray-100 text-[#5C130F] text-xs font-mono font-bold rounded-md transition-colors border border-[#5C130F]/20 cursor-pointer"
+                    className="px-4 py-2 bg-white hover:bg-gray-100 text-[#5C130F] text-xs font-sans font-semibold rounded-md transition-colors border border-[#5C130F]/20 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2563,7 +2563,7 @@ export default function AdminDashboard({
                       }
                       setEditingPermissionsUser(null);
                     }}
-                    className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white text-xs font-mono font-bold rounded-md flex items-center gap-1.5 transition-colors shadow-md cursor-pointer"
+                    className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white text-xs font-sans font-semibold rounded-md flex items-center gap-1.5 transition-colors shadow-md cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     <span>Save Roles & HR Permissions</span>

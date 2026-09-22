@@ -39,10 +39,10 @@ export default function GalleryCard({
         style={{ backgroundColor: 'rgba(246, 237, 218, 0.9)' }}
       >
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-serif text-lg font-bold text-[#5C130F] leading-snug">
+          <h3 className="font-serif text-lg font-semibold text-[#5C130F] leading-snug">
             {title}
           </h3>
-          <span className="shrink-0 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider bg-[#5C130F]/8 text-[#5C130F] border border-[#5C130F]/15">
+          <span className="shrink-0 px-2 py-0.5 text-[10px] font-sans font-medium bg-[#5C130F]/8 text-[#5C130F] border border-[#5C130F]/15">
             {location}
           </span>
         </div>

@@ -56,7 +56,7 @@ export default function DispatchedLensesRosterTable({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#5C130F]/20 pb-3">
         <h2 className="font-serif text-2xl font-bold text-[#5C130F] flex items-center gap-2">
           <Users className="w-6 h-6 text-[#BA8332]" />
-          <span>{lang === 'en' ? 'Al Musawareen Active Dispatched Lenses' : 'عدسات المصورين المعتمدة النشطة'}</span>
+          <span>{lang === 'en' ? 'Active Members & Team Roster' : 'عدسات المصورين المعتمدة النشطة'}</span>
         </h2>
 
         {/* Member Search Bar */}
@@ -67,7 +67,7 @@ export default function DispatchedLensesRosterTable({
             value={overviewSearchQuery}
             onChange={(e) => setOverviewSearchQuery(e.target.value)}
             placeholder={t.searchPeoplePlaceholder}
-            className="w-full pl-9 pr-7 rtl:pl-7 rtl:pr-9 py-1.5 border border-[#5C130F]/30 bg-[#FDFAF3] text-xs font-serif text-[#3A1A14] focus:outline-none focus:border-[#5C130F] rounded-md"
+            className="w-full pl-9 pr-7 rtl:pl-7 rtl:pr-9 py-1.5 border border-[#5C130F]/30 bg-[#FDFAF3] text-xs font-sans text-[#3A1A14] focus:outline-none focus:border-[#5C130F] rounded-md"
           />
           {overviewSearchQuery && (
             <button
@@ -83,26 +83,26 @@ export default function DispatchedLensesRosterTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left rtl:text-right text-xs font-sans border-collapse">
           <thead>
-            <tr className="border-b border-[#5C130F]/20 text-[#5C130F] uppercase tracking-wider pb-3 font-mono font-bold">
-              <th className="py-3 pr-2 font-mono font-bold w-[18%] min-w-[150px]">{lang === 'en' ? 'Member' : 'العضو'}</th>
-              <th className="py-3 px-2 font-mono font-bold w-[8%]">ITS</th>
-              <th className="py-3 px-2 font-mono font-bold whitespace-nowrap w-[10%]">{lang === 'en' ? 'Role' : (t.role || 'الدور')}</th>
-              <th className="py-3 px-2 font-mono font-bold whitespace-nowrap w-[8%]">{lang === 'en' ? 'Rating' : 'التقييم'}</th>
-              <th className="py-3 px-2 font-mono font-bold w-[11%]">{lang === 'en' ? 'Mohalla' : 'المحلة'}</th>
-              <th className="py-3 px-2 font-mono font-bold w-[16%]">{lang === 'en' ? 'Equipment' : 'المعدات'}</th>
-              <th className="py-3 px-2 font-mono font-bold w-[15%]">{lang === 'en' ? 'Contact' : 'التواصل'}</th>
+            <tr className="border-b border-[#5C130F]/20 text-[#5C130F] uppercase tracking-wider pb-3 font-sans font-semibold text-[11px]">
+              <th className="py-3 pr-2 font-sans font-semibold w-[18%] min-w-[150px]">{lang === 'en' ? 'Member' : 'العضو'}</th>
+              <th className="py-3 px-2 font-sans font-semibold w-[8%]">ITS</th>
+              <th className="py-3 px-2 font-sans font-semibold whitespace-nowrap w-[10%]">{lang === 'en' ? 'Role' : (t.role || 'الدور')}</th>
+              <th className="py-3 px-2 font-sans font-semibold whitespace-nowrap w-[8%]">{lang === 'en' ? 'Rating' : 'التقييم'}</th>
+              <th className="py-3 px-2 font-sans font-semibold w-[11%]">{lang === 'en' ? 'Mohalla' : 'المحلة'}</th>
+              <th className="py-3 px-2 font-sans font-semibold w-[16%]">{lang === 'en' ? 'Equipment' : 'المعدات'}</th>
+              <th className="py-3 px-2 font-sans font-semibold w-[15%]">{lang === 'en' ? 'Contact' : 'التواصل'}</th>
 
               {isSafarModeEnabled && (
-                <th className="py-3 px-2 font-mono font-bold whitespace-nowrap w-[10%]">{lang === 'en' ? 'Safar' : 'السفر'}</th>
+                <th className="py-3 px-2 font-sans font-semibold whitespace-nowrap w-[10%]">{lang === 'en' ? 'Safar' : 'السفر'}</th>
               )}
 
-              <th className="py-3 pl-2 font-mono font-bold text-right rtl:text-left whitespace-nowrap">{lang === 'en' ? 'Action' : 'الإجراء'}</th>
+              <th className="py-3 pl-2 font-sans font-semibold text-right rtl:text-left whitespace-nowrap">{lang === 'en' ? 'Action' : 'الإجراء'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#5C130F]/15">
             {filteredOverviewPVs.length === 0 ? (
               <tr>
-                <td colSpan={isSafarModeEnabled ? 9 : 8} className="py-8 text-center text-[#3A1A14]/70 font-serif italic">
+                <td colSpan={isSafarModeEnabled ? 9 : 8} className="py-8 text-center text-[#3A1A14]/70 font-sans italic">
                   {t.noMembersFound}
                 </td>
               </tr>
@@ -138,17 +138,17 @@ export default function DispatchedLensesRosterTable({
 
                     {/* 3. Role */}
                     <td className="py-3 px-2 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-[#5C130F]/10 text-[#5C130F] border border-[#5C130F]/20 whitespace-nowrap inline-block">
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-sans font-semibold uppercase tracking-wider bg-[#5C130F]/10 text-[#5C130F] border border-[#5C130F]/20 whitespace-nowrap inline-block">
                         {formatRoleBadgeLabel(pv)}
                       </span>
                     </td>
 
                     {/* 4. Rating */}
-                    <td className="py-3 px-2 font-mono text-xs whitespace-nowrap" title={ratingTooltip}>
+                    <td className="py-3 px-2 text-xs whitespace-nowrap" title={ratingTooltip}>
                       {rating.reportsCount === 0 ? (
                         <span className="text-[#3A1A14]/40 font-bold">—</span>
                       ) : (
-                        <div className="inline-flex items-center gap-2">
+                        <div className="inline-flex items-center gap-2 font-mono">
                           <span className="inline-flex items-center gap-1 font-bold text-[#BA8332]">
                             <Star className="w-3.5 h-3.5 fill-[#BA8332] text-[#BA8332]" />
                             <span>{rating.averageGold.toFixed(1).replace(/\.0$/, '')}</span>
@@ -162,33 +162,33 @@ export default function DispatchedLensesRosterTable({
                     </td>
 
                     {/* 5. Mohalla */}
-                    <td className="py-3 px-2 font-mono text-xs text-[#3A1A14]/80 max-w-[120px] truncate" title={pv.mohalla || pv.cityDomicile || '—'}>
+                    <td className="py-3 px-2 text-xs text-[#3A1A14]/80 max-w-[120px] truncate" title={pv.mohalla || pv.cityDomicile || '—'}>
                       {pv.mohalla || pv.cityDomicile || '—'}
                     </td>
 
                     {/* 6. Equipment */}
-                    <td className="py-3 px-2 font-mono text-xs max-w-[160px]" title={equipmentFullTooltip}>
+                    <td className="py-3 px-2 text-xs max-w-[160px]" title={equipmentFullTooltip}>
                       <div className="text-[#5C130F] font-medium truncate">{cameraText}</div>
                       <div className="text-[#3A1A14]/75 text-[11px] truncate">{lensText}</div>
                     </td>
 
                     {/* 7. Contact */}
-                    <td className="py-3 px-2 font-mono text-xs max-w-[150px]" title={contactTooltip}>
-                      <div className="text-[#3A1A14] font-medium truncate">{pv.mobile || '—'}</div>
+                    <td className="py-3 px-2 text-xs max-w-[150px]" title={contactTooltip}>
+                      <div className="text-[#3A1A14] font-mono font-medium truncate">{pv.mobile || '—'}</div>
                       <div className="text-[#3A1A14]/65 text-[11px] truncate" title={pv.email}>{pv.email || '—'}</div>
                     </td>
 
                     {/* 8. Safar (Only when Safar Mode is ON) */}
                     {isSafarModeEnabled && (
-                      <td className="py-3 px-2 font-mono text-xs max-w-[130px]">
+                      <td className="py-3 px-2 text-xs max-w-[130px]">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1 truncate" title={`Raza City: ${pv.cityRaza || '—'}`}>
-                            <span className="text-[9px] uppercase text-[#3A1A14]/60 font-bold">RAZA:</span>
-                            <span className="font-bold text-[#5C130F] text-[11px] truncate">{pv.cityRaza || '—'}</span>
+                            <span className="text-[9px] uppercase text-[#3A1A14]/60 font-semibold font-sans">RAZA:</span>
+                            <span className="font-semibold text-[#5C130F] text-[11px] truncate">{pv.cityRaza || '—'}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="text-[9px] uppercase text-[#3A1A14]/60 font-bold">SHARAF:</span>
-                            <span className={`px-1.5 py-0.2 rounded-xs text-[9px] font-bold uppercase ${
+                            <span className="text-[9px] uppercase text-[#3A1A14]/60 font-semibold font-sans">SHARAF:</span>
+                            <span className={`px-1.5 py-0.2 rounded-xs text-[9px] font-semibold uppercase font-sans ${
                               pv.sharafStatus === 'granted'
                                 ? 'bg-[#5C130F] !text-white'
                                 : 'bg-white/50 border border-[#5C130F]/20 text-[#5C130F]/70'
@@ -210,13 +210,13 @@ export default function DispatchedLensesRosterTable({
                             title="Manage user roles & HR access permissions"
                           >
                             <Shield className="w-3 h-3 text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] transition-colors" />
-                            <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-[10px] font-mono font-bold transition-colors">Roles & HR</span>
+                            <span className="text-[#5C130F] group-hover:!text-[#F3E6D0] group-active:!text-[#F3E6D0] text-[10px] font-sans font-semibold transition-colors">Roles & HR</span>
                           </button>
                         )}
                         {onQuickAssignUser && (
                           <button
                             onClick={() => onQuickAssignUser(pv.itsNumber)}
-                            className="px-2.5 py-1 bg-[#BA8332] hover:bg-[#a06e28] text-white text-[10px] font-mono font-bold rounded-md transition-colors shadow-xs whitespace-nowrap cursor-pointer"
+                            className="px-2.5 py-1 bg-[#BA8332] hover:bg-[#a06e28] text-white text-[10px] font-sans font-semibold rounded-md transition-colors shadow-xs whitespace-nowrap cursor-pointer"
                           >
                             + {t.assignTaskBtn}
                           </button>

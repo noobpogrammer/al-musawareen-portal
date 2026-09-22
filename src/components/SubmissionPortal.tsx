@@ -348,10 +348,10 @@ export default function SubmissionPortal({
               )}
             </div>
             <div>
-              <h1 className="font-serif text-lg sm:text-xl font-bold text-[#5C130F]">
+              <h1 className="font-serif text-lg sm:text-xl font-semibold text-[#5C130F]">
                 Al Musawareen Member Portal — {formatRoleBadgeLabel(currentUser)}
               </h1>
-              <p className="font-serif text-xs text-[#5C130F]/80 italic mt-0.5">
+              <p className="font-sans text-xs text-[#5C130F]/80 italic mt-0.5">
                 {lang === 'en'
                   ? 'Operations, coverage assignments, shot approvals & Sharaf allocation'
                   : 'إدارة العمليات، تكليفات التغطية، رفع التقارير وتخصيص مقاعد الشرف'}
@@ -371,10 +371,10 @@ export default function SubmissionPortal({
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
                 {lang === 'en' ? 'SAFAR MODE STATUS' : 'حالة وضع السفر'}
               </span>
-              <span className="text-[9px] font-mono text-[#5C130F]/70 font-bold uppercase">
+              <span className="text-[9px] font-sans text-[#5C130F]/70 font-semibold uppercase">
                 {lang === 'en' ? 'Read Only' : 'عرض فقط'}
               </span>
             </div>
@@ -382,21 +382,21 @@ export default function SubmissionPortal({
             <div>
               {isSafarModeEnabled ? (
                 <div className="space-[#5C130F]/5 space-y-1">
-                  <span className="text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 bg-[#BA8332] text-white rounded-md uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs">
+                  <span className="text-[9px] sm:text-[10px] font-sans font-semibold px-2.5 py-1 bg-[#BA8332] text-white rounded-md uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs">
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                     {lang === 'en' ? "Moula's TUS Safar Mode Active" : 'وضع السفر مفعل'}
                   </span>
-                  <p className="text-[10px] font-serif italic text-[#5C130F]/80">
+                  <p className="text-[10px] font-sans italic text-[#5C130F]/80">
                     {lang === 'en' ? 'Sharaf seating tab is unlocked' : 'ميزة مقاعد الشرف متاحة الآن'}
                   </p>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <span className="text-[9px] sm:text-[10px] font-mono font-bold px-2.5 py-1 bg-[rgba(186,131,50,0.15)] text-[#5C130F] rounded-md uppercase tracking-wider inline-flex items-center gap-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-sans font-semibold px-2.5 py-1 bg-[rgba(186,131,50,0.15)] text-[#5C130F] rounded-md uppercase tracking-wider inline-flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#5C130F]" />
                     {lang === 'en' ? 'Safar Mode Inactive' : 'وضع السفر غير مفعل'}
                   </span>
-                  <p className="text-[10px] font-serif italic text-[#3A1A14]/70">
+                  <p className="text-[10px] font-sans italic text-[#3A1A14]/70">
                     {lang === 'en' ? 'Normal operations — Sharaf seating off' : 'العمليات العادية — مقاعد الشرف مغلقة'}
                   </p>
                 </div>
@@ -416,13 +416,13 @@ export default function SubmissionPortal({
             }}
           >
             <div className="min-w-0 flex-1">
-              <p className="font-serif text-sm sm:text-base font-bold text-[#5C130F] leading-tight break-words">
+              <p className="font-serif text-sm sm:text-base font-semibold text-[#5C130F] leading-tight break-words">
                 {currentUser.fullName}
               </p>
-              <p className="font-mono text-[10px] text-[#3A1A14]/80 font-bold mt-1">
-                ITS: {currentUser.itsNumber}
+              <p className="font-sans text-[10px] text-[#3A1A14]/80 font-medium mt-1">
+                ITS: <span className="font-mono">{currentUser.itsNumber}</span>
               </p>
-              <span className="text-[10px] bg-[#5C130F]/10 text-[#5C130F] font-mono font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block mt-1 text-center border border-[#5C130F]/20">
+              <span className="text-[10px] bg-[#5C130F]/10 text-[#5C130F] font-sans font-semibold px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block mt-1 text-center border border-[#5C130F]/20">
                 {formatRoleBadgeLabel(currentUser)}
               </span>
             </div>
@@ -453,16 +453,16 @@ export default function SubmissionPortal({
           {/* Card 1 — Submissions Due */}
           <div className="editorial-card p-6 border-l-4 border-l-[#BA8332] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
                 {lang === 'en' ? 'Submissions Due' : 'التقارير المطلوبة'}
               </span>
               <FileText className="w-5 h-5 text-[#BA8332]" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-serif text-3xl font-bold text-[#5C130F]">
+              <span className="font-serif text-3xl font-semibold text-[#5C130F]">
                 {pendingSubmissionsCount}
               </span>
-              <span className="text-xs font-mono text-[#3A1A14]/70">
+              <span className="text-xs font-sans text-[#3A1A14]/70">
                 {pendingSubmissionsCount === 1 ? 'Submission Pending' : 'Submissions Pending'}
               </span>
             </div>
@@ -471,16 +471,16 @@ export default function SubmissionPortal({
           {/* Card 2 — Events to Accept/Decline */}
           <div className="editorial-card p-6 border-l-4 border-l-[#5C130F] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
                 {lang === 'en' ? 'Events to Respond' : 'تكليفات تحتاج رد'}
               </span>
               <Calendar className="w-5 h-5 text-[#5C130F]" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-serif text-3xl font-bold text-[#5C130F]">
+              <span className="font-serif text-3xl font-semibold text-[#5C130F]">
                 {pendingResponsesCount}
               </span>
-              <span className="text-xs font-mono text-[#3A1A14]/70">
+              <span className="text-xs font-sans text-[#3A1A14]/70">
                 {pendingResponsesCount > 0 ? 'Pending Accept / Decline' : 'All Confirmed'}
               </span>
             </div>
@@ -489,18 +489,18 @@ export default function SubmissionPortal({
           {/* Card 3 — Star Totals (Earned Gold & Red Stars) */}
           <div className="editorial-card p-6 border-l-4 border-l-[#BA8332] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+              <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
                 {lang === 'en' ? 'Performance Star Totals' : 'إجمالي النجوم المكتسبة'}
               </span>
               <Star className="w-5 h-5 text-[#BA8332] fill-[#BA8332]" />
             </div>
             <div className="flex items-baseline gap-3">
               <span className="font-mono font-bold text-2xl text-[#5C130F]">
-                {totalGoldEarned} <span className="text-xs text-[#BA8332]">Gold</span>
+                {totalGoldEarned} <span className="text-xs font-sans text-[#BA8332] font-semibold">Gold</span>
               </span>
               <span className="text-gray-300 font-bold">·</span>
               <span className="font-mono font-bold text-2xl text-red-700">
-                {totalRedEarned} <span className="text-xs text-red-600">Red</span>
+                {totalRedEarned} <span className="text-xs font-sans text-red-600 font-semibold">Red</span>
               </span>
             </div>
           </div>
@@ -515,7 +515,7 @@ export default function SubmissionPortal({
               <button
                 type="button"
                 onClick={() => setActiveTab('assigned')}
-                className={`relative flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                className={`relative flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                   activeTab === 'assigned'
                     ? 'option-card-selected'
                     : 'option-card-unselected'
@@ -523,7 +523,7 @@ export default function SubmissionPortal({
               >
                 <span>{lang === 'en' ? 'Assigned Coverage Schedules' : 'التكليفات المجدولة'}</span>
                 {pendingResponsesCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 !text-white text-[10px] font-bold rounded-full flex items-center justify-center border border-[#BA8332] animate-pulse">
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 !text-white text-[10px] font-mono font-bold rounded-full flex items-center justify-center border border-[#BA8332] animate-pulse">
                     {pendingResponsesCount}
                   </span>
                 )}
@@ -533,7 +533,7 @@ export default function SubmissionPortal({
               <button
                 type="button"
                 onClick={() => setActiveTab('submit_form')}
-                className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                   activeTab === 'submit_form'
                     ? 'option-card-selected'
                     : 'option-card-unselected'
@@ -546,7 +546,7 @@ export default function SubmissionPortal({
               <button
                 type="button"
                 onClick={() => setActiveTab('submission_logs')}
-                className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                   activeTab === 'submission_logs'
                     ? 'option-card-selected'
                     : 'option-card-unselected'
@@ -560,7 +560,7 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('sharaf')}
-                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'sharaf'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
@@ -579,7 +579,7 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_assignments')}
-                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_assignments'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
@@ -594,14 +594,14 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_submissions')}
-                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_submissions'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
-                  <span>{lang === 'en' ? 'Shot Report Audits' : 'تدقيق تقارير اللقطات'}</span>
+                  <span>{lang === 'en' ? 'Review Submissions' : 'تدقيق تقارير اللقطات'}</span>
                 </button>
               )}
 
@@ -609,7 +609,7 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_roster')}
-                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_roster'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
@@ -624,7 +624,7 @@ export default function SubmissionPortal({
                 <button
                   type="button"
                   onClick={() => setActiveTab('hr_data_dump')}
-                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-mono font-bold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[140px] sm:min-w-0 flex items-center justify-center text-center gap-1.5 py-2.5 px-4 rounded-xl font-sans font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
                     activeTab === 'hr_data_dump'
                       ? 'option-card-selected'
                       : 'option-card-unselected'
@@ -650,12 +650,12 @@ export default function SubmissionPortal({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="w-5 h-5 text-[#BA8332]" />
-                    <h4 className="font-serif text-base sm:text-lg font-bold text-[#5C130F]">
+                    <h4 className="font-serif text-base sm:text-lg font-semibold text-[#5C130F]">
                       {lang === 'en' ? 'Miqaat Availability Requests' : 'طلبات التفرغ للميقات'}
                     </h4>
                   </div>
-                  <span className="text-[10px] font-mono font-bold bg-[#5C130F] text-white px-2.5 py-0.5 rounded">
-                    {myMiqaatRequests.length} Miqaat Request(s)
+                  <span className="text-[10px] font-sans font-semibold bg-[#5C130F] text-white px-2.5 py-0.5 rounded">
+                    <span className="font-mono">{myMiqaatRequests.length}</span> Miqaat Request(s)
                   </span>
                 </div>
 
@@ -668,7 +668,7 @@ export default function SubmissionPortal({
                       <div key={req.id} className="p-4 bg-white border border-[#5C130F]/20 rounded-lg space-y-3 shadow-2xs">
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <span className="bg-[#5C130F] text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                            <span className="bg-[#5C130F] text-white text-[10px] font-sans font-semibold px-2 py-0.5 rounded uppercase tracking-wider">
                               {req.miqaatName}
                             </span>
                             <p className="text-xs font-mono font-bold text-[#BA8332] mt-1.5 flex items-center gap-1">
@@ -677,7 +677,7 @@ export default function SubmissionPortal({
                             </p>
                           </div>
 
-                          <span className={`text-[9px] font-mono font-bold uppercase px-2.5 py-1 rounded ${
+                          <span className={`text-[9px] font-sans font-semibold uppercase px-2.5 py-1 rounded ${
                             status === 'accepted'
                               ? 'bg-[#3E7458] text-white !text-white'
                               : status === 'declined'
@@ -689,7 +689,7 @@ export default function SubmissionPortal({
                         </div>
 
                         {req.notes && (
-                          <p className="text-[11px] font-serif text-[#3A1A14]/85 italic bg-[#FDFAF3] p-2.5 rounded border border-[#5C130F]/10">
+                          <p className="text-[11px] font-sans text-[#3A1A14]/85 italic bg-[#FDFAF3] p-2.5 rounded border border-[#5C130F]/10">
                             "{req.notes}"
                           </p>
                         )}
@@ -700,7 +700,7 @@ export default function SubmissionPortal({
                             <button
                               type="button"
                               onClick={() => onRespondMiqaatRequest(req.id, currentUser.itsNumber, 'accepted')}
-                              className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                              className={`flex-1 py-1.5 px-3 text-xs font-sans font-semibold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
                                 status === 'accepted'
                                   ? 'bg-[#305C45] text-white !text-white shadow-xs'
                                   : 'bg-[#3E7458] hover:bg-[#305C45] text-white !text-white'
@@ -716,7 +716,7 @@ export default function SubmissionPortal({
                                 setDecliningMiqaatRequestId(req.id);
                                 setMiqaatDeclineReason('');
                               }}
-                              className={`flex-1 py-1.5 px-3 text-xs font-mono font-bold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                              className={`flex-1 py-1.5 px-3 text-xs font-sans font-semibold uppercase rounded flex items-center justify-center gap-1 transition-all cursor-pointer ${
                                 status === 'declined'
                                   ? 'bg-[#823028] text-white !text-white shadow-xs'
                                   : 'bg-[#A13F36] hover:bg-[#823028] text-white !text-white'
@@ -735,17 +735,17 @@ export default function SubmissionPortal({
             )}
 
             <div className="flex justify-between items-center border-b border-[#5C130F]/20 pb-3">
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-2">
+              <h3 className="font-serif text-xl sm:text-2xl font-semibold text-[#5C130F] flex items-center gap-2">
                 <Calendar className="w-6 h-6 text-[#BA8332]" />
                 <span>{lang === 'en' ? 'Your Assigned Coverage Schedules' : 'مواعيد تكليفك المجدولة'}</span>
               </h3>
-              <span className="bg-[#5C130F] text-white text-xs font-mono font-bold px-3 py-1">
-                {userAssignments.length} Assigned
+              <span className="bg-[#5C130F] text-white text-xs font-sans font-semibold px-3 py-1">
+                <span className="font-mono">{userAssignments.length}</span> Assigned
               </span>
             </div>
 
             {userAssignments.length === 0 ? (
-              <p className="text-xs text-[#3A1A14]/80 bg-white/40 p-4 rounded-none border border-[#5C130F]/20 font-serif">
+              <p className="text-xs text-[#3A1A14]/80 bg-white/40 p-4 rounded-none border border-[#5C130F]/20 font-sans">
                 {lang === 'en' ? 'No scheduled zone coverage assignments at this time. Standard ad-hoc submissions are authorized.' : 'لا توجد تكليفات حيوية مجدولة باسمك حالياً. يمكنك التقديم الفوري الحر.'}
               </p>
             ) : (
@@ -782,7 +782,7 @@ export default function SubmissionPortal({
                         </div>
 
                         {/* Individual Member Status Badge */}
-                        <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
+                        <span className={`text-[10px] font-sans font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
                           memberStatus === 'accepted'
                             ? 'bg-[#4F6B57] text-[#F3E6D0]'
                             : memberStatus === 'declined'
@@ -799,15 +799,15 @@ export default function SubmissionPortal({
 
                       {/* Zone & Touch Points */}
                       <div className="space-y-1">
-                        <p className="text-xs text-[#3A1A14]/80 flex items-center gap-1 font-serif">
+                        <p className="text-xs text-[#3A1A14]/80 flex items-center gap-1 font-sans">
                           <MapPin className="w-3.5 h-3.5 text-[#BA8332] shrink-0" />
-                          <span className="font-bold text-[#5C130F]">{as.zone}</span>
+                          <span className="font-semibold text-[#5C130F]">{as.zone}</span>
                         </p>
 
                         {touchPoints.length > 0 && (
                           <div className="flex flex-wrap gap-1 pt-1">
                             {touchPoints.map((tp, idx) => (
-                              <span key={idx} className="bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 text-[10px] font-serif font-bold px-2 py-0.5 rounded-md">
+                              <span key={idx} className="bg-[#BA8332]/15 text-[#5C130F] border border-[#BA8332]/30 text-[11px] font-sans font-medium px-2 py-0.5 rounded-md">
                                 {tp}
                               </span>
                             ))}
@@ -817,7 +817,7 @@ export default function SubmissionPortal({
 
                       {/* Notes/Directives */}
                       {as.notes && (
-                        <p className="text-xs text-[#3A1A14]/85 bg-white/70 p-3 border border-[#5C130F]/15 font-serif italic rounded-md">
+                        <p className="text-xs text-[#3A1A14]/85 bg-white/70 p-3 border border-[#5C130F]/15 font-sans italic rounded-md">
                           "{as.notes}"
                         </p>
                       )}
@@ -829,7 +829,7 @@ export default function SubmissionPortal({
                             /* Required Decline Reason Inline Form */
                             <div className="p-3 bg-[#8C3B32]/10 border border-[#8C3B32]/30 rounded-md space-y-2 text-xs font-sans">
                               <div className="flex items-center justify-between">
-                                <span className="font-mono font-bold text-[#8C3B32] uppercase tracking-wider text-[10px]">
+                                <span className="font-sans font-semibold text-[#8C3B32] uppercase tracking-wider text-[10px]">
                                   {lang === 'en' ? 'Decline Task — Reason Required' : 'سبب الاعتذار - مطلوب'}
                                 </span>
                                 <button
@@ -838,20 +838,20 @@ export default function SubmissionPortal({
                                     setDecliningAssignmentId(null);
                                     setDeclineError('');
                                   }}
-                                  className="text-[10px] font-mono text-[#8C3B32] hover:underline cursor-pointer"
+                                  className="text-[10px] font-sans font-semibold text-[#8C3B32] hover:underline cursor-pointer"
                                 >
                                   {lang === 'en' ? 'Cancel' : 'إلغاء'}
                                 </button>
                               </div>
 
                               {declineError && (
-                                <p className="text-[11px] text-[#8C3B32] font-mono font-bold">
+                                <p className="text-[11px] text-[#8C3B32] font-sans font-semibold">
                                   ⚠️ {declineError}
                                 </p>
                               )}
 
                               <div>
-                                <label className="block text-[10px] font-mono font-bold text-[#5C130F] mb-1">
+                                <label className="block text-[10px] font-sans font-semibold text-[#5C130F] mb-1">
                                   {lang === 'en' ? 'Decline Category:' : 'فئة الاعتذار:'}
                                 </label>
                                 <select
@@ -868,7 +868,7 @@ export default function SubmissionPortal({
                               </div>
 
                               <div>
-                                <label className="block text-[10px] font-mono font-bold text-[#5C130F] mb-1">
+                                <label className="block text-[10px] font-sans font-semibold text-[#5C130F] mb-1">
                                   {lang === 'en' ? 'Specific Details / Reason (Required):' : 'التفاصيل / السبب (مطلوب):'}
                                 </label>
                                 <textarea
@@ -896,21 +896,22 @@ export default function SubmissionPortal({
                                   setDeclineNotes('');
                                   setDeclineError('');
                                 }}
-                                className="w-full py-2 bg-[#8C3B32] hover:bg-[#6E2824] text-[#F3E6D0] font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md shadow-xs"
+                                className="w-full py-2 bg-[#8C3B32] hover:bg-[#6E2824] text-[#F3E6D0] font-sans text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md shadow-xs"
                               >
-                                {lang === 'en' ? 'Submit Decline & Notify Admin' : 'تأكيد الاعتذار وإبلاغ الإدارة'}
+                                {lang === 'en' ? 'Confirm Decline & Submit Reason' : 'تأكيد الاعتذار وإرسال السبب'}
                               </button>
                             </div>
                           ) : (
-                            /* Initial Accept / Decline Buttons */
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => onRespondAssignment(as.id, currentUser.itsNumber, 'accepted')}
-                                className="flex-1 py-2 bg-[#4F6B57] hover:bg-[#3E5645] text-[#F3E6D0] font-mono text-xs font-bold uppercase tracking-wider cursor-pointer shadow-xs transition-colors text-center rounded-md"
+                                className="flex-1 py-2 bg-[#4F6B57] hover:bg-[#3D5343] text-[#F3E6D0] font-sans text-xs font-semibold uppercase tracking-wider rounded-md transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                               >
-                                {lang === 'en' ? 'Accept Assignment' : 'قبول التكليف'}
+                                <Check className="w-4 h-4" />
+                                <span>{lang === 'en' ? 'Accept Task' : 'قبول التكليف'}</span>
                               </button>
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -918,9 +919,10 @@ export default function SubmissionPortal({
                                   setDeclineNotes('');
                                   setDeclineError('');
                                 }}
-                                className="flex-1 py-2 border border-[#8C3B32]/50 text-[#8C3B32] hover:bg-[#8C3B32]/10 font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors text-center rounded-md"
+                                className="flex-1 py-2 bg-[#8C3B32] hover:bg-[#6E2824] text-[#F3E6D0] font-sans text-xs font-semibold uppercase tracking-wider rounded-md transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                               >
-                                {lang === 'en' ? 'Decline Task' : 'اعتذار عن التغطية'}
+                                <X className="w-4 h-4" />
+                                <span>{lang === 'en' ? 'Decline Task' : 'اعتذار عن التكليف'}</span>
                               </button>
                             </div>
                           )}
@@ -958,31 +960,31 @@ export default function SubmissionPortal({
           <div className="max-w-3xl mx-auto">
             <div className="editorial-card p-6 sm:p-8 space-y-6">
               <div className="flex justify-between items-center border-b border-[#5C130F]/20 pb-3">
-                <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-2">
+                <h3 className="font-serif text-xl sm:text-2xl font-semibold text-[#5C130F] flex items-center gap-2">
                   <FileText className="w-6 h-6 text-[#BA8332]" />
-                  <span>{lang === 'en' ? 'Dispatch New Shot Report' : 'إرسال تقرير تغطية جديد'}</span>
+                  <span>{lang === 'en' ? 'Submit Your Work' : 'إرسال تقرير تغطية جديد'}</span>
                 </h3>
-                <span className="bg-[#BA8332] text-white text-xs font-mono font-bold px-3 py-1 rounded-md">
-                  {confirmedAssignments.length} Confirmed Tasks
+                <span className="bg-[#BA8332] text-white text-xs font-sans font-semibold px-3 py-1 rounded-md">
+                  <span className="font-mono">{confirmedAssignments.length}</span> Confirmed Assignments
                 </span>
               </div>
 
               {error && (
-                <div className="bg-[#5C130F]/10 border border-[#5C130F] text-[#5C130F] p-3.5 rounded-md text-xs flex items-start gap-2 font-mono">
+                <div className="bg-[#5C130F]/10 border border-[#5C130F] text-[#5C130F] p-3.5 rounded-md text-xs flex items-start gap-2 font-sans font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
               )}
 
               {success && (
-                <div className="bg-[#5C130F] border border-[#BA8332] !text-white p-4 rounded-md text-xs flex items-start gap-2 font-serif shadow-sm">
+                <div className="bg-[#5C130F] border border-[#BA8332] !text-white p-4 rounded-md text-xs flex items-start gap-2 font-sans shadow-sm">
                   <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-[#BA8332]" />
                   <div className="space-y-1">
-                    <p className="font-bold text-sm text-[#BA8332]">
-                      {lang === 'en' ? 'Shot Report Submitted Successfully!' : 'تم إرسال التقرير بنجاح!'}
+                    <p className="font-semibold text-sm text-[#BA8332]">
+                      {lang === 'en' ? 'Submission Received Successfully!' : 'تم إرسال التقرير بنجاح!'}
                     </p>
                     <p className="!text-white/90">
-                      {lang === 'en' ? 'Your report has been dispatched to Sheikh Ibrahim Bhai Lokhandwala for rating evaluation. Redirecting to logs...' : 'تم إرسال التقرير بنجاح للشيخ إبراهيم بهائي لوكهند والا للتصديق...'}
+                      {lang === 'en' ? 'Your work has been submitted for review. Redirecting to submissions...' : 'تم إرسال التقرير بنجاح للشيخ إبراهيم بهائي لوكهند والا للتصديق...'}
                     </p>
                   </div>
                 </div>
@@ -991,13 +993,13 @@ export default function SubmissionPortal({
               <form onSubmit={handleSubmit} className="space-y-5 text-xs font-sans">
                 {/* Select Task (Confirmed Assignments Only) */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                  <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                     {t.selectTask}
                   </label>
 
                   {confirmedAssignments.length === 0 ? (
-                    <div className="p-4 bg-[#BA8332]/10 border border-[#BA8332]/35 text-[#5C130F] font-serif text-xs leading-relaxed rounded-md space-y-1">
-                      <p className="font-bold text-sm">
+                    <div className="p-4 bg-[#BA8332]/10 border border-[#BA8332]/35 text-[#5C130F] font-sans text-xs leading-relaxed rounded-md space-y-1">
+                      <p className="font-semibold text-sm">
                         {lang === 'en' ? 'No Confirmed Assignments Available' : 'لا توجد تكليفات مؤكدة متاحة'}
                       </p>
                       <p>
@@ -1010,7 +1012,7 @@ export default function SubmissionPortal({
                     <select
                       value={selectedAssignmentId}
                       onChange={(e) => setSelectedAssignmentId(e.target.value)}
-                      className="w-full px-3.5 py-3 border border-[#5C130F]/35 rounded-md bg-[#FDFAF3] text-[#3A1A14] font-serif text-sm focus:border-[#5C130F] focus:outline-none"
+                      className="w-full px-3.5 py-3 border border-[#5C130F]/35 rounded-md bg-[#FDFAF3] text-[#3A1A14] font-sans text-sm focus:border-[#5C130F] focus:outline-none"
                     >
                       <option value="">-- {lang === 'en' ? 'Choose Confirmed Assignment' : 'اختر التكليف المؤكد'} --</option>
                       {confirmedAssignments.map(as => {
@@ -1034,22 +1036,22 @@ export default function SubmissionPortal({
                   <div className="p-4 bg-[#FAF4E8] border border-[#5C130F]/20 rounded-lg space-y-3 shadow-xs">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#5C130F]/15 pb-2">
                       <div>
-                        <label className="text-xs font-mono font-bold uppercase text-[#5C130F] flex items-center gap-1.5">
+                        <label className="text-xs font-sans font-semibold uppercase text-[#5C130F] flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-[#BA8332]" />
                           <span>Touch-Point Completion Checklist (Required)</span>
                         </label>
-                        <p className="text-[11px] font-serif italic text-[#3A1A14]/75 mt-0.5">
+                        <p className="text-[11px] font-sans italic text-[#3A1A14]/75 mt-0.5">
                           Mark which assigned touch points were covered in your submitted media.
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 text-[10px] font-mono font-bold">
+                      <div className="flex items-center gap-2 text-[10px] font-sans font-semibold">
                         <button
                           type="button"
                           onClick={handleSelectAllTouchPoints}
                           className="px-2 py-1 bg-emerald-700 text-white rounded-md hover:bg-emerald-800 transition-colors cursor-pointer"
                         >
-                          Select All ({availableTouchPoints.length})
+                          Select All (<span className="font-mono">{availableTouchPoints.length}</span>)
                         </button>
                         <button
                           type="button"
@@ -1069,7 +1071,7 @@ export default function SubmissionPortal({
                           <div
                             key={`tp-check-${idx}`}
                             onClick={() => toggleTouchPoint(tp)}
-                            className={`p-2.5 rounded-md border text-xs font-serif flex items-center justify-between gap-2 cursor-pointer transition-all ${
+                            className={`p-2.5 rounded-md border text-xs font-sans flex items-center justify-between gap-2 cursor-pointer transition-all ${
                               isChecked
                                 ? 'bg-emerald-50/90 border-emerald-300 text-emerald-900 shadow-xs'
                                 : 'bg-white/80 border-[#5C130F]/15 text-[#3A1A14]/70 hover:bg-[#5C130F]/5'
@@ -1082,12 +1084,12 @@ export default function SubmissionPortal({
                                 onChange={() => {}}
                                 className="w-4 h-4 text-emerald-700 rounded border-gray-300 focus:ring-emerald-600 cursor-pointer"
                               />
-                              <span className={`truncate font-semibold ${isChecked ? 'text-emerald-900' : 'text-[#3A1A14]/80'}`}>
+                              <span className={`truncate font-medium ${isChecked ? 'text-emerald-900' : 'text-[#3A1A14]/80'}`}>
                                 {tp}
                               </span>
                             </div>
 
-                            <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-xs shrink-0 ${
+                            <span className={`text-[9px] font-sans font-semibold uppercase px-1.5 py-0.5 rounded-xs shrink-0 ${
                               isChecked
                                 ? 'bg-emerald-700 text-white'
                                 : 'bg-red-100 text-red-800 border border-red-200'
@@ -1099,11 +1101,11 @@ export default function SubmissionPortal({
                       })}
                     </div>
 
-                    <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10px] font-mono text-[#5C130F] border-t border-[#5C130F]/15">
+                    <div className="pt-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10px] font-sans text-[#5C130F] border-t border-[#5C130F]/15">
                       <span>
-                        Status: <strong>{completedTouchPoints.length} of {availableTouchPoints.length}</strong> touch points covered
+                        Status: <strong><span className="font-mono">{completedTouchPoints.length}</span> of <span className="font-mono">{availableTouchPoints.length}</span></strong> touch points covered
                       </span>
-                      <span className="font-bold text-[#BA8332]">
+                      <span className="font-semibold text-[#BA8332]">
                         Est. Base Gold: {
                           (completedTouchPoints.length / availableTouchPoints.length) >= 1 ? '3.0★ (100% complete)' :
                           (completedTouchPoints.length / availableTouchPoints.length) >= 0.75 ? '2.0★ (75%+ complete)' :
@@ -1117,7 +1119,7 @@ export default function SubmissionPortal({
 
                 {/* Drive Link */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                  <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                     {t.driveLinkLabel}
                   </label>
                   <div className="relative">
@@ -1138,7 +1140,7 @@ export default function SubmissionPortal({
 
                 {/* Notes */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+                  <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
                     {t.submissionNotes}
                   </label>
                   <textarea
@@ -1146,13 +1148,13 @@ export default function SubmissionPortal({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={lang === 'en' ? 'Include file counts or selection reasons...' : 'اكتب عدد الملفات أو تفاصيل اللقطات...'}
-                    className="w-full px-3.5 py-3 border border-[#5C130F]/35 rounded-md bg-[#FDFAF3] text-xs text-[#3A1A14] focus:border-[#5C130F] focus:outline-none font-serif"
+                    className="w-full px-3.5 py-3 border border-[#5C130F]/35 rounded-md bg-[#FDFAF3] text-xs text-[#3A1A14] focus:border-[#5C130F] focus:outline-none font-sans"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-mono font-bold rounded-md text-xs uppercase tracking-widest shadow-sm transition-colors cursor-pointer"
+                  className="w-full py-3.5 bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans font-semibold rounded-md text-xs uppercase tracking-wider shadow-sm transition-colors cursor-pointer"
                 >
                   {t.submitReport}
                 </button>
@@ -1165,25 +1167,25 @@ export default function SubmissionPortal({
         {activeTab === 'submission_logs' && (
           <div className="editorial-card p-6 sm:p-8 space-y-6">
             <div className="flex justify-between items-center border-b border-[#5C130F]/20 pb-3">
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-2">
+              <h3 className="font-serif text-xl sm:text-2xl font-semibold text-[#5C130F] flex items-center gap-2">
                 <ListFilter className="w-6 h-6 text-[#BA8332]" />
                 <span>{lang === 'en' ? 'Shot Submission Logs' : 'سجل تقارير التغطية المقدمة'}</span>
               </h3>
-              <span className="bg-[#5C130F] text-white text-xs font-mono font-bold px-3 py-1 rounded-md">
-                {mySubmissions.length} Cataloged Logged
+              <span className="bg-[#5C130F] text-white text-xs font-sans font-semibold px-3 py-1 rounded-md">
+                <span className="font-mono">{mySubmissions.length}</span> Cataloged Logged
               </span>
             </div>
 
             {mySubmissions.length === 0 ? (
               <div className="py-16 text-center text-[#3A1A14]/60 flex flex-col items-center gap-3 bg-white/40 border border-[#5C130F]/20 p-8 rounded-xl">
                 <FileText className="w-12 h-12 text-[#BA8332]" />
-                <p className="text-sm font-serif font-bold text-[#5C130F]">
+                <p className="text-sm font-serif font-semibold text-[#5C130F]">
                   {lang === 'en' ? 'No submission logs recorded yet.' : 'لم تقم بتقديم أي تقارير لقطات مؤخراً.'}
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveTab('submit_form')}
-                  className="mt-2 px-4 py-2 bg-[#BA8332] text-white font-mono text-xs font-bold uppercase rounded-md shadow-xs hover:bg-[#a06e28] transition-colors"
+                  className="mt-2 px-4 py-2 bg-[#BA8332] text-white font-sans text-xs font-semibold uppercase rounded-md shadow-xs hover:bg-[#a06e28] transition-colors cursor-pointer"
                 >
                   {lang === 'en' ? 'Submit Your First Shot Report' : 'إرسال أول تقرير الآن'}
                 </button>
@@ -1206,13 +1208,13 @@ export default function SubmissionPortal({
                             ITS: {sub.itsNumber}
                           </span>
                         </div>
-                        <span className="text-xs font-serif italic text-[#3A1A14]/75">
+                        <span className="text-xs font-sans italic text-[#3A1A14]/75">
                           Submitted by: <strong className="text-[#5C130F] font-semibold">{currentUser.fullName}</strong>
                         </span>
                       </div>
 
                       {/* Assignment Title */}
-                      <h4 className="font-serif text-lg font-bold text-[#5C130F] leading-tight">
+                      <h4 className="font-serif text-lg font-semibold text-[#5C130F] leading-tight">
                         {sub.assignmentTitle}
                       </h4>
 
@@ -1224,10 +1226,10 @@ export default function SubmissionPortal({
                       {/* Notes / Description */}
                       {sub.notes && (
                         <div className="space-y-1">
-                          <p className="text-[10px] font-mono font-bold uppercase text-[#5C130F]">
+                          <p className="text-[10px] font-sans font-semibold uppercase text-[#5C130F]">
                             Description / Notes:
                           </p>
-                          <p className="text-xs text-[#3A1A14]/85 italic font-serif bg-white/70 p-3 border border-[#5C130F]/15 rounded-md">
+                          <p className="text-xs text-[#3A1A14]/85 italic font-sans bg-white/70 p-3 border border-[#5C130F]/15 rounded-md">
                             "{sub.notes}"
                           </p>
                         </div>
@@ -1239,7 +1241,7 @@ export default function SubmissionPortal({
                           href={sub.driveLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3 py-1.5 bg-white border border-[#5C130F]/30 rounded-md text-xs text-[#5C130F] font-mono font-bold hover:bg-[#5C130F] hover:text-white transition-colors flex items-center gap-1.5"
+                          className="px-3 py-1.5 bg-white border border-[#5C130F]/30 rounded-md text-xs text-[#5C130F] font-sans font-semibold hover:bg-[#5C130F] hover:text-white transition-colors flex items-center gap-1.5"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           <span>Access Google Drive Link</span>
@@ -1257,19 +1259,19 @@ export default function SubmissionPortal({
         {activeTab === 'sharaf' && isSafarModeEnabled && (
           <div className="editorial-card p-6 sm:p-8 space-y-6">
             <div className="flex justify-between items-center border-b border-[#5C130F]/20 pb-3">
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#5C130F] uppercase tracking-wider flex items-center gap-2">
+              <h3 className="font-serif text-xl sm:text-2xl font-semibold text-[#5C130F] flex items-center gap-2">
                 <Award className="w-6 h-6 text-[#BA8332]" />
                 <span>{lang === 'en' ? "Moula's TUS Sharaf Allocation" : 'مقاعد الشرف وسجل التخصيص'}</span>
               </h3>
-              <span className="bg-[#BA8332] text-white text-xs font-mono font-bold px-3 py-1 rounded-md">
-                {mySharafAllocations.length} Allocated
+              <span className="bg-[#BA8332] text-white text-xs font-sans font-semibold px-3 py-1 rounded-md">
+                <span className="font-mono">{mySharafAllocations.length}</span> Allocated
               </span>
             </div>
 
             {mySharafAllocations.length === 0 ? (
               <div className="py-12 text-center text-[#3A1A14]/60 flex flex-col items-center gap-2 bg-white/40 border border-[#5C130F]/20 p-6 rounded-xl">
                 <Award className="w-12 h-12 text-[#BA8332]" />
-                <p className="font-serif text-sm font-bold text-[#5C130F]">
+                <p className="font-serif text-sm font-semibold text-[#5C130F]">
                   {lang === 'en' ? 'No active Sharaf seating allocated to your profile for current events.' : 'لا توجد مقاعد شرف مخصصة لملفك الشخصي في المناسبات الحالية.'}
                 </p>
                 <p className="text-xs font-sans text-[#3A1A14]/75">
@@ -1281,26 +1283,26 @@ export default function SubmissionPortal({
                 {mySharafAllocations.map(alloc => (
                   <div key={alloc.id} className="p-6 border-2 border-[#BA8332] bg-gradient-to-br from-[#FAF4E8] to-[#FDFAF3] rounded-xl space-y-4 shadow-sm">
                     <div className="flex justify-between items-start">
-                      <span className="bg-[#5C130F] text-white font-mono text-[10px] font-bold px-2.5 py-1 uppercase tracking-wider rounded-md">
+                      <span className="bg-[#5C130F] text-white font-sans text-[10px] font-semibold px-2.5 py-1 uppercase tracking-wider rounded-md">
                         {alloc.eventType}
                       </span>
-                      <span className="bg-emerald-700 text-white font-mono text-[9px] font-bold px-2 py-0.5 uppercase rounded-md">
+                      <span className="bg-emerald-700 text-white font-sans text-[9px] font-semibold px-2 py-0.5 uppercase rounded-md">
                         {lang === 'en' ? 'GRANTED' : 'ممنوح'}
                       </span>
                     </div>
 
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-[#3A1A14]/70 font-mono uppercase font-bold">Event Location:</p>
-                        <h4 className="font-serif text-lg font-bold text-[#5C130F] flex items-center gap-1.5 mt-0.5">
+                        <p className="text-xs text-[#3A1A14]/70 font-sans uppercase font-semibold">Event Location:</p>
+                        <h4 className="font-serif text-lg font-semibold text-[#5C130F] flex items-center gap-1.5 mt-0.5">
                           <MapPin className="w-4 h-4 text-[#BA8332]" />
-                          <span>{alloc.location || <span className="text-amber-800 italic font-mono text-sm">Location not set</span>}</span>
+                          <span>{alloc.location || <span className="text-amber-800 italic font-sans text-sm">Location not set</span>}</span>
                         </h4>
                       </div>
                       {alloc.zone && (
                         <div>
-                          <p className="text-xs text-[#3A1A14]/70 font-mono uppercase font-bold">Coverage Zone:</p>
-                          <p className="text-sm text-[#3A1A14] font-medium font-serif mt-0.5">
+                          <p className="text-xs text-[#3A1A14]/70 font-sans uppercase font-semibold">Coverage Zone:</p>
+                          <p className="text-sm text-[#3A1A14] font-medium font-sans mt-0.5">
                             {alloc.zone}
                           </p>
                         </div>
@@ -1388,7 +1390,7 @@ export default function SubmissionPortal({
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-[#FDFAF3] border-2 border-[#5C130F] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#5C130F]/20 pb-3">
-              <h4 className="font-serif font-bold text-lg text-[#5C130F]">
+              <h4 className="font-serif font-semibold text-lg text-[#5C130F]">
                 {lang === 'en' ? 'Miqaat Availability: Not Available' : 'التفرغ للميقات: غير متفرغ'}
               </h4>
               <button
@@ -1400,7 +1402,7 @@ export default function SubmissionPortal({
               </button>
             </div>
 
-            <p className="text-xs font-serif text-[#3A1A14]/80">
+            <p className="text-xs font-sans text-[#3A1A14]/80">
               {lang === 'en' 
                 ? 'Please share any context or reason for your unavailability (optional):' 
                 : 'يرجى تقديم سبب عدم التفرغ (اختياري):'}
@@ -1411,14 +1413,14 @@ export default function SubmissionPortal({
               onChange={(e) => setMiqaatDeclineReason(e.target.value)}
               placeholder="e.g. Prior travel commitment, out of city, academic exams..."
               rows={3}
-              className="w-full p-2.5 border border-[#5C130F]/30 bg-white rounded-md font-serif text-xs"
+              className="w-full p-2.5 border border-[#5C130F]/30 bg-white rounded-md font-sans text-xs"
             />
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#5C130F]/15">
               <button
                 type="button"
                 onClick={() => setDecliningMiqaatRequestId(null)}
-                className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded cursor-pointer"
+                className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-sans text-xs font-semibold rounded cursor-pointer"
               >
                 Cancel
               </button>
@@ -1431,7 +1433,7 @@ export default function SubmissionPortal({
                     setMiqaatDeclineReason('');
                   }
                 }}
-                className="px-5 py-2 bg-[#A13F36] hover:bg-[#823028] text-white !text-white font-mono text-xs font-bold uppercase rounded cursor-pointer shadow-xs"
+                className="px-5 py-2 bg-[#A13F36] hover:bg-[#823028] text-white !text-white font-sans text-xs font-semibold uppercase rounded cursor-pointer shadow-xs"
               >
                 Confirm Unavailable
               </button>

@@ -61,8 +61,9 @@ export function cleanAuthUrlParams(): void {
 
 /**
  * Parses auth indicator from URL search query or hash fragment.
+ * Supports password recovery and email verification callback flows.
  */
-export function detectAuthActionFromUrl(): 'recovery' | 'verified' | 'oauth' | null {
+export function detectAuthActionFromUrl(): 'recovery' | 'verified' | null {
   if (typeof window === 'undefined') return null;
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -70,7 +71,6 @@ export function detectAuthActionFromUrl(): 'recovery' | 'verified' | 'oauth' | n
 
   if (authQuery === 'recovery') return 'recovery';
   if (authQuery === 'verified') return 'verified';
-  if (authQuery === 'oauth') return 'oauth';
 
   const hash = window.location.hash || '';
   if (hash.includes('type=recovery')) return 'recovery';

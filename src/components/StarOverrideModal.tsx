@@ -67,12 +67,12 @@ export default function StarOverrideModal({
         {/* Header */}
         <div className="flex items-start justify-between border-b border-[#5C130F]/20 pb-3">
           <div>
-            <h3 className="font-serif text-xl font-bold text-[#5C130F] flex items-center gap-2">
+            <h3 className="font-serif text-xl font-semibold text-[#5C130F] flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#BA8332]" />
               <span>Admin Star Rating Override</span>
             </h3>
-            <p className="text-xs text-[#3A1A14]/75 font-mono mt-0.5">
-              Member: <strong className="text-[#5C130F]">{user?.fullName || report.userName}</strong> ({report.itsNumber})
+            <p className="text-xs text-[#3A1A14]/75 font-sans mt-0.5">
+              Member: <strong className="text-[#5C130F]">{user?.fullName || report.userName}</strong> (<span className="font-mono">{report.itsNumber}</span>)
             </p>
           </div>
           <button
@@ -86,10 +86,10 @@ export default function StarOverrideModal({
         {/* System Auto-Calculated Rating Card */}
         <div className="bg-[#FAF4E8] p-4 rounded-lg border border-[#5C130F]/15 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+            <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-[#5C130F]">
               System Auto-Calculated Baseline
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 bg-[#BA8332]/15 text-[#5C130F] rounded-xs font-bold">
+            <span className="text-[10px] font-sans px-2 py-0.5 bg-[#BA8332]/15 text-[#5C130F] rounded-xs font-semibold">
               Automated
             </span>
           </div>
@@ -102,7 +102,7 @@ export default function StarOverrideModal({
               <button
                 type="button"
                 onClick={() => setShowTouchPointBreakdown(!showTouchPointBreakdown)}
-                className="text-[10px] font-mono text-[#5C130F] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-[11px] font-sans text-[#5C130F] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
               >
                 {showTouchPointBreakdown ? (
                   <>
@@ -122,7 +122,7 @@ export default function StarOverrideModal({
                   {activeAutoRating.touchPointDetails.map((tp, idx) => (
                     <span
                       key={`tp-dtl-${idx}`}
-                      className={`text-[10px] font-mono font-bold px-2 py-1 rounded-md flex items-center gap-1 ${
+                      className={`text-[10px] font-sans font-medium px-2 py-1 rounded-md flex items-center gap-1 ${
                         tp.isCompleted
                           ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
                           : 'bg-red-50 text-red-700 border border-red-200'
@@ -144,15 +144,15 @@ export default function StarOverrideModal({
 
         {/* Decline Reason Surfacing Box (If Red Star Penalty Applied for Declined Task) */}
         {activeAutoRating.redStarReasons?.assignmentDeclineReason && (
-          <div className="p-[#5C130F]/5 p-3 bg-red-50/90 border border-red-200 rounded-md space-y-1 text-xs">
-            <div className="flex items-center gap-1.5 text-red-800 font-mono font-bold">
+          <div className="p-[#5C130F]/5 p-3 bg-red-50/90 border border-red-200 rounded-md space-y-1 text-xs font-sans">
+            <div className="flex items-center gap-1.5 text-red-800 font-semibold">
               <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
               <span>Red Star: Assignment Declined</span>
             </div>
-            <p className="text-[#3A1A14] font-serif pl-5 italic">
+            <p className="text-[#3A1A14] font-sans pl-5 italic">
               Reason submitted: <strong className="text-red-950 font-sans font-semibold">"{activeAutoRating.redStarReasons.assignmentDeclineReason}"</strong>
             </p>
-            <p className="text-[10px] text-red-700 font-mono pl-5 pt-0.5">
+            <p className="text-[11px] text-red-700 font-sans pl-5 pt-0.5">
               💡 Admin Notice: If this decline reason is justified (e.g. valid emergency), adjust custom Red Stars to 0 below to clear the penalty.
             </p>
           </div>
@@ -161,13 +161,13 @@ export default function StarOverrideModal({
         {/* Override Controls */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+            <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
               Set Custom Gold Stars (0.5 Step Precision):
             </label>
             <button
               type="button"
               onClick={handleResetToAuto}
-              className="text-[10px] font-mono text-[#BA8332] hover:text-[#a06e28] font-bold flex items-center gap-1 cursor-pointer"
+              className="text-[11px] font-sans text-[#BA8332] hover:text-[#a06e28] font-semibold flex items-center gap-1 cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Reset to Auto ({activeAutoRating.goldStars}★)</span>
@@ -184,7 +184,7 @@ export default function StarOverrideModal({
                   setGoldStars(val);
                   setIsOverride(true);
                 }}
-                className={`px-2.5 py-1.5 rounded-md text-xs font-mono font-bold transition-all border cursor-pointer ${
+                className={`px-2.5 py-1.5 rounded-md text-xs font-sans font-semibold transition-all border cursor-pointer ${
                   goldStars === val
                     ? 'bg-[#BA8332] text-white border-[#BA8332] shadow-xs'
                     : 'bg-white text-[#5C130F] border-[#5C130F]/20 hover:border-[#BA8332]'
@@ -197,7 +197,7 @@ export default function StarOverrideModal({
 
           {/* Red Star Options */}
           <div className="space-y-1.5">
-            <label className="text-xs font-mono font-bold uppercase text-[#C53030]">
+            <label className="text-xs font-sans font-semibold uppercase text-[#C53030]">
               Set Custom Red Star Demerits:
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -209,7 +209,7 @@ export default function StarOverrideModal({
                     setRedStars(val);
                     setIsOverride(true);
                   }}
-                  className={`px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all border cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-sans font-semibold transition-all border cursor-pointer ${
                     redStars === val
                       ? 'bg-[#C53030] text-white border-[#C53030] shadow-xs'
                       : 'bg-white text-[#C53030] border-[#C53030]/30 hover:border-[#C53030]'
@@ -223,7 +223,7 @@ export default function StarOverrideModal({
 
           {/* Admin Override Reason Note */}
           <div className="space-y-1.5">
-            <label className="text-xs font-mono font-bold uppercase text-[#5C130F]">
+            <label className="text-xs font-sans font-semibold uppercase text-[#5C130F]">
               Admin Override Reason / Audit Note:
             </label>
             <textarea
@@ -244,14 +244,14 @@ export default function StarOverrideModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold rounded-md hover:bg-[#5C130F]/5 transition-colors"
+            className="px-4 py-2 border border-[#5C130F]/30 text-[#5C130F] font-sans text-xs font-semibold rounded-md hover:bg-[#5C130F]/5 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-mono text-xs font-bold rounded-md transition-colors shadow-sm flex items-center gap-1.5"
+            className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold rounded-md transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <Check className="w-4 h-4" />
             <span>Save Rating Override</span>

@@ -99,7 +99,7 @@ export default function StarRatingDisplay({
         )}
 
         {isOverride && (
-          <span className="ml-1 px-1.5 py-0.2 bg-[#5C130F] !text-white text-[8px] font-mono font-bold uppercase rounded-xs tracking-wider">
+          <span className="ml-1 px-1.5 py-0.2 bg-[#5C130F] !text-white text-[8px] font-sans font-semibold uppercase rounded-xs tracking-wider">
             ADMIN OVERRIDDEN
           </span>
         )}
@@ -107,13 +107,13 @@ export default function StarRatingDisplay({
 
       {/* Subtext & Tooltip breakdown */}
       {showSubtext && (
-        <div className={`font-mono ${textSizeClass} text-[#3A1A14]/80 flex flex-col gap-0.5 mt-0.5`}>
+        <div className={`font-sans ${textSizeClass} text-[#3A1A14]/80 flex flex-col gap-0.5 mt-0.5`}>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-bold text-[#5C130F]">
+            <span className="font-semibold text-[#5C130F]">
               {goldStars} Gold {goldStars === 1 ? 'Star' : 'Stars'}
             </span>
             <span>•</span>
-            <span>
+            <span className="font-mono text-[11px]">
               {completedTouchPointsCount}/{totalTouchPointsCount} Touch Points ({Math.round(completionPercent)}%)
             </span>
           </div>
@@ -122,14 +122,14 @@ export default function StarRatingDisplay({
             <div className="text-[10px] text-red-700 font-sans flex items-start gap-1 mt-0.5 bg-red-50/70 p-1 rounded-xs border border-red-200">
               <AlertTriangle className="w-3 h-3 text-red-600 shrink-0 mt-0.5" />
               <div>
-                <strong className="font-mono uppercase">Red Star Demerits:</strong> {redReasonsList.join('; ')}
+                <strong className="font-sans font-semibold uppercase">Red Star Demerits:</strong> {redReasonsList.join('; ')}
               </div>
             </div>
           )}
 
           {isOverride && overrideNote && (
-            <p className="text-[10px] text-[#5C130F] font-serif italic bg-[#BA8332]/10 px-1.5 py-0.5 rounded-xs border border-[#BA8332]/30 mt-0.5">
-              <strong>Admin Note:</strong> "{overrideNote}"
+            <p className="text-[10px] text-[#5C130F] font-sans italic bg-[#BA8332]/10 px-1.5 py-0.5 rounded-xs border border-[#BA8332]/30 mt-0.5">
+              <strong className="font-semibold">Admin Note:</strong> "{overrideNote}"
             </p>
           )}
         </div>

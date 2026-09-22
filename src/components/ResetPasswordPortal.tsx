@@ -105,10 +105,10 @@ export default function ResetPasswordPortal({
         {/* Form Body */}
         <div className="p-8">
           <div className="text-center mb-6">
-            <h2 className="font-serif text-2xl font-bold text-[#5c130f]">
+            <h2 className="font-serif text-2xl font-semibold text-[#5c130f]">
               {lang === 'en' ? 'Create New Password' : 'تعيين كلمة مرور جديدة'}
             </h2>
-            <p className="font-serif text-xs text-[#3A1A14]/70 italic mt-1">
+            <p className="font-sans text-xs text-[#3A1A14]/75 italic mt-1">
               {lang === 'en'
                 ? 'Choose a strong, secure password for your Al Musawareen account.'
                 : 'اختر كلمة مرور قوية وآمنة لحسابك في منصة المصورين.'}
@@ -119,8 +119,8 @@ export default function ResetPasswordPortal({
             <div className="space-y-6 text-center animate-fadeIn">
               <div className="p-4 bg-amber-50 border border-amber-300 text-amber-900 rounded-none flex items-start gap-3 text-left rtl:text-right">
                 <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-xs leading-relaxed font-serif">
-                  <p className="font-bold text-amber-950 font-sans uppercase tracking-wider text-[11px]">
+                <div className="space-y-1 text-xs leading-relaxed font-sans">
+                  <p className="font-bold text-amber-950 font-sans text-xs">
                     {lang === 'en' ? 'Recovery Link Expired or Invalid' : 'رابط الاستعادة غير صالح أو منتهي'}
                   </p>
                   <p>
@@ -135,7 +135,7 @@ export default function ResetPasswordPortal({
                 <button
                   type="button"
                   onClick={onNavigateForgotPassword}
-                  className="w-full bg-[#BA8332] hover:bg-[#a06e28] !text-white font-mono text-xs font-bold py-3 rounded-none uppercase tracking-wider shadow-sm transition-colors cursor-pointer"
+                  className="w-full bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans text-xs font-semibold py-3 rounded-none shadow-xs transition-colors cursor-pointer"
                 >
                   {lang === 'en' ? 'Request New Reset Link' : 'طلب رابط استعادة جديد'}
                 </button>
@@ -143,7 +143,7 @@ export default function ResetPasswordPortal({
                 <button
                   type="button"
                   onClick={onNavigateLogin}
-                  className="w-full border border-[#5C130F]/30 text-[#5C130F] font-mono text-xs font-bold py-2.5 rounded-none uppercase tracking-wider hover:bg-[#5C130F]/5 transition-colors cursor-pointer"
+                  className="w-full border border-[#5C130F]/30 text-[#5C130F] font-sans text-xs font-semibold py-2.5 rounded-none hover:bg-[#5C130F]/5 transition-colors cursor-pointer"
                 >
                   {lang === 'en' ? 'Back to Sign In' : 'العودة لتسجيل الدخول'}
                 </button>
@@ -153,13 +153,13 @@ export default function ResetPasswordPortal({
             <div className="space-y-6 text-center animate-fadeIn">
               <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-none flex items-start gap-3 text-left rtl:text-right">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="space-y-1 text-xs leading-relaxed font-serif">
-                  <p className="font-bold text-emerald-900 font-sans uppercase tracking-wider text-[11px]">
+                <div className="space-y-1 text-xs leading-relaxed font-sans">
+                  <p className="font-bold text-emerald-900 font-sans text-xs">
                     {lang === 'en' ? 'Password Successfully Updated' : 'تم تحديث كلمة المرور بنجاح'}
                   </p>
                   <p>
                     {lang === 'en'
-                      ? 'Your new credentials have been safely configured. You may now log in to the portal.'
+                      ? 'Your password has been updated successfully. You can now sign in.'
                       : 'تم تعيين كلمة المرور الجديدة بنجاح. يمكنك الآن تسجيل الدخول إلى البوابة.'}
                   </p>
                 </div>
@@ -168,10 +168,10 @@ export default function ResetPasswordPortal({
               <button
                 type="button"
                 onClick={onNavigateLogin}
-                className="w-full bg-[#BA8332] hover:bg-[#a06e28] !text-white font-mono text-xs font-bold py-3 rounded-none uppercase tracking-wider shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-[#BA8332] hover:bg-[#a06e28] !text-white font-sans text-xs font-semibold py-3 rounded-none shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <Lock className="w-4 h-4" />
-                <span>{lang === 'en' ? 'Proceed to Sign In' : 'المتابعة لتسجيل الدخول'}</span>
+                <span>{lang === 'en' ? 'Sign In' : 'تسجيل الدخول'}</span>
               </button>
             </div>
           ) : (
@@ -185,7 +185,7 @@ export default function ResetPasswordPortal({
 
               {/* New Password */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+                <label className="text-xs font-sans font-semibold text-[#5C130F]">
                   {lang === 'en' ? 'New Password' : 'كلمة المرور الجديدة'}
                 </label>
                 <div className="relative">
@@ -220,7 +220,7 @@ export default function ResetPasswordPortal({
                       <div className={`h-full ${pwdStrength.color} ${pwdStrength.score >= 3 ? 'w-1/3' : 'w-0'}`} />
                       <div className={`h-full ${pwdStrength.color} ${pwdStrength.score >= 5 ? 'w-1/3' : 'w-0'}`} />
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#5C130F]">
+                    <span className="text-[10px] font-sans font-semibold text-[#5C130F]">
                       {pwdStrength.text}
                     </span>
                   </div>
@@ -229,7 +229,7 @@ export default function ResetPasswordPortal({
 
               {/* Confirm Password */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#5C130F]">
+                <label className="text-xs font-sans font-semibold text-[#5C130F]">
                   {lang === 'en' ? 'Confirm New Password' : 'تأكيد كلمة المرور الجديدة'}
                 </label>
                 <div className="relative">
@@ -253,7 +253,7 @@ export default function ResetPasswordPortal({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#BA8332] hover:bg-[#a06e28] disabled:bg-gray-400 !text-white font-mono text-xs font-bold py-3 rounded-none uppercase tracking-wider shadow-sm transition-colors mt-6 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full bg-[#BA8332] hover:bg-[#a06e28] disabled:bg-gray-400 !text-white font-sans text-xs font-semibold py-3 rounded-none shadow-xs transition-colors mt-6 cursor-pointer flex items-center justify-center gap-2"
               >
                 {loading && (
                   <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -268,7 +268,7 @@ export default function ResetPasswordPortal({
                 <button
                   type="button"
                   onClick={onNavigateLogin}
-                  className="font-bold text-[#5C130F] hover:underline transition-colors focus:outline-none font-mono text-[11px] uppercase tracking-wider cursor-pointer inline-flex items-center gap-1.5"
+                  className="font-semibold text-[#5C130F] hover:underline transition-colors focus:outline-none font-sans text-xs cursor-pointer inline-flex items-center gap-1.5"
                 >
                   <ArrowLeft className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
                   <span>{lang === 'en' ? 'Cancel & Return to Sign In' : 'إلغاء والعودة لتسجيل الدخول'}</span>
