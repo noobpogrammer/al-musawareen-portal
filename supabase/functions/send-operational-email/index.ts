@@ -3,6 +3,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const ALLOWED_NOTIFICATION_TYPES = [
   "assignment_created",
   "assignment_updated",
+  "assignment_graded",
+  "assignment_rating_updated",
   "miqaat_request",
   "sharaf_allocated",
   "sharaf_updated",
@@ -94,32 +96,39 @@ function baseTemplate(title: string, bodyHtml: string, bodyText: string): Render
 
 function renderTemplate(type: NotificationType, data: TemplateData): RenderedTemplate {
   switch (type) {
-    case "assignment_created": {
-      const miqaat = textValue(data, "miqaat", "Coverage assignment");
-      const date = textValue(data, "date", "Date to be confirmed");
-      const location = textValue(data, "location", "Location to be confirmed");
-
+    case "assignment_created":
       return baseTemplate(
         "New Al Musawareen Assignment",
-        `<p style="margin:0 0 16px;">You have received a new coverage assignment.</p>
-         <p style="margin:0;"><strong>Miqaat:</strong> ${escapeHtml(miqaat)}<br>
-         <strong>Date:</strong> ${escapeHtml(date)}<br>
-         <strong>Location:</strong> ${escapeHtml(location)}</p>`,
-        `You have received a new coverage assignment.\nMiqaat: ${miqaat}\nDate: ${date}\nLocation: ${location}`,
+        '<p style="margin:0;">You have a new assignment. Please check the portal.</p>',
+        "You have a new assignment. Please check the portal.",
       );
-    }
 
     case "assignment_updated": {
-      const miqaat = textValue(data, "miqaat", "Coverage assignment");
+      const assignment = textValue(data, "assignment", textValue(data, "miqaat", "your assignment"));
       const changeSummary = textValue(data, "changeSummary", "Assignment details were updated.");
 
       return baseTemplate(
         "Al Musawareen Assignment Updated",
-        `<p style="margin:0 0 16px;">Your assignment for <strong>${escapeHtml(miqaat)}</strong> has been updated.</p>
-         <p style="margin:0;">${escapeHtml(changeSummary)}</p>`,
-        `Your assignment for ${miqaat} has been updated.\n${changeSummary}`,
+        `<p style="margin:0 0 16px;">Your assignment <strong>${escapeHtml(assignment)}</strong> has been updated.</p>
+         <p style="margin:0 0 16px;">${escapeHtml(changeSummary)}</p>
+         <p style="margin:0;">Please check the portal.</p>`,
+        `Your assignment ${assignment} has been updated.\n${changeSummary}\nPlease check the portal.`,
       );
     }
+
+    case "assignment_graded":
+      return baseTemplate(
+        "Al Musawareen Assignment Reviewed",
+        '<p style="margin:0;">Your assignment/submission has been reviewed. Please check the portal.</p>',
+        "Your assignment/submission has been reviewed. Please check the portal.",
+      );
+
+    case "assignment_rating_updated":
+      return baseTemplate(
+        "Al Musawareen Rating Updated",
+        '<p style="margin:0;">Your rating has been updated. Please check the portal.</p>',
+        "Your rating has been updated. Please check the portal.",
+      );
 
     case "miqaat_request": {
       const miqaat = textValue(data, "miqaat", "Miqaat");
