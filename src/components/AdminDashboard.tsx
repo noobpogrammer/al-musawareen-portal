@@ -49,9 +49,9 @@ interface AdminDashboardProps {
   onToggleSafarMode?: (enabled: boolean) => void;
   sharafEvents?: SharafEventDef[];
   sharafAllocations?: SharafAllocation[];
-  onAddSharafAllocation?: (alloc: Omit<SharafAllocation, 'id'>) => void;
+  onAddSharafAllocation?: (alloc: Omit<SharafAllocation, 'id'>) => void | Promise<void>;
   onRemoveSharafAllocation?: (id: string) => void;
-  onBulkAssignSharaf?: (allocs: Omit<SharafAllocation, 'id'>[]) => void;
+  onBulkAssignSharaf?: (allocs: Omit<SharafAllocation, 'id'>[]) => void | Promise<void>;
   onCreateCustomEvent?: (name: string) => void;
   onDeleteCustomEvent?: (id: string) => void;
   // Miqaat, Zone, and Touch Point Handlers
@@ -129,23 +129,21 @@ export default function AdminDashboard({
         .from('dp-uploads')
         .upload(fileName, file, { contentType: file.type || 'image/jpeg', upsert: true });
       
-      let publicUrl = '';
-      if (!uploadError) {
-        const { data } = supabase.storage.from('dp-uploads').getPublicUrl(fileName);
-        publicUrl = data.publicUrl;
-      } else {
-        publicUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-      }
+      if (uploadError) throw uploadError;
 
-      if (publicUrl) {
-        await supabase.from('members').update({ dp_url: publicUrl }).eq('its_id', currentUser.itsNumber);
-        if (onUpdateAvatar) {
-          onUpdateAvatar(currentUser.itsNumber, publicUrl);
-        }
+      const { data } = supabase.storage.from('dp-uploads').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+      if (!publicUrl) throw new Error('Unable to resolve uploaded profile picture URL.');
+
+      const { error: profileError } = await supabase
+        .from('members')
+        .update({ dp_url: publicUrl })
+        .eq('its_id', currentUser.itsNumber);
+
+      if (profileError) throw profileError;
+
+      if (onUpdateAvatar) {
+        onUpdateAvatar(currentUser.itsNumber, publicUrl);
       }
     } catch (err: any) {
       console.error('Failed to upload profile picture:', err);
@@ -271,7 +269,7 @@ export default function AdminDashboard({
     }
   };
 
-  const handleSingleSharafSubmit = (e: React.FormEvent) => {
+  const handleSingleSharafSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sharafMemberIts) {
       alert(lang === 'en' ? 'Please select a team member.' : 'يرجى اختيار عضو الفريق.');
@@ -301,23 +299,32 @@ export default function AdminDashboard({
       setInlineCustomEventName('');
     }
 
-    onAddSharafAllocation({
-      itsNumber: sharafMemberIts,
-      eventType: targetEventType,
-      date: sharafDate.trim() || undefined,
-      location: sharafLocation.trim(),
-      zone: sharafZone.trim() || undefined,
-      fromTime: fromTime.trim() || undefined,
-      toTime: toTime.trim() || undefined,
-      dataCopyingDeadlineDate: sharafDeadlineDate.trim() || sharafDate.trim() || undefined,
-      dataCopyingDeadlineTime: sharafDeadlineTime.trim() || undefined
-    });
+    try {
+      await onAddSharafAllocation({
+        itsNumber: sharafMemberIts,
+        eventType: targetEventType,
+        date: sharafDate.trim() || undefined,
+        location: sharafLocation.trim(),
+        zone: sharafZone.trim() || undefined,
+        fromTime: fromTime.trim() || undefined,
+        toTime: toTime.trim() || undefined,
+        dataCopyingDeadlineDate: sharafDeadlineDate.trim() || sharafDate.trim() || undefined,
+        dataCopyingDeadlineTime: sharafDeadlineTime.trim() || undefined
+      });
 
-    setSharafMemberIts('');
-    setSharafMemberSearchQuery('');
-    setSharafLocation('');
-    setSharafZone('');
-    alert(lang === 'en' ? `Sharaf allocated for ${targetEventType} successfully!` : `تم تخصيص شرف ${targetEventType} بنجاح!`);
+      setSharafMemberIts('');
+      setSharafMemberSearchQuery('');
+      setSharafLocation('');
+      setSharafZone('');
+      alert(lang === 'en' ? `Sharaf allocated for ${targetEventType} successfully!` : `تم تخصيص شرف ${targetEventType} بنجاح!`);
+    } catch (err: any) {
+      console.error('Failed to allocate Sharaf:', err);
+      alert(
+        lang === 'en'
+          ? `Failed to allocate Sharaf: ${err?.message || 'Unknown error'}`
+          : `فشل تخصيص الشرف: ${err?.message || 'خطأ غير معروف'}`
+      );
+    }
   };
 
   // CSV Parsing & Validation Function supporting 9 columns (with 6-column backward compatibility)
@@ -1551,12 +1558,20 @@ export default function AdminDashboard({
                     </button>
                     {csvPreview && csvPreview.valid.length > 0 && (
                       <button
-                        onClick={() => {
-                          if (onBulkAssignSharaf) {
-                            onBulkAssignSharaf(csvPreview.valid);
+                        onClick={async () => {
+                          if (!onBulkAssignSharaf) return;
+                          try {
+                            await onBulkAssignSharaf(csvPreview.valid);
                             alert(lang === 'en' ? `Successfully bulk assigned ${csvPreview.valid.length} Sharaf records!` : `تم تخصيص ${csvPreview.valid.length} من سجلات الشرف بنجاح!`);
                             handleResetCsvUpload();
                             setIsCsvModalOpen(false);
+                          } catch (err: any) {
+                            console.error('Failed to bulk assign Sharaf:', err);
+                            alert(
+                              lang === 'en'
+                                ? `Failed to bulk assign Sharaf: ${err?.message || 'Unknown error'}`
+                                : `فشل التخصيص الجماعي للشرف: ${err?.message || 'خطأ غير معروف'}`
+                            );
                           }
                         }}
                         className="px-5 py-2 bg-[#BA8332] hover:bg-[#a06e28] text-white font-sans text-xs font-semibold rounded-none uppercase shadow-sm cursor-pointer"
