@@ -1147,17 +1147,13 @@ export default function App() {
         .select()
         .single();
 
-      if (error) {
-        console.error('Failed to create Sharaf allocation in Supabase:', error);
-        alert(lang === 'en' ? `Failed to allocate Sharaf: ${error.message}` : `فشل تخصيص الشرف: ${error.message}`);
-        return;
-      }
+      if (error) throw error;
 
       const created = mapSharafAllocationFromDb(data);
       setSharafAllocations(prev => [created, ...prev]);
     } catch (err: any) {
       console.error('Error in handleAddSharafAllocation:', err);
-      alert(lang === 'en' ? `Failed to allocate Sharaf: ${err.message}` : `فشل تخصيص الشرف: ${err.message}`);
+      throw err;
     }
   };
 
@@ -1190,11 +1186,7 @@ export default function App() {
         .insert(dbPayloads)
         .select();
 
-      if (error) {
-        console.error('Failed to bulk assign Sharaf in Supabase:', error);
-        alert(lang === 'en' ? `Failed to bulk assign Sharaf: ${error.message}` : `فشل التخصيص الجماعي للشرف: ${error.message}`);
-        return;
-      }
+      if (error) throw error;
 
       if (data) {
         const createdList = data.map(mapSharafAllocationFromDb);
@@ -1202,7 +1194,7 @@ export default function App() {
       }
     } catch (err: any) {
       console.error('Error in handleBulkAssignSharaf:', err);
-      alert(lang === 'en' ? `Failed to bulk assign Sharaf: ${err.message}` : `فشل التخصيص الجماعي للشرف: ${err.message}`);
+      throw err;
     }
   };
 
@@ -1291,16 +1283,13 @@ export default function App() {
         .select()
         .single();
 
-      if (error) {
-        console.error('Failed to create miqaat request in Supabase:', error);
-        alert(lang === 'en' ? `Failed to create Miqaat request: ${error.message}` : `فشل إنشاء طلب الميقات: ${error.message}`);
-        return;
-      }
+      if (error) throw error;
 
       const saved = mapMiqaatRequestFromDb(data);
       setMiqaatRequests(prev => [saved, ...prev]);
     } catch (err) {
       console.error('Error in handleAddMiqaatRequest:', err);
+      throw err;
     }
   };
 
