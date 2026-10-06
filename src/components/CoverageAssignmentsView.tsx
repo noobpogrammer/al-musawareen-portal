@@ -26,7 +26,7 @@ interface CoverageAssignmentsViewProps {
   onBulkAddZones?: (names: string[]) => void;
   onAddTopic?: (name: string) => void;
   onBulkAddTopics?: (names: string[]) => void;
-  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void;
+  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void | Promise<void>;
   onRespondMiqaatRequest?: (requestId: string, itsNumber: string, status: 'accepted' | 'declined', declineReason?: string) => void;
 }
 
@@ -254,7 +254,7 @@ export default function CoverageAssignmentsView({
     setIsAddingReqInlineMiqaat(false);
   };
 
-  const handleCreateMiqaatRequestSubmit = (e: React.FormEvent) => {
+  const handleCreateMiqaatRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reqMiqaat.trim()) {
       alert(lang === 'en' ? 'Please select or enter a Miqaat name.' : 'يرجى اختيار أو إدخال اسم الميقات.');
@@ -281,18 +281,27 @@ export default function CoverageAssignmentsView({
       };
     });
 
-    if (onAddMiqaatRequest) {
-      onAddMiqaatRequest({
+    if (!onAddMiqaatRequest) return;
+
+    try {
+      await onAddMiqaatRequest({
         miqaatName: reqMiqaat.trim(),
         fromDate: reqFromDate,
         toDate: reqToDate,
         notes: reqNotes.trim() || undefined,
         memberResponses
       });
-    }
 
-    setIsNewMiqaatRequestModalOpen(false);
-    alert(lang === 'en' ? `Miqaat Request sent to ${reqSelectedIts.length} member(s)!` : `تم إرسال طلب الميقات إلى ${reqSelectedIts.length} من الأعضاء!`);
+      setIsNewMiqaatRequestModalOpen(false);
+      alert(lang === 'en' ? `Miqaat Request sent to ${reqSelectedIts.length} member(s)!` : `تم إرسال طلب الميقات إلى ${reqSelectedIts.length} من الأعضاء!`);
+    } catch (err: any) {
+      console.error('Failed to create Miqaat request:', err);
+      alert(
+        lang === 'en'
+          ? `Failed to create Miqaat request: ${err?.message || 'Unknown error'}`
+          : `فشل إنشاء طلب الميقات: ${err?.message || 'خطأ غير معروف'}`
+      );
+    }
   };
 
   const handleSaveAssignment = () => {
