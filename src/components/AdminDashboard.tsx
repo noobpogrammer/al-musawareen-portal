@@ -506,29 +506,39 @@ export default function AdminDashboard({
       return;
     }
 
-    onAddAssignment({
-      date: assignDate,
-      miqaatName: assignMiqaatName,
-      zone: assignZone,
-      topic: assignTopics.join(', '),
-      topics: assignTopics,
-      assignedUsers: targetPVs,
-      notes: assignMode === 'mohalla' 
-        ? `[Mohalla Dispatch: ${selectedMohalla}] ${assignNotes}`.trim()
-        : assignNotes,
-      status: 'active'
-    });
+    try {
+      await onAddAssignment({
+        date: assignDate,
+        miqaatName: assignMiqaatName,
+        zone: assignZone,
+        topic: assignTopics.join(', '),
+        topics: assignTopics,
+        assignedUsers: targetPVs,
+        notes: assignMode === 'mohalla'
+          ? `[Mohalla Dispatch: ${selectedMohalla}] ${assignNotes}`.trim()
+          : assignNotes,
+        status: 'active'
+      });
 
-    setAssignNotes('');
-    if (assignMode === 'individual') {
-      setAssignPVs([]);
+      setAssignNotes('');
+      if (assignMode === 'individual') {
+        setAssignPVs([]);
+      }
+      setIsNewAssignmentModalOpen(false);
+      alert(
+        lang === 'en'
+          ? `Assignment created for ${targetPVs.length} team member(s) successfully!`
+          : `تم إرسال التكليف إلى ${targetPVs.length} من الأعضاء بنجاح!`
+      );
+    } catch (err: any) {
+      console.error('Failed to create assignment:', err);
+      alert(
+        lang === 'en'
+          ? `Failed to create assignment: ${err?.message || 'Unknown error'}`
+          : `فشل إنشاء التكليف: ${err?.message || 'خطأ غير معروف'}`
+      );
+      return;
     }
-    setIsNewAssignmentModalOpen(false);
-    alert(
-      lang === 'en' 
-        ? `Assignment created for ${targetPVs.length} team member(s) successfully!` 
-        : `تم إرسال التكليف إلى ${targetPVs.length} من الأعضاء بنجاح!`
-    );
   };
 
   const handleAllocateSharafSubmit = (e: React.FormEvent) => {
@@ -542,32 +552,6 @@ export default function AdminDashboard({
     alert(lang === 'en' ? 'Sharaf allocated successfully!' : 'تم تخصيص إحداثيات الشرف بنجاح!');
   };
 
-  // Generate dynamic batch coverage schedule template
-  const handleBatchGenerate = () => {
-    const dates = ['2026-07-22', '2026-07-23', '2026-07-24'];
-    let count = 0;
-    
-    dates.forEach((d) => {
-      // Pick a random zone and topic, assign a random approved PV
-      const randomZone = zones[Math.floor(Math.random() * zones.length)]?.name;
-      const randomTopic = topics[Math.floor(Math.random() * topics.length)]?.name;
-      const randomPV = approvedPVs[Math.floor(Math.random() * approvedPVs.length)];
-
-      if (randomZone && randomTopic && randomPV) {
-        onAddAssignment({
-          date: d,
-          zone: randomZone,
-          topic: randomTopic,
-          assignedUsers: [randomPV.itsNumber],
-          notes: 'Auto-generated assignment schedule.',
-          status: 'active'
-        });
-        count++;
-      }
-    });
-
-    alert(lang === 'en' ? `Created ${count} assignments successfully!` : `تم إنشاء ${count} من مصفوفات التغطية التلقائية بنجاح!`);
-  };
 
   return (
     <div className={`min-h-screen bg-editorial-bg py-8 px-4 sm:px-6 lg:px-8 font-sans ${isRtl ? 'rtl' : 'ltr'}`}>
