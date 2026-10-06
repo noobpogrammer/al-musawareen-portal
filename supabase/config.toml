@@ -1,0 +1,4 @@
+project_id = "ceudhwrdplcumvojcrvp"
+
+[functions.send-operational-email]
+verify_jwt = true
