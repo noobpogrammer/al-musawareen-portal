@@ -505,71 +505,63 @@ export default function App() {
     }
   };
 
-  // Grant, extend, revoke HR permissions, or update user roles
+  // Grant, extend, revoke HR permissions, or update user roles.
+  // Supabase is authoritative: only update local UI state after the DB write succeeds.
   const handleUpdateUserPermissions = async (its: string, newRoles: UserRole[], permissions?: HRPermissions) => {
     const updatedRoles = Array.from(new Set(newRoles));
-    // Primary role fallback: keep admin if admin, else first non-admin role or primary role
     const primaryRole = updatedRoles.includes('admin')
       ? 'admin'
       : updatedRoles[0] || 'photographer';
 
-    setUsers(prev => prev.map(u => {
-      if (u.itsNumber === its) {
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .update({
+          role: primaryRole,
+          roles: updatedRoles,
+          hr_permissions: permissions ?? null
+        })
+        .eq('its_id', its)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => {
+        if (u.itsNumber !== its) return u;
         return {
           ...u,
-          role: primaryRole,
-          roles: updatedRoles,
-          hrPermissions: permissions
+          role: data.role as UserRole,
+          roles: data.roles || updatedRoles,
+          hrPermissions: data.hr_permissions || undefined
         };
-      }
-      return u;
-    }));
+      }));
 
-    // Update currentUser if modifying logged-in user
-    setCurrentUser(prev => {
-      if (prev && prev.itsNumber === its) {
-        const updated = {
+      setCurrentUser(prev => {
+        if (!prev || prev.itsNumber !== its) return prev;
+
+        const updated: UserProfile = {
           ...prev,
-          role: primaryRole,
-          roles: updatedRoles,
-          hrPermissions: permissions
+          role: data.role as UserRole,
+          roles: data.roles || updatedRoles,
+          hrPermissions: data.hr_permissions || undefined
         };
+
         localStorage.setItem('al_musawareen_session', JSON.stringify(updated));
         return updated;
-      }
-      return prev;
-    });
-
-    try {
-      await supabase.from('members').update({
-        role: primaryRole,
-        roles: updatedRoles,
-        hr_permissions: permissions
-      }).eq('its_id', its);
+      });
     } catch (err) {
       console.warn('Could not sync user permissions to Supabase:', err);
+      throw err;
     }
   };
 
-  // Data Dump update handler
+  // Data Dump update handler.
+  // Supabase is authoritative: only reflect the saved canonical row after upsert succeeds.
   const handleUpdateDataDump = async (record: DataDumpRecord) => {
-    setDataDumps(prev => {
-      const idx = prev.findIndex(d => 
-        d.id === record.id || 
-        (record.assignmentId && d.assignmentId === record.assignmentId && d.itsNumber === record.itsNumber) ||
-        (record.sharafAllocationId && d.sharafAllocationId === record.sharafAllocationId && d.itsNumber === record.itsNumber)
-      );
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = record;
-        return next;
-      }
-      return [record, ...prev];
-    });
-
     try {
       const conflictTarget = record.sharafAllocationId ? 'sharaf_allocation_id,its_number' : 'assignment_id,its_number';
-      const { error } = await supabase.from('data_dumps').upsert({
+      const { data, error } = await supabase.from('data_dumps').upsert({
         assignment_id: record.assignmentId || null,
         sharaf_allocation_id: record.sharafAllocationId || null,
         its_number: record.itsNumber,
@@ -590,11 +582,48 @@ export default function App() {
         updated_at: new Date().toISOString()
       }, {
         onConflict: conflictTarget
+      }).select().single();
+
+      if (error) throw error;
+
+      const saved: DataDumpRecord = {
+        id: data.id,
+        assignmentId: data.assignment_id || undefined,
+        sharafAllocationId: data.sharaf_allocation_id || undefined,
+        itsNumber: data.its_number,
+        eventName: data.event_name || undefined,
+        date: data.date || undefined,
+        zone: data.zone || undefined,
+        cardReceived: Boolean(data.card_received),
+        cardReceivedAt: data.card_received_at || undefined,
+        cardReceivedBy: data.card_received_by || undefined,
+        cardCopied: Boolean(data.card_copied),
+        cardCopiedAt: data.card_copied_at || undefined,
+        cardCopiedBy: data.card_copied_by || undefined,
+        notes: data.notes || undefined,
+        cardNotes: data.card_notes || undefined,
+        touchPointCompletionMode: data.touch_point_completion_mode || undefined,
+        completionPercentOverride: data.completion_percent_override ?? undefined,
+        completedTouchPoints: data.completed_touch_points || undefined,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      };
+
+      setDataDumps(prev => {
+        const idx = prev.findIndex(d =>
+          d.id === saved.id ||
+          (saved.assignmentId && d.assignmentId === saved.assignmentId && d.itsNumber === saved.itsNumber) ||
+          (saved.sharafAllocationId && d.sharafAllocationId === saved.sharafAllocationId && d.itsNumber === saved.itsNumber)
+        );
+
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = saved;
+          return next;
+        }
+
+        return [saved, ...prev];
       });
-      if (error) {
-        console.warn('Supabase data_dumps upsert error:', error);
-        throw error;
-      }
     } catch (err) {
       console.warn('Could not sync data dump record to Supabase:', err);
       throw err;
