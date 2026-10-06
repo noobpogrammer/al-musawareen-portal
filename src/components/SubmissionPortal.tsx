@@ -43,7 +43,7 @@ interface SubmissionPortalProps {
   onSaveRatingOverride?: (reportId: string, goldStars: number, redStars: number, note: string, isOverride: boolean) => void;
   isSafarModeEnabled?: boolean;
   sharafAllocations?: SharafAllocation[];
-  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void;
+  onAddMiqaatRequest?: (request: Omit<MiqaatRequest, 'id' | 'createdAt'>) => void | Promise<void>;
   onRespondMiqaatRequest?: (requestId: string, itsNumber: string, status: 'accepted' | 'declined', declineReason?: string) => void;
   initialTab?: string;
 }
@@ -126,23 +126,21 @@ export default function SubmissionPortal({
         .from('dp-uploads')
         .upload(fileName, file, { contentType: file.type || 'image/jpeg', upsert: true });
       
-      let publicUrl = '';
-      if (!uploadError) {
-        const { data } = supabase.storage.from('dp-uploads').getPublicUrl(fileName);
-        publicUrl = data.publicUrl;
-      } else {
-        publicUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-      }
+      if (uploadError) throw uploadError;
 
-      if (publicUrl) {
-        await supabase.from('members').update({ dp_url: publicUrl }).eq('its_id', currentUser.itsNumber);
-        if (onUpdateAvatar) {
-          onUpdateAvatar(currentUser.itsNumber, publicUrl);
-        }
+      const { data } = supabase.storage.from('dp-uploads').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+      if (!publicUrl) throw new Error('Unable to resolve uploaded profile picture URL.');
+
+      const { error: profileError } = await supabase
+        .from('members')
+        .update({ dp_url: publicUrl })
+        .eq('its_id', currentUser.itsNumber);
+
+      if (profileError) throw profileError;
+
+      if (onUpdateAvatar) {
+        onUpdateAvatar(currentUser.itsNumber, publicUrl);
       }
     } catch (err: any) {
       console.error('Failed to upload profile picture:', err);
