@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Assignment, ShotReport, SharafEventDef, SharafAllocation, MiqaatDef, Zone, Topic, AssignmentNotification, HRPermissions, UserRole, DataDumpRecord, getUserRoles, DEFAULT_HR_PERMISSIONS, MiqaatRequest } from './types';
-import { INITIAL_SUBMISSIONS } from './utils/mockData';
 import { LanguageType } from './utils/translations';
 import { 
   mapAssignmentFromDb, 
@@ -58,39 +57,14 @@ export default function App() {
     }
   });
 
-  const [users, setUsers] = useState<UserProfile[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_users');
-      if (!saved) return [];
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed.map(sanitizeUserProfile) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [users, setUsers] = useState<UserProfile[]>([]);
 
   // Supabase-backed assignments (authoritative DB source)
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
-  const [submissions, setSubmissions] = useState<ShotReport[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_submissions');
-      if (!saved) return INITIAL_SUBMISSIONS;
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : INITIAL_SUBMISSIONS;
-    } catch {
-      return INITIAL_SUBMISSIONS;
-    }
-  });
+  const [submissions, setSubmissions] = useState<ShotReport[]>([]);
 
-  const [dataDumps, setDataDumps] = useState<DataDumpRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem('al_musawareen_datadumps');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [dataDumps, setDataDumps] = useState<DataDumpRecord[]>([]);
 
   // Supabase-backed notifications (authoritative DB source)
   const [notifications, setNotifications] = useState<AssignmentNotification[]>([]);
@@ -137,19 +111,9 @@ export default function App() {
     return 'public';
   });
 
-  // 2. Persistence Hooks (Phase 1B: Removed localStorage for all DB-backed entities)
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_submissions', JSON.stringify(submissions));
-  }, [submissions]);
-
-  useEffect(() => {
-    localStorage.setItem('al_musawareen_datadumps', JSON.stringify(dataDumps));
-  }, [dataDumps]);
-
+  // 2. Persistence Hooks
+  // Operational entities are Supabase-authoritative. localStorage is used only
+  // for non-authoritative UI preferences/session convenience.
   useEffect(() => {
     localStorage.setItem('al_musawareen_lang', lang);
   }, [lang]);
@@ -229,24 +193,7 @@ export default function App() {
             otherEquipment: member.other_equipment
           }));
 
-          setUsers(prev => {
-            const updated = [...prev];
-            mappedMembers.forEach(dbm => {
-              const index = updated.findIndex(u => u.itsNumber === dbm.itsNumber);
-              if (index >= 0) {
-                updated[index] = {
-                  ...updated[index],
-                  ...dbm,
-                  avatarUrl: dbm.avatarUrl || updated[index].avatarUrl,
-                  hrPermissions: dbm.hrPermissions || updated[index].hrPermissions,
-                  roles: dbm.roles || updated[index].roles
-                };
-              } else {
-                updated.push(dbm);
-              }
-            });
-            return updated;
-          });
+          setUsers(mappedMembers);
 
           // Immediately sync Supabase dp_url into active logged-in user profile
           setCurrentUser(prevUser => {
@@ -290,7 +237,7 @@ export default function App() {
 
         // Fetch Data Dump records from Supabase
         const { data: dbDumps, error: dumpErr } = await supabase.from('data_dumps').select('*');
-        if (!dumpErr && dbDumps && dbDumps.length > 0) {
+        if (!dumpErr && dbDumps) {
           const mappedDumps: DataDumpRecord[] = dbDumps.map(d => ({
             id: d.id,
             assignmentId: d.assignment_id || undefined,
@@ -336,16 +283,7 @@ export default function App() {
             notes: sr.notes || undefined,
             grade: sr.grade || 'Pending'
           }));
-          setSubmissions(prev => {
-            const combined = [...mappedReports];
-            // Include local reports not yet in DB
-            prev.forEach(p => {
-              if (!combined.some(c => c.id === p.id || (p.assignmentId && c.assignmentId === p.assignmentId && c.itsNumber === p.itsNumber))) {
-                combined.push(p);
-              }
-            });
-            return combined;
-          });
+          setSubmissions(mappedReports);
         }
 
         // Fetch Miqaat Requests from Supabase
@@ -537,26 +475,33 @@ export default function App() {
     const existingRoles = existing ? getUserRoles(existing) : ['photographer' as UserRole];
     const hrPermsToApply = permissions || existing?.hrPermissions || (existing?.role === 'coordinator' || existingRoles.includes('coordinator') ? DEFAULT_HR_PERMISSIONS : undefined);
 
-    setUsers(prev => prev.map(u => {
-      if (u.itsNumber === its) {
-        return {
-          ...u,
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .update({
           status: 'approved',
           roles: existingRoles,
-          hrPermissions: hrPermsToApply
-        };
-      }
-      return u;
-    }));
+          hr_permissions: hrPermsToApply
+        })
+        .eq('its_id', its)
+        .select()
+        .single();
 
-    try {
-      await supabase.from('members').update({ 
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.itsNumber === its ? {
+        ...u,
         status: 'approved',
         roles: existingRoles,
-        hr_permissions: hrPermsToApply
-      }).eq('its_id', its);
+        hrPermissions: hrPermsToApply
+      } : u));
+
+      if (currentUser?.itsNumber === its && data) {
+        await loadUserProfile(data.id);
+      }
     } catch (err) {
       console.warn('Failed to sync approval to Supabase database:', err);
+      throw err;
     }
   };
 
@@ -658,17 +603,18 @@ export default function App() {
 
   // B. Reject a pending user registration
   const handleRejectUser = async (its: string) => {
-    setUsers(prev => prev.map(u => {
-      if (u.itsNumber === its) {
-        return { ...u, status: 'rejected' };
-      }
-      return u;
-    }));
-
     try {
-      await supabase.from('members').update({ status: 'rejected' }).eq('its_id', its);
+      const { error } = await supabase
+        .from('members')
+        .update({ status: 'rejected' })
+        .eq('its_id', its);
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.itsNumber === its ? { ...u, status: 'rejected' } : u));
     } catch (err) {
       console.warn('Failed to sync rejection to Supabase database:', err);
+      throw err;
     }
   };
 
@@ -994,97 +940,145 @@ export default function App() {
   };
 
   // E. Audits and grades a shot report
-  const handleGradeSubmission = (subId: string, grade: ShotReport['grade']) => {
-    setSubmissions(prev => prev.map(sub => {
-      if (sub.id === subId) {
-        return { ...sub, grade };
-      }
-      return sub;
-    }));
+  const handleGradeSubmission = async (subId: string, grade: ShotReport['grade']) => {
+    try {
+      const { data, error } = await supabase
+        .from('shot_reports')
+        .update({ grade })
+        .eq('id', subId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setSubmissions(prev => prev.map(sub =>
+        sub.id === subId ? { ...sub, grade: data.grade || grade } : sub
+      ));
+    } catch (err) {
+      console.error('Failed to persist shot report grade:', err);
+      throw err;
+    }
   };
 
   // F. Submit or update a shot report
   const handleSubmitReport = async (newReport: Omit<ShotReport, 'id' | 'timestamp' | 'userName'>) => {
     const userName = users.find(u => u.itsNumber === newReport.itsNumber)?.fullName || 'Photographer';
 
-    setSubmissions(prev => {
-      const existingIndex = prev.findIndex(
+    try {
+      const existing = submissions.find(
         s => (newReport.assignmentId && s.assignmentId === newReport.assignmentId && s.itsNumber === newReport.itsNumber) ||
              (!newReport.assignmentId && s.assignmentTitle === newReport.assignmentTitle && s.itsNumber === newReport.itsNumber)
       );
 
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          driveLink: newReport.driveLink !== undefined ? newReport.driveLink : updated[existingIndex].driveLink,
-          submissionMethod: newReport.submissionMethod || updated[existingIndex].submissionMethod || 'drive',
-          touchPointCompletionMode: newReport.touchPointCompletionMode || updated[existingIndex].touchPointCompletionMode,
-          completionPercentOverride: newReport.completionPercentOverride !== undefined ? newReport.completionPercentOverride : updated[existingIndex].completionPercentOverride,
-          completedTouchPoints: newReport.completedTouchPoints || updated[existingIndex].completedTouchPoints,
-          notes: newReport.notes !== undefined ? newReport.notes : updated[existingIndex].notes,
-          grade: updated[existingIndex].grade || 'Pending',
-          timestamp: new Date().toISOString()
-        };
-        return updated;
-      }
-
-      const fullReport: ShotReport = {
-        ...newReport,
-        id: `sub_${Date.now()}`,
-        submissionMethod: newReport.submissionMethod || 'drive',
-        timestamp: new Date().toISOString(),
-        userName
-      };
-      return [fullReport, ...prev];
-    });
-
-    try {
       const { data: dbReport, error } = await supabase.from('shot_reports').upsert({
         its_number: newReport.itsNumber,
         user_name: userName,
         assignment_id: newReport.assignmentId || null,
         assignment_title: newReport.assignmentTitle,
-        drive_link: newReport.driveLink || null,
-        submission_method: newReport.submissionMethod || 'drive',
-        touch_point_completion_mode: newReport.touchPointCompletionMode || 'exact',
-        completion_percent_override: newReport.completionPercentOverride ?? null,
-        completed_touch_points: newReport.completedTouchPoints || null,
-        notes: newReport.notes || null,
-        grade: newReport.grade || 'Pending',
+        drive_link: newReport.driveLink ?? existing?.driveLink ?? null,
+        submission_method: newReport.submissionMethod || existing?.submissionMethod || 'drive',
+        touch_point_completion_mode: newReport.touchPointCompletionMode || existing?.touchPointCompletionMode || 'exact',
+        completion_percent_override: newReport.completionPercentOverride ?? existing?.completionPercentOverride ?? null,
+        completed_touch_points: newReport.completedTouchPoints || existing?.completedTouchPoints || null,
+        notes: newReport.notes ?? existing?.notes ?? null,
+        grade: existing?.grade || newReport.grade || 'Pending',
         timestamp: new Date().toISOString()
       }, {
         onConflict: 'assignment_id,its_number'
       }).select().single();
 
-      if (error) {
-        console.warn('Supabase shot_reports upsert error:', error);
-      } else if (dbReport) {
-        setSubmissions(prev => prev.map(s => 
-          (newReport.assignmentId && s.assignmentId === newReport.assignmentId && s.itsNumber === newReport.itsNumber)
-            ? { ...s, id: dbReport.id }
-            : s
-        ));
-      }
+      if (error) throw error;
+
+      const saved: ShotReport = {
+        id: dbReport.id,
+        itsNumber: dbReport.its_number,
+        userName: dbReport.user_name,
+        assignmentId: dbReport.assignment_id || undefined,
+        assignmentTitle: dbReport.assignment_title,
+        driveLink: dbReport.drive_link || undefined,
+        submissionMethod: dbReport.submission_method || 'drive',
+        touchPointCompletionMode: dbReport.touch_point_completion_mode || 'exact',
+        completionPercentOverride: dbReport.completion_percent_override ?? undefined,
+        completedTouchPoints: dbReport.completed_touch_points || [],
+        adminOverride: dbReport.admin_override || undefined,
+        redStarFlags: dbReport.red_star_flags || undefined,
+        timestamp: dbReport.timestamp,
+        notes: dbReport.notes || undefined,
+        grade: dbReport.grade || 'Pending'
+      };
+
+      setSubmissions(prev => {
+        const filtered = prev.filter(s =>
+          !(saved.assignmentId && s.assignmentId === saved.assignmentId && s.itsNumber === saved.itsNumber) &&
+          !(!saved.assignmentId && s.assignmentTitle === saved.assignmentTitle && s.itsNumber === saved.itsNumber)
+        );
+        return [saved, ...filtered];
+      });
     } catch (err) {
-      console.warn('Could not sync shot report to Supabase:', err);
+      console.error('Could not sync shot report to Supabase:', err);
+      throw err;
     }
   };
 
-  // G. Legacy allocate Sharaf seating
-  const handleAllocateSharaf = (its: string, zone: string, seat: string) => {
-    setUsers(prev => prev.map(u => {
-      if (u.itsNumber === its) {
-        return {
-          ...u,
-          sharafStatus: 'granted',
-          sharafZone: zone,
-          sharafSeat: seat
-        };
-      }
-      return u;
-    }));
+  // Persist legacy member Sharaf seating to Supabase.
+  const handleAllocateSharaf = async (its: string, zone: string, seat: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .update({
+          sharaf_status: 'granted',
+          sharaf_zone: zone,
+          sharaf_seat: seat
+        })
+        .eq('its_id', its)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.itsNumber === its ? {
+        ...u,
+        sharafStatus: data.sharaf_status || 'granted',
+        sharafZone: data.sharaf_zone || zone,
+        sharafSeat: data.sharaf_seat || seat
+      } : u));
+    } catch (err) {
+      console.error('Failed to persist Sharaf seating:', err);
+      throw err;
+    }
   };
+
+  // Persist star-rating overrides to the shot report before reflecting them in UI.
+  const handleSaveRatingOverride = async (
+    reportId: string,
+    goldStars: number,
+    redStars: number,
+    note: string,
+    isOverride: boolean
+  ) => {
+    const adminOverride = { goldStars, redStars, isOverride, note };
+
+    try {
+      const { data, error } = await supabase
+        .from('shot_reports')
+        .update({ admin_override: adminOverride })
+        .eq('id', reportId)
+        .select('id, admin_override')
+        .single();
+
+      if (error) throw error;
+
+      setSubmissions(prev => prev.map(sub =>
+        sub.id === reportId
+          ? { ...sub, adminOverride: data.admin_override || adminOverride }
+          : sub
+      ));
+    } catch (err) {
+      console.error('Failed to persist star rating override:', err);
+      throw err;
+    }
+  };
+
 
   // Sharaf Event Allocation Handlers
   const handleToggleSafarMode = async (enabled: boolean) => {
@@ -1507,24 +1501,7 @@ export default function App() {
             onBulkAddTopics={handleBulkAddTopics}
             onAddMiqaatRequest={handleAddMiqaatRequest}
             onRespondMiqaatRequest={handleRespondMiqaatRequest}
-            onSaveRatingOverride={(reportId, goldStars, redStars, note, isOverride) => {
-              setSubmissions(prev =>
-                prev.map(sub => {
-                  if (sub.id === reportId) {
-                    return {
-                      ...sub,
-                      adminOverride: {
-                        goldStars,
-                        redStars,
-                        isOverride,
-                        note
-                      }
-                    };
-                  }
-                  return sub;
-                })
-              );
-            }}
+            onSaveRatingOverride={handleSaveRatingOverride}
           />
         )}
 
@@ -1554,24 +1531,7 @@ export default function App() {
             onGradeSubmission={handleGradeSubmission}
             onAddMiqaatRequest={handleAddMiqaatRequest}
             onRespondMiqaatRequest={handleRespondMiqaatRequest}
-            onSaveRatingOverride={(reportId, goldStars, redStars, note, isOverride) => {
-              setSubmissions(prev =>
-                prev.map(sub => {
-                  if (sub.id === reportId) {
-                    return {
-                      ...sub,
-                      adminOverride: {
-                        goldStars,
-                        redStars,
-                        isOverride,
-                        note
-                      }
-                    };
-                  }
-                  return sub;
-                })
-              );
-            }}
+            onSaveRatingOverride={handleSaveRatingOverride}
             isSafarModeEnabled={isSafarModeEnabled}
             sharafAllocations={sharafAllocations}
             initialTab={activeView === 'sharaf' ? 'sharaf' : 'assigned'}
