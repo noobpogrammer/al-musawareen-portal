@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import nodemailer from "npm:nodemailer@6";
 
 const ALLOWED_NOTIFICATION_TYPES = [
   "assignment_created",
@@ -209,7 +210,7 @@ function renderTemplate(type: NotificationType, data: TemplateData): RenderedTem
   }
 }
 
-const OPERATIONAL_FROM = "Al Musawareen <admin@almusawareen.com>";
+const OPERATIONAL_FROM = "Al Musawareen <admin@theelmserver.com>";
 const MAX_RECIPIENTS = 50;
 
 function normalizeItsNumbers(value: unknown): string[] {
@@ -232,43 +233,28 @@ function memberHasRole(member: MemberRecipient, role: string): boolean {
   return member.role === role || roles.includes(role);
 }
 
-async function sendWithResend(
-  apiKey: string,
+async function sendWithSmtp(
+  transporter: ReturnType<typeof nodemailer.createTransport>,
   recipientEmail: string,
   rendered: RenderedTemplate,
 ): Promise<{ ok: true; id: string | null } | { ok: false; error: string }> {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  try {
+    const result = await transporter.sendMail({
       from: OPERATIONAL_FROM,
-      to: [recipientEmail],
+      to: recipientEmail,
       subject: rendered.subject,
       html: rendered.html,
       text: rendered.text,
-    }),
-  });
+    });
 
-  let result: Record<string, unknown> = {};
-  try {
-    result = await response.json();
-  } catch {
-    result = {};
+    return {
+      ok: true,
+      id: typeof result.messageId === "string" ? result.messageId : null,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "SMTP delivery failed";
+    return { ok: false, error: message };
   }
-
-  if (!response.ok) {
-    const providerMessage =
-      typeof result.message === "string" ? result.message : "Email provider rejected the request";
-    return { ok: false, error: providerMessage };
-  }
-
-  return {
-    ok: true,
-    id: typeof result.id === "string" ? result.id : null,
-  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -279,12 +265,39 @@ Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const smtpHost = Deno.env.get("SMTP_HOST") || "smtp.titan.email";
+  const smtpPort = Number(Deno.env.get("SMTP_PORT") || "587");
+  const smtpUser = Deno.env.get("SMTP_USER");
+  const smtpPassword = Deno.env.get("SMTP_PASSWORD");
 
-  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey || !resendApiKey) {
-    console.error("Missing required Edge Function environment variables.");
+  if (
+    !supabaseUrl ||
+    !supabaseAnonKey ||
+    !supabaseServiceRoleKey ||
+    !smtpUser ||
+    !smtpPassword ||
+    !Number.isInteger(smtpPort) ||
+    smtpPort <= 0
+  ) {
+    console.error("Missing or invalid required Edge Function environment variables.");
     return json(500, { error: "Server configuration error" });
   }
+
+  if (smtpUser.toLowerCase() !== "admin@theelmserver.com") {
+    console.error("SMTP_USER does not match the approved operational sender.");
+    return json(500, { error: "Server configuration error" });
+  }
+
+  const smtpTransport = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    requireTLS: smtpPort === 587,
+    auth: {
+      user: smtpUser,
+      pass: smtpPassword,
+    },
+  });
 
   const authorization = req.headers.get("Authorization");
   if (!authorization?.startsWith("Bearer ")) {
@@ -427,7 +440,7 @@ Deno.serve(async (req: Request) => {
 
   const deliveries = await Promise.all(
     deliverableRecipients.map(async (member) => {
-      const result = await sendWithResend(resendApiKey, member.email!.trim(), rendered);
+      const result = await sendWithSmtp(smtpTransport, member.email!.trim(), rendered);
       return {
         itsNumber: member.its_id,
         ...result,
