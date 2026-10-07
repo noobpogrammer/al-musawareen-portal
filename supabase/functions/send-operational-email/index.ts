@@ -19,7 +19,16 @@ type TemplateData = Record<string, string | number | boolean | null | undefined>
 
 interface OperationalEmailRequest {
   notificationType?: string;
+  recipientItsNumbers?: string[];
   data?: TemplateData;
+}
+
+interface MemberRecipient {
+  its_id: string;
+  email: string | null;
+  status: string | null;
+  role: string | null;
+  roles: unknown;
 }
 
 interface RenderedTemplate {
@@ -200,6 +209,68 @@ function renderTemplate(type: NotificationType, data: TemplateData): RenderedTem
   }
 }
 
+const OPERATIONAL_FROM = "Al Musawareen <admin@almusawareen.com>";
+const MAX_RECIPIENTS = 50;
+
+function normalizeItsNumbers(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => String(item ?? "").trim())
+        .filter((item) => /^\d{8}$/.test(item)),
+    ),
+  ).slice(0, MAX_RECIPIENTS);
+}
+
+function memberHasRole(member: MemberRecipient, role: string): boolean {
+  const roles = Array.isArray(member.roles)
+    ? member.roles.map((item: unknown) => String(item))
+    : [];
+
+  return member.role === role || roles.includes(role);
+}
+
+async function sendWithResend(
+  apiKey: string,
+  recipientEmail: string,
+  rendered: RenderedTemplate,
+): Promise<{ ok: true; id: string | null } | { ok: false; error: string }> {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: OPERATIONAL_FROM,
+      to: [recipientEmail],
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+    }),
+  });
+
+  let result: Record<string, unknown> = {};
+  try {
+    result = await response.json();
+  } catch {
+    result = {};
+  }
+
+  if (!response.ok) {
+    const providerMessage =
+      typeof result.message === "string" ? result.message : "Email provider rejected the request";
+    return { ok: false, error: providerMessage };
+  }
+
+  return {
+    ok: true,
+    id: typeof result.id === "string" ? result.id : null,
+  };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return json(405, { error: "Method not allowed" });
@@ -207,9 +278,11 @@ Deno.serve(async (req: Request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Missing built-in Supabase Edge Function environment variables.");
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey || !resendApiKey) {
+    console.error("Missing required Edge Function environment variables.");
     return json(500, { error: "Server configuration error" });
   }
 
@@ -223,7 +296,7 @@ Deno.serve(async (req: Request) => {
     return json(401, { error: "Authentication required" });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -235,18 +308,25 @@ Deno.serve(async (req: Request) => {
     },
   });
 
+  const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser(accessToken);
+  } = await callerClient.auth.getUser(accessToken);
 
   if (userError || !user) {
     return json(401, { error: "Invalid authentication" });
   }
 
-  const { data: member, error: memberError } = await supabase
+  const { data: callerMember, error: memberError } = await adminClient
     .from("members")
-    .select("role, roles, status")
+    .select("its_id, email, status, role, roles")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -255,14 +335,12 @@ Deno.serve(async (req: Request) => {
     return json(500, { error: "Authorization check failed" });
   }
 
-  const roles = Array.isArray(member?.roles)
-    ? member.roles.map((role: unknown) => String(role))
-    : [];
-
-  const isAdmin = member?.role === "admin" || roles.includes("admin");
-
-  if (!member || !isAdmin) {
-    return json(403, { error: "Admin access required" });
+  if (
+    !callerMember ||
+    callerMember.status !== "approved" ||
+    !memberHasRole(callerMember as MemberRecipient, "admin")
+  ) {
+    return json(403, { error: "Approved admin access required" });
   }
 
   let payload: OperationalEmailRequest;
@@ -285,30 +363,97 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const typedNotificationType = notificationType as NotificationType;
   const data =
     payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)
       ? payload.data
       : {};
 
-  const rendered = renderTemplate(notificationType as NotificationType, data);
+  const rendered = renderTemplate(typedNotificationType, data);
 
-  // Phase 4A foundation only:
-  // - no arbitrary recipients
-  // - no raw subject/html accepted from callers
-  // - no provider credentials in source control
-  // - no email is sent yet
-  //
-  // A later, separately approved update will resolve recipients server-side
-  // and connect the rendered template to a transactional email provider.
+  let recipients: MemberRecipient[] = [];
 
-  return json(200, {
-    ok: true,
-    mode: "validation_only",
-    notificationType,
-    template: {
-      subject: rendered.subject,
-      html: rendered.html,
-      text: rendered.text,
-    },
+  if (typedNotificationType === "coverage_request_received") {
+    const { data: adminRecipients, error: adminRecipientError } = await adminClient
+      .from("members")
+      .select("its_id, email, status, role, roles")
+      .eq("status", "approved");
+
+    if (adminRecipientError) {
+      console.error("Could not resolve admin notification recipients.");
+      return json(500, { error: "Recipient resolution failed" });
+    }
+
+    recipients = (adminRecipients || [])
+      .filter((member) => memberHasRole(member as MemberRecipient, "admin"))
+      .slice(0, MAX_RECIPIENTS) as MemberRecipient[];
+  } else {
+    const itsNumbers = normalizeItsNumbers(payload.recipientItsNumbers);
+
+    if (itsNumbers.length === 0) {
+      return json(400, {
+        error: "At least one valid 8-digit recipient ITS number is required",
+      });
+    }
+
+    const { data: memberRecipients, error: recipientError } = await adminClient
+      .from("members")
+      .select("its_id, email, status, role, roles")
+      .in("its_id", itsNumbers);
+
+    if (recipientError) {
+      console.error("Could not resolve operational email recipients.");
+      return json(500, { error: "Recipient resolution failed" });
+    }
+
+    recipients = (memberRecipients || []) as MemberRecipient[];
+
+    const registrationNotification =
+      typedNotificationType === "registration_approved" ||
+      typedNotificationType === "registration_rejected";
+
+    if (!registrationNotification) {
+      recipients = recipients.filter((member) => member.status === "approved");
+    }
+  }
+
+  const deliverableRecipients = recipients.filter(
+    (member) => typeof member.email === "string" && member.email.trim().length > 0,
+  );
+
+  if (deliverableRecipients.length === 0) {
+    return json(422, { error: "No deliverable member email addresses were found" });
+  }
+
+  const deliveries = await Promise.all(
+    deliverableRecipients.map(async (member) => {
+      const result = await sendWithResend(resendApiKey, member.email!.trim(), rendered);
+      return {
+        itsNumber: member.its_id,
+        ...result,
+      };
+    }),
+  );
+
+  const succeeded = deliveries.filter((delivery) => delivery.ok);
+  const failed = deliveries.filter((delivery) => !delivery.ok);
+
+  if (failed.length > 0) {
+    console.error("One or more operational emails failed to send.", {
+      notificationType: typedNotificationType,
+      attempted: deliveries.length,
+      failed: failed.length,
+    });
+  }
+
+  return json(failed.length > 0 ? 207 : 200, {
+    ok: failed.length === 0,
+    notificationType: typedNotificationType,
+    attempted: deliveries.length,
+    sent: succeeded.length,
+    failed: failed.length,
+    deliveryIds: succeeded
+      .map((delivery) => ("id" in delivery ? delivery.id : null))
+      .filter(Boolean),
   });
 });
