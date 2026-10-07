@@ -23,6 +23,7 @@ type TemplateData = Record<string, string | number | boolean | null | undefined>
 interface OperationalEmailRequest {
   notificationType?: string;
   recipientItsNumbers?: string[];
+  memberId?: string;
   data?: TemplateData;
 }
 
@@ -406,6 +407,7 @@ Deno.serve(async (req: Request) => {
   const smtpPort = Number(Deno.env.get("SMTP_PORT") || "587");
   const smtpUser = Deno.env.get("SMTP_USER");
   const smtpPassword = Deno.env.get("SMTP_PASSWORD");
+  const registrationWebhookSecret = Deno.env.get("REGISTRATION_WEBHOOK_SECRET");
 
   if (
     !supabaseUrl ||
@@ -413,6 +415,7 @@ Deno.serve(async (req: Request) => {
     !supabaseServiceRoleKey ||
     !smtpUser ||
     !smtpPassword ||
+    !registrationWebhookSecret ||
     !Number.isInteger(smtpPort) ||
     smtpPort <= 0
   ) {
@@ -436,59 +439,6 @@ Deno.serve(async (req: Request) => {
     },
   });
 
-  const authorization = req.headers.get("Authorization");
-  if (!authorization?.startsWith("Bearer ")) {
-    return json(401, { error: "Authentication required" });
-  }
-
-  const accessToken = authorization.slice("Bearer ".length).trim();
-  if (!accessToken) {
-    return json(401, { error: "Authentication required" });
-  }
-
-  const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const {
-    data: { user },
-    error: userError,
-  } = await callerClient.auth.getUser(accessToken);
-
-  if (userError || !user) {
-    return json(401, { error: "Invalid authentication" });
-  }
-
-  const { data: callerMember, error: memberError } = await adminClient
-    .from("members")
-    .select("its_id, full_name, email, status, role, roles, hr_permissions")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (memberError) {
-    console.error("Could not resolve caller authorization.");
-    return json(500, { error: "Authorization check failed" });
-  }
-
-  if (!callerMember) {
-    return json(403, { error: "Member profile required" });
-  }
-
   let payload: OperationalEmailRequest;
 
   try {
@@ -510,20 +460,84 @@ Deno.serve(async (req: Request) => {
   }
 
   const typedNotificationType = notificationType as NotificationType;
+  const internalSecret = req.headers.get("x-registration-webhook-secret");
+  const isInternalRegistrationCall =
+    typedNotificationType === "registration_pending_admin" &&
+    typeof internalSecret === "string" &&
+    internalSecret.length > 0 &&
+    internalSecret === registrationWebhookSecret;
+
+  const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  let callerMember: MemberRecipient | null = null;
+
+  if (!isInternalRegistrationCall) {
+    const authorization = req.headers.get("Authorization");
+    if (!authorization?.startsWith("Bearer ")) {
+      return json(401, { error: "Authentication required" });
+    }
+
+    const accessToken = authorization.slice("Bearer ".length).trim();
+    if (!accessToken) {
+      return json(401, { error: "Authentication required" });
+    }
+
+    const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+
+    const {
+      data: { user },
+      error: userError,
+    } = await callerClient.auth.getUser(accessToken);
+
+    if (userError || !user) {
+      return json(401, { error: "Invalid authentication" });
+    }
+
+    const { data: resolvedCaller, error: memberError } = await adminClient
+      .from("members")
+      .select("its_id, full_name, email, status, role, roles, hr_permissions")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (memberError) {
+      console.error("Could not resolve caller authorization.");
+      return json(500, { error: "Authorization check failed" });
+    }
+
+    if (!resolvedCaller) {
+      return json(403, { error: "Member profile required" });
+    }
+
+    callerMember = resolvedCaller as MemberRecipient;
+  }
+
   let data: TemplateData =
     payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)
       ? payload.data
       : {};
 
-  const caller = callerMember as MemberRecipient;
+  const caller = callerMember;
   const isApprovedAdmin =
-    caller.status === "approved" && memberHasRole(caller, "admin");
+    Boolean(caller && caller.status === "approved" && memberHasRole(caller, "admin"));
 
-  const memberCallableType =
-    typedNotificationType === "assignment_response_admin" ||
-    typedNotificationType === "registration_pending_admin";
+  const memberCallableType = typedNotificationType === "assignment_response_admin";
 
-  if (!isApprovedAdmin && !memberCallableType) {
+  if (!isInternalRegistrationCall && !isApprovedAdmin && !memberCallableType) {
     return json(403, { error: "Approved admin access required" });
   }
 
@@ -544,18 +558,38 @@ Deno.serve(async (req: Request) => {
   const approvedAdmins = approvedStaffMembers.filter((member) => memberHasRole(member, "admin"));
 
   if (typedNotificationType === "registration_pending_admin") {
-    if (caller.status !== "pending") {
-      return json(403, { error: "Only a pending registrant can send this notification" });
+    if (!isInternalRegistrationCall) {
+      return json(403, { error: "Server authentication required for pending registration notifications" });
+    }
+
+    const memberId = typeof payload.memberId === "string" ? payload.memberId.trim() : "";
+    if (!memberId) {
+      return json(400, { error: "memberId is required" });
+    }
+
+    const { data: pendingMember, error: pendingMemberError } = await adminClient
+      .from("members")
+      .select("its_id, full_name, email, status, role, roles, hr_permissions")
+      .eq("id", memberId)
+      .maybeSingle();
+
+    if (pendingMemberError) {
+      console.error("Could not resolve pending registration.");
+      return json(500, { error: "Registration lookup failed" });
+    }
+
+    if (!pendingMember || pendingMember.status !== "pending") {
+      return json(409, { error: "Pending registration not found" });
     }
 
     data = {
-      memberName: caller.full_name || "New member",
-      itsNumber: caller.its_id,
+      memberName: pendingMember.full_name || "New member",
+      itsNumber: pendingMember.its_id,
     };
 
     adminRecipients = approvedStaffMembers.filter(canApproveOnboarding);
   } else if (typedNotificationType === "assignment_response_admin") {
-    if (caller.status !== "approved") {
+    if (!caller || caller.status !== "approved") {
       return json(403, { error: "Approved member access required" });
     }
 
