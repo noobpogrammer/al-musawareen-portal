@@ -6,10 +6,12 @@ const ALLOWED_NOTIFICATION_TYPES = [
   "assignment_updated",
   "assignment_graded",
   "assignment_rating_updated",
+  "assignment_response_admin",
   "miqaat_request",
   "sharaf_allocated",
   "sharaf_updated",
   "coverage_request_received",
+  "registration_pending_admin",
   "registration_approved",
   "registration_rejected",
 ] as const;
@@ -26,10 +28,12 @@ interface OperationalEmailRequest {
 
 interface MemberRecipient {
   its_id: string;
+  full_name: string | null;
   email: string | null;
   status: string | null;
   role: string | null;
   roles: unknown;
+  hr_permissions: Record<string, unknown> | null;
 }
 
 interface RenderedTemplate {
@@ -140,6 +144,18 @@ function renderTemplate(type: NotificationType, data: TemplateData): RenderedTem
         "Your rating has been updated. Please check the portal.",
       );
 
+    case "assignment_response_admin": {
+      const memberName = textValue(data, "memberName", "A team member");
+      const assignment = textValue(data, "assignment", "an assignment");
+      const response = textValue(data, "response", "responded");
+
+      return baseTemplate(
+        "Assignment Response — Al Musawareen",
+        `<p style="margin:0;"><strong>${escapeHtml(memberName)}</strong> has <strong>${escapeHtml(response)}</strong> ${escapeHtml(assignment)}. Please check the portal.</p>`,
+        `${memberName} has ${response} ${assignment}. Please check the portal.`,
+      );
+    }
+
     case "miqaat_request": {
       const miqaat = textValue(data, "miqaat", "Miqaat");
       const date = textValue(data, "date", "Date to be confirmed");
@@ -194,6 +210,20 @@ function renderTemplate(type: NotificationType, data: TemplateData): RenderedTem
       );
     }
 
+    case "registration_pending_admin": {
+      const memberName = textValue(data, "memberName", "A new member");
+      const itsNumber = textValue(data, "itsNumber", "");
+
+      return baseTemplate(
+        "New Al Musawareen Registration Awaiting Approval",
+        `<p style="margin:0 0 16px;">A new member has registered and is waiting for approval.</p>
+         <p style="margin:0;"><strong>Name:</strong> ${escapeHtml(memberName)}<br>
+         <strong>ITS ID:</strong> ${escapeHtml(itsNumber)}</p>
+         <p style="margin:16px 0 0;">Please check the Al Musawareen portal to review the registration.</p>`,
+        `A new member has registered and is waiting for approval.\nName: ${memberName}\nITS ID: ${itsNumber}\nPlease check the Al Musawareen portal to review the registration.`,
+      );
+    }
+
     case "registration_approved":
       return baseTemplate(
         "Your Al Musawareen Registration Has Been Approved",
@@ -231,6 +261,113 @@ function memberHasRole(member: MemberRecipient, role: string): boolean {
     : [];
 
   return member.role === role || roles.includes(role);
+}
+
+function canApproveOnboarding(member: MemberRecipient): boolean {
+  return memberHasRole(member, "admin") ||
+    (memberHasRole(member, "coordinator") && member.hr_permissions?.approveOnboarding === true);
+}
+
+function dedupeRecipients(members: MemberRecipient[]): MemberRecipient[] {
+  const seen = new Set<string>();
+
+  return members.filter((member) => {
+    const key = (member.email || "").trim().toLowerCase() || member.its_id;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function recipientSummary(members: MemberRecipient[]): string {
+  const names = members
+    .map((member) => member.full_name?.trim() || member.its_id)
+    .filter(Boolean);
+
+  return names.length > 0 ? names.join(", ") : "the affected member";
+}
+
+function renderAdminCopy(
+  type: NotificationType,
+  data: TemplateData,
+  affectedMembers: MemberRecipient[],
+): RenderedTemplate {
+  const affected = recipientSummary(affectedMembers);
+
+  switch (type) {
+    case "assignment_created":
+      return baseTemplate(
+        "Assignment Created — Al Musawareen",
+        `<p style="margin:0;">A new assignment has been created for <strong>${escapeHtml(affected)}</strong>. Please check the portal.</p>`,
+        `A new assignment has been created for ${affected}. Please check the portal.`,
+      );
+
+    case "assignment_updated": {
+      const assignment = textValue(data, "assignment", textValue(data, "miqaat", "an assignment"));
+      const changeSummary = textValue(data, "changeSummary", "Assignment details were updated.");
+      return baseTemplate(
+        "Assignment Updated — Al Musawareen",
+        `<p style="margin:0 0 16px;">${escapeHtml(assignment)} was updated for <strong>${escapeHtml(affected)}</strong>.</p>
+         <p style="margin:0 0 16px;">${escapeHtml(changeSummary)}</p>
+         <p style="margin:0;">Please check the portal.</p>`,
+        `${assignment} was updated for ${affected}.\n${changeSummary}\nPlease check the portal.`,
+      );
+    }
+
+    case "assignment_graded":
+      return baseTemplate(
+        "Assignment Reviewed — Al Musawareen",
+        `<p style="margin:0;">The assignment/submission for <strong>${escapeHtml(affected)}</strong> has been reviewed. Please check the portal.</p>`,
+        `The assignment/submission for ${affected} has been reviewed. Please check the portal.`,
+      );
+
+    case "assignment_rating_updated":
+      return baseTemplate(
+        "Member Rating Updated — Al Musawareen",
+        `<p style="margin:0;">The rating for <strong>${escapeHtml(affected)}</strong> has been updated. Please check the portal.</p>`,
+        `The rating for ${affected} has been updated. Please check the portal.`,
+      );
+
+    case "miqaat_request": {
+      const miqaat = textValue(data, "miqaat", "Miqaat");
+      return baseTemplate(
+        "Miqaat Request Sent — Al Musawareen",
+        `<p style="margin:0;">A Miqaat request for <strong>${escapeHtml(miqaat)}</strong> was sent to <strong>${escapeHtml(affected)}</strong>. Please check the portal.</p>`,
+        `A Miqaat request for ${miqaat} was sent to ${affected}. Please check the portal.`,
+      );
+    }
+
+    case "sharaf_allocated":
+      return baseTemplate(
+        "Sharaf Allocation Created — Al Musawareen",
+        `<p style="margin:0;">A Sharaf allocation was created for <strong>${escapeHtml(affected)}</strong>. Please check the portal.</p>`,
+        `A Sharaf allocation was created for ${affected}. Please check the portal.`,
+      );
+
+    case "sharaf_updated":
+      return baseTemplate(
+        "Sharaf Allocation Updated — Al Musawareen",
+        `<p style="margin:0;">A Sharaf allocation was updated for <strong>${escapeHtml(affected)}</strong>. Please check the portal.</p>`,
+        `A Sharaf allocation was updated for ${affected}. Please check the portal.`,
+      );
+
+    case "registration_approved":
+      return baseTemplate(
+        "Registration Approved — Al Musawareen",
+        `<p style="margin:0;">The registration for <strong>${escapeHtml(affected)}</strong> has been approved.</p>`,
+        `The registration for ${affected} has been approved.`,
+      );
+
+    case "registration_rejected":
+      return baseTemplate(
+        "Registration Rejected — Al Musawareen",
+        `<p style="margin:0;">The registration for <strong>${escapeHtml(affected)}</strong> was not approved.</p>`,
+        `The registration for ${affected} was not approved.`,
+      );
+
+    default:
+      return renderTemplate(type, data);
+  }
 }
 
 async function sendWithSmtp(
@@ -339,7 +476,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: callerMember, error: memberError } = await adminClient
     .from("members")
-    .select("its_id, email, status, role, roles")
+    .select("its_id, full_name, email, status, role, roles, hr_permissions")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -348,12 +485,8 @@ Deno.serve(async (req: Request) => {
     return json(500, { error: "Authorization check failed" });
   }
 
-  if (
-    !callerMember ||
-    callerMember.status !== "approved" ||
-    !memberHasRole(callerMember as MemberRecipient, "admin")
-  ) {
-    return json(403, { error: "Approved admin access required" });
+  if (!callerMember) {
+    return json(403, { error: "Member profile required" });
   }
 
   let payload: OperationalEmailRequest;
@@ -377,29 +510,96 @@ Deno.serve(async (req: Request) => {
   }
 
   const typedNotificationType = notificationType as NotificationType;
-  const data =
+  let data: TemplateData =
     payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)
       ? payload.data
       : {};
 
-  const rendered = renderTemplate(typedNotificationType, data);
+  const caller = callerMember as MemberRecipient;
+  const isApprovedAdmin =
+    caller.status === "approved" && memberHasRole(caller, "admin");
 
-  let recipients: MemberRecipient[] = [];
+  const memberCallableType =
+    typedNotificationType === "assignment_response_admin" ||
+    typedNotificationType === "registration_pending_admin";
 
-  if (typedNotificationType === "coverage_request_received") {
-    const { data: adminRecipients, error: adminRecipientError } = await adminClient
-      .from("members")
-      .select("its_id, email, status, role, roles")
-      .eq("status", "approved");
+  if (!isApprovedAdmin && !memberCallableType) {
+    return json(403, { error: "Approved admin access required" });
+  }
 
-    if (adminRecipientError) {
-      console.error("Could not resolve admin notification recipients.");
-      return json(500, { error: "Recipient resolution failed" });
+  let affectedRecipients: MemberRecipient[] = [];
+  let adminRecipients: MemberRecipient[] = [];
+
+  const { data: approvedStaff, error: staffError } = await adminClient
+    .from("members")
+    .select("its_id, full_name, email, status, role, roles, hr_permissions")
+    .eq("status", "approved");
+
+  if (staffError) {
+    console.error("Could not resolve staff notification recipients.");
+    return json(500, { error: "Recipient resolution failed" });
+  }
+
+  const approvedStaffMembers = (approvedStaff || []) as MemberRecipient[];
+  const approvedAdmins = approvedStaffMembers.filter((member) => memberHasRole(member, "admin"));
+
+  if (typedNotificationType === "registration_pending_admin") {
+    if (caller.status !== "pending") {
+      return json(403, { error: "Only a pending registrant can send this notification" });
     }
 
-    recipients = (adminRecipients || [])
-      .filter((member) => memberHasRole(member as MemberRecipient, "admin"))
-      .slice(0, MAX_RECIPIENTS) as MemberRecipient[];
+    data = {
+      memberName: caller.full_name || "New member",
+      itsNumber: caller.its_id,
+    };
+
+    adminRecipients = approvedStaffMembers.filter(canApproveOnboarding);
+  } else if (typedNotificationType === "assignment_response_admin") {
+    if (caller.status !== "approved") {
+      return json(403, { error: "Approved member access required" });
+    }
+
+    const assignmentId = textValue(data, "assignmentId");
+    if (!assignmentId) {
+      return json(400, { error: "assignmentId is required" });
+    }
+
+    const { data: assignment, error: assignmentError } = await adminClient
+      .from("assignments")
+      .select("id, miqaat_name, assigned_users, member_statuses")
+      .eq("id", assignmentId)
+      .maybeSingle();
+
+    if (assignmentError || !assignment) {
+      return json(404, { error: "Assignment not found" });
+    }
+
+    const assignedUsers = Array.isArray(assignment.assigned_users)
+      ? assignment.assigned_users.map((item: unknown) => String(item))
+      : [];
+    const memberStatuses =
+      assignment.member_statuses && typeof assignment.member_statuses === "object"
+        ? assignment.member_statuses as Record<string, unknown>
+        : {};
+
+    if (!assignedUsers.includes(caller.its_id)) {
+      return json(403, { error: "Caller is not assigned to this assignment" });
+    }
+
+    const response = String(memberStatuses[caller.its_id] || "");
+    if (response !== "accepted" && response !== "declined") {
+      return json(409, { error: "No accepted or declined response is recorded" });
+    }
+
+    data = {
+      memberName: caller.full_name || caller.its_id,
+      assignment: assignment.miqaat_name || "the assignment",
+      response,
+    };
+
+    adminRecipients = approvedAdmins;
+  } else if (typedNotificationType === "coverage_request_received") {
+    adminRecipients = approvedAdmins;
   } else {
     const itsNumbers = normalizeItsNumbers(payload.recipientItsNumbers);
 
@@ -411,7 +611,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: memberRecipients, error: recipientError } = await adminClient
       .from("members")
-      .select("its_id, email, status, role, roles")
+      .select("its_id, full_name, email, status, role, roles, hr_permissions")
       .in("its_id", itsNumbers);
 
     if (recipientError) {
@@ -419,30 +619,55 @@ Deno.serve(async (req: Request) => {
       return json(500, { error: "Recipient resolution failed" });
     }
 
-    recipients = (memberRecipients || []) as MemberRecipient[];
+    affectedRecipients = (memberRecipients || []) as MemberRecipient[];
 
     const registrationNotification =
       typedNotificationType === "registration_approved" ||
       typedNotificationType === "registration_rejected";
 
     if (!registrationNotification) {
-      recipients = recipients.filter((member) => member.status === "approved");
+      affectedRecipients = affectedRecipients.filter((member) => member.status === "approved");
     }
+
+    adminRecipients = approvedAdmins;
   }
 
-  const deliverableRecipients = recipients.filter(
+  affectedRecipients = dedupeRecipients(affectedRecipients);
+  adminRecipients = dedupeRecipients(adminRecipients);
+
+  const affectedDeliverable = affectedRecipients.filter(
+    (member) => typeof member.email === "string" && member.email.trim().length > 0,
+  );
+  const adminDeliverable = adminRecipients.filter(
     (member) => typeof member.email === "string" && member.email.trim().length > 0,
   );
 
-  if (deliverableRecipients.length === 0) {
+  if (affectedDeliverable.length === 0 && adminDeliverable.length === 0) {
     return json(422, { error: "No deliverable member email addresses were found" });
   }
 
+  const memberTemplate = renderTemplate(typedNotificationType, data);
+  const adminTemplate =
+    typedNotificationType === "registration_pending_admin" ||
+    typedNotificationType === "assignment_response_admin" ||
+    typedNotificationType === "coverage_request_received"
+      ? memberTemplate
+      : renderAdminCopy(typedNotificationType, data, affectedDeliverable);
+
+  const deliveryTargets = [
+    ...affectedDeliverable.map((member) => ({ member, rendered: memberTemplate, audience: "member" as const })),
+    ...adminDeliverable.map((member) => ({ member, rendered: adminTemplate, audience: "admin" as const })),
+  ].filter((target, index, all) => {
+    const email = target.member.email!.trim().toLowerCase();
+    return all.findIndex((candidate) => candidate.member.email!.trim().toLowerCase() === email) === index;
+  });
+
   const deliveries = await Promise.all(
-    deliverableRecipients.map(async (member) => {
+    deliveryTargets.map(async ({ member, rendered, audience }) => {
       const result = await sendWithSmtp(smtpTransport, member.email!.trim(), rendered);
       return {
         itsNumber: member.its_id,
+        audience,
         ...result,
       };
     }),
