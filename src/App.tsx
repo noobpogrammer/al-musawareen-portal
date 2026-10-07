@@ -467,6 +467,76 @@ export default function App() {
     });
   };
 
+  type OperationalEmailType =
+    | 'assignment_created'
+    | 'assignment_updated'
+    | 'assignment_graded'
+    | 'assignment_rating_updated'
+    | 'assignment_response_admin'
+    | 'miqaat_request'
+    | 'sharaf_allocated'
+    | 'sharaf_updated'
+    | 'registration_approved'
+    | 'registration_rejected';
+
+  const sendOperationalEmail = async (
+    notificationType: OperationalEmailType,
+    recipientItsNumbers?: string[],
+    data?: Record<string, string | number | boolean | null | undefined>
+  ) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-operational-email', {
+        body: {
+          notificationType,
+          ...(recipientItsNumbers && recipientItsNumbers.length > 0 ? { recipientItsNumbers } : {}),
+          ...(data ? { data } : {})
+        }
+      });
+
+      if (error) {
+        console.warn(`Operational email failed for ${notificationType}:`, error);
+      }
+    } catch (err) {
+      // The database operation is authoritative. Email failure must never undo it.
+      console.warn(`Operational email failed for ${notificationType}:`, err);
+    }
+  };
+
+  const assignmentLabel = (assignment?: Assignment | null) =>
+    assignment?.miqaatName || assignment?.zone || 'Assignment';
+
+  const buildAssignmentChangeSummary = (
+    previous: Assignment | undefined,
+    next: Assignment
+  ): string => {
+    if (!previous) return 'Assignment details were updated.';
+
+    const changes: string[] = [];
+    const addChange = (label: string, before: unknown, after: unknown) => {
+      const beforeText = Array.isArray(before) ? before.join(', ') : String(before ?? '').trim();
+      const afterText = Array.isArray(after) ? after.join(', ') : String(after ?? '').trim();
+      if (beforeText !== afterText) {
+        changes.push(`${label}: ${beforeText || '—'} → ${afterText || '—'}`);
+      }
+    };
+
+    addChange('Date', previous.date, next.date);
+    addChange('From time', previous.fromTime, next.fromTime);
+    addChange('To time', previous.toTime || previous.endTime, next.toTime || next.endTime);
+    addChange('Zone', previous.zone, next.zone);
+    addChange('Miqaat', previous.miqaatName, next.miqaatName);
+    addChange('Touch points', previous.topics || previous.topic, next.topics || next.topic);
+    addChange('Status', previous.status, next.status);
+
+    const previousUsers = [...previous.assignedUsers].sort();
+    const nextUsers = [...next.assignedUsers].sort();
+    if (previousUsers.join(',') !== nextUsers.join(',')) {
+      changes.push('Assigned members were updated.');
+    }
+
+    return changes.length > 0 ? changes.join(' | ') : 'Assignment details were updated.';
+  };
+
   // 3. Operational State Mutation Functions (Callbacks)
   
   // A. Approve a pending user registration (with optional custom HR permissions)
@@ -499,6 +569,8 @@ export default function App() {
       if (currentUser?.itsNumber === its && data) {
         await loadUserProfile(data.id);
       }
+
+      await sendOperationalEmail('registration_approved', [its]);
     } catch (err) {
       console.warn('Failed to sync approval to Supabase database:', err);
       throw err;
@@ -641,6 +713,8 @@ export default function App() {
       if (error) throw error;
 
       setUsers(prev => prev.map(u => u.itsNumber === its ? { ...u, status: 'rejected' } : u));
+
+      await sendOperationalEmail('registration_rejected', [its]);
     } catch (err) {
       console.warn('Failed to sync rejection to Supabase database:', err);
       throw err;
@@ -693,6 +767,12 @@ export default function App() {
 
       const createdAssignment = mapAssignmentFromDb(data);
       setAssignments(prev => [createdAssignment, ...prev]);
+
+      await sendOperationalEmail(
+        'assignment_created',
+        createdAssignment.assignedUsers,
+        { assignment: assignmentLabel(createdAssignment) }
+      );
     } catch (err) {
       console.error('Error in handleAddAssignment:', err);
     }
@@ -722,6 +802,12 @@ export default function App() {
         const saved = mapAssignmentFromDb(data);
         setAssignments(prev => prev.map(as => as.id === saved.id ? saved : as));
       }
+
+      await sendOperationalEmail(
+        'assignment_response_admin',
+        undefined,
+        { assignmentId }
+      );
 
       // Refetch notifications to sync newly created server notification
       const { data: dbNotifs } = await supabase
@@ -776,12 +862,23 @@ export default function App() {
 
       const saved = mapAssignmentFromDb(data);
       setAssignments(prev => prev.map(as => as.id === saved.id ? saved : as));
+
+      await sendOperationalEmail(
+        'assignment_updated',
+        Array.from(new Set([oldIts, newIts])),
+        {
+          assignment: assignmentLabel(saved),
+          changeSummary: 'Assigned member allocation was updated.'
+        }
+      );
     } catch (err) {
       console.error('Error in handleReassignSlot:', err);
     }
   };
 
   const handleUpdateAssignment = async (updatedAssignment: Assignment) => {
+    const previousAssignment = assignments.find(a => a.id === updatedAssignment.id);
+
     try {
       const dbPayload = mapAssignmentToDb(updatedAssignment);
       const { data, error } = await supabase
@@ -799,6 +896,20 @@ export default function App() {
 
       const saved = mapAssignmentFromDb(data);
       setAssignments(prev => prev.map(as => as.id === saved.id ? saved : as));
+
+      const affectedItsNumbers = Array.from(new Set([
+        ...(previousAssignment?.assignedUsers || []),
+        ...saved.assignedUsers
+      ]));
+
+      await sendOperationalEmail(
+        'assignment_updated',
+        affectedItsNumbers,
+        {
+          assignment: assignmentLabel(saved),
+          changeSummary: buildAssignmentChangeSummary(previousAssignment, saved)
+        }
+      );
     } catch (err) {
       console.error('Error in handleUpdateAssignment:', err);
     }
@@ -983,6 +1094,10 @@ export default function App() {
       setSubmissions(prev => prev.map(sub =>
         sub.id === subId ? { ...sub, grade: data.grade || grade } : sub
       ));
+
+      if (data.its_number) {
+        await sendOperationalEmail('assignment_graded', [data.its_number]);
+      }
     } catch (err) {
       console.error('Failed to persist shot report grade:', err);
       throw err;
@@ -1071,6 +1186,15 @@ export default function App() {
         sharafZone: data.sharaf_zone || zone,
         sharafSeat: data.sharaf_seat || seat
       } : u));
+
+      await sendOperationalEmail(
+        'sharaf_allocated',
+        [its],
+        {
+          event: 'Sharaf seating',
+          location: [zone, seat].filter(Boolean).join(' · ') || 'Please check the portal'
+        }
+      );
     } catch (err) {
       console.error('Failed to persist Sharaf seating:', err);
       throw err;
@@ -1092,7 +1216,7 @@ export default function App() {
         .from('shot_reports')
         .update({ admin_override: adminOverride })
         .eq('id', reportId)
-        .select('id, admin_override')
+        .select('id, its_number, admin_override')
         .single();
 
       if (error) throw error;
@@ -1102,6 +1226,10 @@ export default function App() {
           ? { ...sub, adminOverride: data.admin_override || adminOverride }
           : sub
       ));
+
+      if (data.its_number) {
+        await sendOperationalEmail('assignment_rating_updated', [data.its_number]);
+      }
     } catch (err) {
       console.error('Failed to persist star rating override:', err);
       throw err;
@@ -1151,6 +1279,16 @@ export default function App() {
 
       const created = mapSharafAllocationFromDb(data);
       setSharafAllocations(prev => [created, ...prev]);
+
+      await sendOperationalEmail(
+        'sharaf_allocated',
+        [created.itsNumber],
+        {
+          event: created.eventType,
+          date: created.date || 'Date to be confirmed',
+          location: created.location || created.zone || 'Location to be confirmed'
+        }
+      );
     } catch (err: any) {
       console.error('Error in handleAddSharafAllocation:', err);
       throw err;
@@ -1191,6 +1329,18 @@ export default function App() {
       if (data) {
         const createdList = data.map(mapSharafAllocationFromDb);
         setSharafAllocations(prev => [...createdList, ...prev]);
+
+        await Promise.all(createdList.map(created =>
+          sendOperationalEmail(
+            'sharaf_allocated',
+            [created.itsNumber],
+            {
+              event: created.eventType,
+              date: created.date || 'Date to be confirmed',
+              location: created.location || created.zone || 'Location to be confirmed'
+            }
+          )
+        ));
       }
     } catch (err: any) {
       console.error('Error in handleBulkAssignSharaf:', err);
@@ -1287,6 +1437,18 @@ export default function App() {
 
       const saved = mapMiqaatRequestFromDb(data);
       setMiqaatRequests(prev => [saved, ...prev]);
+
+      const requestedItsNumbers = Object.keys(saved.memberResponses || {});
+      await sendOperationalEmail(
+        'miqaat_request',
+        requestedItsNumbers,
+        {
+          miqaat: saved.miqaatName,
+          date: saved.fromDate === saved.toDate
+            ? saved.fromDate
+            : `${saved.fromDate} to ${saved.toDate}`
+        }
+      );
     } catch (err) {
       console.error('Error in handleAddMiqaatRequest:', err);
       throw err;
